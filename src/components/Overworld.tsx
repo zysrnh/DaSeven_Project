@@ -12,8 +12,8 @@ interface OverworldProps {
 const TILE_SIZE = 32;
 const MAP_COLS = 20;
 const MAP_ROWS = 14;
-const CANVAS_WIDTH = MAP_COLS * TILE_SIZE; // 640px
-const CANVAS_HEIGHT = MAP_ROWS * TILE_SIZE; // 448px
+const CANVAS_WIDTH = MAP_COLS * TILE_SIZE;
+const CANVAS_HEIGHT = MAP_ROWS * TILE_SIZE;
 
 // 0: Floor, 1: Wall, 2: PC Desk, 3: Door, 4: Blackboard, 5: Anomaly Rift
 const MAP_DATA: number[][] = [
@@ -35,7 +35,7 @@ const MAP_DATA: number[][] = [
 
 interface RoamingMonster {
   id: string;
-  x: number; // in pixels
+  x: number;
   y: number;
   vx: number;
   spriteKey: 'void_eyeball' | 'glitch_monolith' | 'cosmic_slime';
@@ -44,7 +44,7 @@ interface RoamingMonster {
 export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Continuous Pixel Positions
+  // Position & Direction
   const playerPosRef = useRef({ x: 96, y: 72 });
   const playerDirRef = useRef<Direction>('right');
   const isMovingRef = useRef(false);
@@ -52,33 +52,36 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
   const animFrameRef = useRef(0);
   const stepSoundTimerRef = useRef(0);
 
-  // Active Key Tracker
   const keysDownRef = useRef<Set<string>>(new Set());
 
-  // Sliced Hero Sprites
-  const heroIdleImgRef = useRef<HTMLImageElement | null>(null);
-  const heroWalkImgRef = useRef<HTMLImageElement | null>(null);
+  // 4 Directional Sliced Sprites
+  const spriteImgRefs = useRef<Record<string, HTMLImageElement>>({});
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
-  // Load custom hero sprites
   useEffect(() => {
-    let count = 0;
-    const checkDone = () => {
-      count++;
-      if (count >= 2) setImagesLoaded(true);
+    const list: Record<string, string> = {
+      front_idle: '/assets/Maine/hero_front_idle.png',
+      front_walk: '/assets/Maine/hero_front_walk.png',
+      side_walk: '/assets/Maine/hero_side_walk.png',
+      back_idle: '/assets/Maine/hero_back_idle.png',
     };
 
-    const idle = new Image();
-    idle.src = '/assets/hero_idle.png';
-    idle.onload = checkDone;
-    idle.onerror = checkDone;
-    heroIdleImgRef.current = idle;
+    let loadedCount = 0;
+    const total = Object.keys(list).length;
 
-    const walk = new Image();
-    walk.src = '/assets/hero_walk.png';
-    walk.onload = checkDone;
-    walk.onerror = checkDone;
-    heroWalkImgRef.current = walk;
+    Object.entries(list).forEach(([key, src]) => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        loadedCount++;
+        if (loadedCount >= total) setImagesLoaded(true);
+      };
+      img.onerror = () => {
+        loadedCount++;
+        if (loadedCount >= total) setImagesLoaded(true);
+      };
+      spriteImgRefs.current[key] = img;
+    });
   }, []);
 
   // Roaming Monsters
@@ -90,20 +93,17 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
 
   const tickRef = useRef(0);
 
-  // Hitbox Collision Check (AABB at character feet: 18x12 pixels)
+  // Hitbox Collision
   const checkCollisionAt = (px: number, py: number): boolean => {
-    // Character base anchor: center-bottom
     const feetLeft = px - 9;
     const feetRight = px + 9;
     const feetTop = py + 8;
     const feetBottom = py + 20;
 
-    // Check canvas boundaries
     if (feetLeft < 0 || feetRight >= CANVAS_WIDTH || feetTop < 0 || feetBottom >= CANVAS_HEIGHT) {
       return true;
     }
 
-    // Check tiles intersecting feet hitbox
     const minCol = Math.floor(feetLeft / TILE_SIZE);
     const maxCol = Math.floor(feetRight / TILE_SIZE);
     const minRow = Math.floor(feetTop / TILE_SIZE);
@@ -114,7 +114,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         if (r >= 0 && r < MAP_ROWS && c >= 0 && c < MAP_COLS) {
           const tile = MAP_DATA[r][c];
           if (tile === 1 || tile === 2 || tile === 4) {
-            return true; // Solid collision (wall, desk, blackboard)
+            return true;
           }
         }
       }
@@ -122,7 +122,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
     return false;
   };
 
-  // Keyboard Event Listeners
+  // Keyboard
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const code = e.code;
@@ -145,7 +145,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
     };
   }, []);
 
-  // Main 60 FPS Game Loop (Smooth Analog Movement)
+  // Game Loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -158,11 +158,11 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
     let animId: number;
 
     const gameLoop = (currentTime: number) => {
-      const dt = Math.min((currentTime - lastTime) / 1000, 0.05); // Delta time in seconds, max 50ms
+      const dt = Math.min((currentTime - lastTime) / 1000, 0.05);
       lastTime = currentTime;
       tickRef.current++;
 
-      // 1. Calculate Input Direction
+      // Input
       let dx = 0;
       let dy = 0;
 
@@ -172,13 +172,11 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
       if (keys.has('KeyA') || keys.has('ArrowLeft')) dx -= 1;
       if (keys.has('KeyD') || keys.has('ArrowRight')) dx += 1;
 
-      // Determine Facing Direction
       if (dx < 0) playerDirRef.current = 'left';
       else if (dx > 0) playerDirRef.current = 'right';
       else if (dy < 0) playerDirRef.current = 'up';
       else if (dy > 0) playerDirRef.current = 'down';
 
-      // 2. Normalize Velocity
       const isMoving = dx !== 0 || dy !== 0;
       isMovingRef.current = isMoving;
 
@@ -187,53 +185,48 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         dx = (dx / length);
         dy = (dy / length);
 
-        const speed = 135; // Pixels per second
+        const speed = 135;
         const moveX = dx * speed * dt;
         const moveY = dy * speed * dt;
 
         let curPos = playerPosRef.current;
 
-        // Slide Collision: Check X movement independently
         if (!checkCollisionAt(curPos.x + moveX, curPos.y)) {
           curPos.x += moveX;
         }
-        // Slide Collision: Check Y movement independently
         if (!checkCollisionAt(curPos.x, curPos.y + moveY)) {
           curPos.y += moveY;
         }
 
-        // Footstep sound cadence
         stepSoundTimerRef.current += dt;
         if (stepSoundTimerRef.current > 0.28) {
           stepSoundTimerRef.current = 0;
           playSound.step();
         }
 
-        // Walk cycle animation
         animTimerRef.current += dt;
         if (animTimerRef.current > 0.16) {
           animTimerRef.current = 0;
           animFrameRef.current = animFrameRef.current === 0 ? 1 : 0;
         }
       } else {
-        animFrameRef.current = 0; // Return to idle
+        animFrameRef.current = 0;
         stepSoundTimerRef.current = 0.2;
       }
 
-      // 3. Update Roaming Monsters Position
+      // Monster positions
       monstersRef.current.forEach((m) => {
         m.x += m.vx * dt;
-        if (m.x < 100 || m.x > 540) m.vx *= -1; // Bounce inside corridor
+        if (m.x < 100 || m.x > 540) m.vx *= -1;
       });
 
-      // 4. Proximity Encounter Check with Monsters (radius 24px)
+      // Encounter checks
       const pX = playerPosRef.current.x;
       const pY = playerPosRef.current.y;
 
       for (let i = 0; i < monstersRef.current.length; i++) {
         const m = monstersRef.current[i];
-        const dist = Math.hypot(pX - m.x, pY - m.y);
-        if (dist < 26) {
+        if (Math.hypot(pX - m.x, pY - m.y) < 26) {
           playSound.encounter();
           const enemy = getRandomEnemy();
           monstersRef.current.splice(i, 1);
@@ -243,7 +236,6 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         }
       }
 
-      // Check proximity with Anomaly Rift tiles (tile 5)
       const tileCol = Math.floor(pX / TILE_SIZE);
       const tileRow = Math.floor(pY / TILE_SIZE);
       if (tileRow >= 0 && tileRow < MAP_ROWS && tileCol >= 0 && tileCol < MAP_COLS) {
@@ -256,8 +248,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         }
       }
 
-      // 5. RENDER CANVAS
-      // 5a. Draw Tiles
+      // Draw Tiles
       for (let r = 0; r < MAP_ROWS; r++) {
         for (let c = 0; c < MAP_COLS; c++) {
           const tile = MAP_DATA[r][c];
@@ -273,13 +264,12 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         }
       }
 
-      // 5b. Draw Roaming Monsters
+      // Draw Monsters
       const animStep = Math.floor(tickRef.current / 16) % 2;
       monstersRef.current.forEach((m) => {
         const spriteKey = `${m.spriteKey}_${animStep}` as SpriteId;
         const monsterCanvas = getSprite(spriteKey);
 
-        // Cosmic aura glow
         ctx.fillStyle = 'rgba(192, 38, 211, 0.25)';
         ctx.beginPath();
         ctx.arc(m.x, m.y + 12, 16, 0, Math.PI * 2);
@@ -288,31 +278,39 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         ctx.drawImage(monsterCanvas, m.x - 16, m.y - 12, 32, 32);
       });
 
-      // 5c. Draw Player (Anak SMK with High-Res Pixel Sprite)
-      const isLeft = playerDirRef.current === 'left';
-      const isWalk = isMovingRef.current && animFrameRef.current === 1;
-
-      // Shadow under feet
+      // Draw Player Shadow
       ctx.fillStyle = 'rgba(0,0,0,0.35)';
       ctx.beginPath();
       ctx.ellipse(pX, pY + 20, 10, 4, 0, 0, Math.PI * 2);
       ctx.fill();
 
+      // Pick correct sprite based on direction & animation frame
+      let activeSpriteKey = 'front_idle';
+      const dir = playerDirRef.current;
+      const isWalk = isMovingRef.current && animFrameRef.current === 1;
+
+      if (dir === 'down') {
+        activeSpriteKey = isWalk ? 'front_walk' : 'front_idle';
+      } else if (dir === 'up') {
+        activeSpriteKey = 'back_idle';
+      } else {
+        // side
+        activeSpriteKey = 'side_walk';
+      }
+
+      const img = spriteImgRefs.current[activeSpriteKey];
+
       ctx.save();
       ctx.translate(pX, pY);
 
-      if (isLeft) {
-        ctx.scale(-1, 1); // Flip horizontally for left movement
+      if (dir === 'left') {
+        ctx.scale(-1, 1); // Flip horizontally for left
       }
 
-      // Render custom sliced pixel sprite
-      const targetImg = isWalk ? heroWalkImgRef.current : heroIdleImgRef.current;
-      if (targetImg && targetImg.complete && targetImg.naturalWidth > 0) {
-        // Draw custom sprite: 40px wide, 48px tall, centered horizontally
-        ctx.drawImage(targetImg, -20, -26, 40, 48);
+      if (img && img.complete && img.naturalWidth > 0) {
+        ctx.drawImage(img, -20, -26, 40, 48);
       } else {
-        // Fallback to procedural 32x32 sprite if image loading
-        const fallbackId = `hero_${playerDirRef.current}_${animFrameRef.current}` as SpriteId;
+        const fallbackId = `hero_${dir}_${animFrameRef.current}` as SpriteId;
         const fallbackCanvas = getSprite(fallbackId);
         ctx.drawImage(fallbackCanvas, -16, -16, 32, 32);
       }
@@ -327,17 +325,11 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
     return () => cancelAnimationFrame(animId);
   }, [onEncounter, imagesLoaded]);
 
-  // Virtual Joypad Handlers (Hold to continuous move)
-  const startVirtualKey = (key: string) => {
-    keysDownRef.current.add(key);
-  };
-  const stopVirtualKey = (key: string) => {
-    keysDownRef.current.delete(key);
-  };
+  const startVirtualKey = (key: string) => keysDownRef.current.add(key);
+  const stopVirtualKey = (key: string) => keysDownRef.current.delete(key);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#0d0d12] text-white p-4 font-mono select-none">
-      {/* HEADER / HUD */}
       <div className="w-full max-w-[640px] bg-[#161622] border-2 border-[#323246] p-3 mb-2 flex items-center justify-between text-xs">
         <div className="flex items-center space-x-3">
           <div className="w-3 h-3 bg-red-500 animate-ping" />
@@ -350,12 +342,11 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
             HP: <strong className="text-green-400">{player.hp}/{player.maxHp}</strong>
           </span>
           <span className="text-cyan-400 font-bold bg-[#1e293b] px-2 py-0.5 border border-[#334155]">
-            GERAK BEBAS
+            4 ARAH AKTIF
           </span>
         </div>
       </div>
 
-      {/* CANVAS CONTAINER */}
       <div className="relative border-4 border-[#323246] bg-black shadow-2xl overflow-hidden">
         <canvas
           ref={canvasRef}
@@ -365,19 +356,15 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
           style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
         />
 
-        {/* Ambient CRT Scanline Overlay */}
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px] opacity-40" />
       </div>
 
-      {/* INSTRUCTIONS & JOYPAD BUTTONS */}
       <div className="w-full max-w-[640px] mt-3 bg-[#161622] border-2 border-[#323246] p-3 text-xs flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="text-neutral-300">
-          <p className="font-bold text-yellow-400 mb-1">🎮 KONTROL GERAK BEBAS (ANALOG):</p>
-          <p>Tahan tombol <strong className="text-white">WASD</strong> atau <strong className="text-white">Tombol Panah</strong> untuk jalan leluasa ke segala arah (termasuk serong/diagonal).</p>
-          <p className="text-neutral-400 mt-0.5">Ada sistem collision sliding: tidak akan nyangkut di sudut dinding/meja!</p>
+          <p className="font-bold text-yellow-400 mb-1">🎮 KONTROL GERAK BEBAS 4-ARAH:</p>
+          <p>Tahan tombol <strong className="text-white">WASD</strong> atau <strong className="text-white">Panah</strong>. Karakter bisa hadap depan, belakang, dan samping dengan sprite animasi asli!</p>
         </div>
 
-        {/* VIRTUAL CONTINUOUS JOYPAD BUTTONS */}
         <div className="grid grid-cols-3 gap-1 w-28">
           <div />
           <button

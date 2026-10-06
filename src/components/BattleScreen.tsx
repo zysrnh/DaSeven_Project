@@ -23,7 +23,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
   const [activeCard, setActiveCard] = useState<Card | null>(null);
   const [isEnemyAttacking, setIsEnemyAttacking] = useState(false);
-  const [heroPose, setHeroPose] = useState<'idle' | 'attack' | 'defend' | 'hurt'>('idle');
+  const [heroPose, setHeroPose] = useState<'idle' | 'windup' | 'attack' | 'defend' | 'hurt'>('idle');
   const [enemyFlash, setEnemyFlash] = useState(false);
   const [battleLogs, setBattleLogs] = useState<string[]>([
     `Pertarungan dimulai! ${enemy.name} (${enemy.title}) menghalangi lorong!`,
@@ -75,8 +75,9 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
     if (card.type === 'attack' || card.type === 'special') {
       setActiveCard(card);
+      setHeroPose('windup'); // Pose ancang-ancang angkat penggaris
     } else if (card.type === 'defense') {
-      setHeroPose('defend');
+      setHeroPose('defend'); // Pose pasang buku modul sebagai perisai!
       setPlayer((prev) => ({
         ...prev,
         ap: prev.ap - card.cost,
@@ -86,7 +87,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       }));
       playSound.attackHit(false);
       addLog(`Kamu memasang ${card.name}! Mendapatkan +${card.value} Shield!`);
-      setTimeout(() => setHeroPose('idle'), 600);
+      setTimeout(() => setHeroPose('idle'), 1000);
     } else if (card.type === 'heal') {
       setHeroPose('idle');
       playSound.heal();
@@ -119,7 +120,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     const baseDmg = activeCard.value;
     const finalDamage = Math.round(baseDmg * multiplier);
 
-    setHeroPose('attack');
+    setHeroPose('attack'); // Pose tebas slash penggaris besi!
     setEnemyFlash(true);
 
     setEnemy((prev) => {
@@ -167,7 +168,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           onVictory(player);
         }, 800);
       }
-    }, 600);
+    }, 700);
   };
 
   const handleEndTurn = () => {
@@ -182,7 +183,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     const rawDmg = enemy.intent.value;
     const finalDmg = parried ? Math.max(1, Math.round(rawDmg * 0.2)) : rawDmg;
 
-    setHeroPose('hurt');
+    setHeroPose(parried ? 'defend' : 'hurt');
 
     setPlayer((prev) => {
       let dmgLeft = finalDmg;
@@ -204,7 +205,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     });
 
     if (parried) {
-      addLog(`★ PARRY SUKSES! Kamu membelokkan serangan! Hanya kena ${finalDmg} DMG!`);
+      addLog(`★ PARRY SUKSES! Kamu menangkis dengan buku modul! Hanya kena ${finalDmg} DMG!`);
     } else {
       addLog(`✗ PARRY GAGAL! ${enemy.name} menghantam sebesar ${finalDmg} DMG!`);
     }
@@ -217,11 +218,15 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       } else {
         startTurn();
       }
-    }, 600);
+    }, 700);
   };
 
-  // Custom Sliced Hero Sprites
-  const heroSpriteSrc = heroPose === 'attack' ? '/assets/hero_walk.png' : '/assets/hero_idle.png';
+  // Dynamic Battle Sprites from Maine
+  let heroSpriteSrc = '/assets/Maine/hero_battle_idle.png';
+  if (heroPose === 'windup') heroSpriteSrc = '/assets/Maine/hero_attack_windup.png';
+  else if (heroPose === 'attack') heroSpriteSrc = '/assets/Maine/hero_attack_slash.png';
+  else if (heroPose === 'defend') heroSpriteSrc = '/assets/Maine/hero_battle_defend.png';
+
   const enemySpriteUrl = getSpriteDataUrl(`${enemy.spriteKey}_0`);
 
   return (
@@ -263,13 +268,13 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
               </div>
             </div>
 
-            {/* Custom Sliced SMK Sprite in Battle */}
-            <div className="w-32 h-36 flex items-center justify-center">
+            {/* Dynamic Battle Sprite Frame */}
+            <div className="w-40 h-36 flex items-center justify-center">
               <img
                 src={heroSpriteSrc}
                 alt="Hero Anak SMK"
-                className={`max-h-36 object-contain [image-rendering:pixelated] drop-shadow-[0_8px_0_rgba(0,0,0,0.5)] transition-transform duration-200 ${
-                  heroPose === 'attack' ? 'scale-110 translate-x-3' : heroPose === 'hurt' ? 'opacity-70 -translate-x-2' : ''
+                className={`max-h-36 object-contain [image-rendering:pixelated] drop-shadow-[0_8px_0_rgba(0,0,0,0.5)] transition-transform duration-150 ${
+                  heroPose === 'attack' ? 'scale-110 translate-x-4' : heroPose === 'hurt' ? 'opacity-70 -translate-x-2' : ''
                 }`}
               />
             </div>
