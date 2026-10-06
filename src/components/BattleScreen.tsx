@@ -220,7 +220,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     }, 600);
   };
 
-  const heroSpriteUrl = getSpriteDataUrl(`hero_battle_${heroPose}`);
+  // Custom Sliced Hero Sprites
+  const heroSpriteSrc = heroPose === 'attack' ? '/assets/hero_walk.png' : '/assets/hero_idle.png';
   const enemySpriteUrl = getSpriteDataUrl(`${enemy.spriteKey}_0`);
 
   return (
@@ -242,7 +243,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
           {/* PLAYER */}
           <div className="relative z-10 flex flex-col items-center">
-            <div className="bg-[#1e1e2d] border-2 border-[#474766] p-2.5 mb-3 w-44 shadow-md">
+            <div className="bg-[#1e1e2d] border-2 border-[#474766] p-2.5 mb-2 w-44 shadow-md">
               <div className="flex justify-between items-center text-xs mb-1">
                 <span className="font-bold text-white">{player.name}</span>
                 <span className="text-[10px] text-cyan-400 bg-[#0f172a] px-1 border border-[#334155]">{player.jurusan}</span>
@@ -262,11 +263,14 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
               </div>
             </div>
 
-            <div className="w-32 h-32 flex items-center justify-center">
+            {/* Custom Sliced SMK Sprite in Battle */}
+            <div className="w-32 h-36 flex items-center justify-center">
               <img
-                src={heroSpriteUrl}
+                src={heroSpriteSrc}
                 alt="Hero Anak SMK"
-                className="w-32 h-32 [image-rendering:pixelated] drop-shadow-[0_8px_0_rgba(0,0,0,0.4)]"
+                className={`max-h-36 object-contain [image-rendering:pixelated] drop-shadow-[0_8px_0_rgba(0,0,0,0.5)] transition-transform duration-200 ${
+                  heroPose === 'attack' ? 'scale-110 translate-x-3' : heroPose === 'hurt' ? 'opacity-70 -translate-x-2' : ''
+                }`}
               />
             </div>
           </div>
@@ -277,7 +281,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
           {/* ENEMY */}
           <div className="relative z-10 flex flex-col items-center">
-            <div className="bg-[#1e1e2d] border-2 border-[#474766] p-2.5 mb-3 w-48 shadow-md">
+            <div className="bg-[#1e1e2d] border-2 border-[#474766] p-2.5 mb-2 w-48 shadow-md">
               <div className="flex justify-between items-center text-xs mb-1">
                 <span className="font-bold text-red-400">{enemy.name}</span>
                 <span className="text-[9px] text-neutral-400">{enemy.title}</span>
@@ -302,7 +306,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
               </div>
             </div>
 
-            <div className="w-32 h-32 flex items-center justify-center animate-bounce duration-1000">
+            <div className="w-32 h-36 flex items-center justify-center animate-bounce duration-1000">
               <img
                 src={enemySpriteUrl}
                 alt={enemy.name}
