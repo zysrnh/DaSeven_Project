@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { Direction, Enemy, Player } from '../types/game';
 import { getSprite, type SpriteId } from '../utils/sprites';
 import { getRandomEnemy } from '../data/enemies';
@@ -50,20 +50,26 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
   const isMovingRef = useRef(false);
   const animTimerRef = useRef(0);
   const animFrameRef = useRef(0);
+  const idleTimerRef = useRef(0);
+  const idleFrameRef = useRef(0);
   const stepSoundTimerRef = useRef(0);
 
   const keysDownRef = useRef<Set<string>>(new Set());
 
-  // 4 Directional Sliced Sprites
+  // 4-Directional 2-Frame Sprites
   const spriteImgRefs = useRef<Record<string, HTMLImageElement>>({});
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
   useEffect(() => {
     const list: Record<string, string> = {
-      front_idle: '/assets/Maine/hero_front_idle.png',
-      front_walk: '/assets/Maine/hero_front_walk.png',
-      side_walk: '/assets/Maine/hero_side_walk.png',
-      back_idle: '/assets/Maine/hero_back_idle.png',
+      walk_front_1: '/assets/Maine/hero_walk_front_1.png',
+      walk_front_2: '/assets/Maine/hero_walk_front_2.png',
+      walk_back_1: '/assets/Maine/hero_walk_back_1.png',
+      walk_back_2: '/assets/Maine/hero_walk_back_2.png',
+      walk_side_1: '/assets/Maine/hero_walk_side_1.png',
+      walk_side_2: '/assets/Maine/hero_walk_side_2.png',
+      idle_front_1: '/assets/Maine/hero_idle_front_1.png',
+      idle_front_2: '/assets/Maine/hero_idle_front_2.png',
     };
 
     let loadedCount = 0;
@@ -95,10 +101,10 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
 
   // Hitbox Collision
   const checkCollisionAt = (px: number, py: number): boolean => {
-    const feetLeft = px - 9;
-    const feetRight = px + 9;
-    const feetTop = py + 8;
-    const feetBottom = py + 20;
+    const feetLeft = px - 10;
+    const feetRight = px + 10;
+    const feetTop = py + 12;
+    const feetBottom = py + 24;
 
     if (feetLeft < 0 || feetRight >= CANVAS_WIDTH || feetTop < 0 || feetBottom >= CANVAS_HEIGHT) {
       return true;
@@ -180,17 +186,14 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
       const isMoving = dx !== 0 || dy !== 0;
       isMovingRef.current = isMoving;
 
+      // Analog sliding movement
       if (isMoving) {
-        let length = Math.hypot(dx, dy);
-        dx = (dx / length);
-        dy = (dy / length);
+        const len = Math.hypot(dx, dy) || 1;
+        const speed = 120;
+        const moveX = (dx / len) * speed * dt;
+        const moveY = (dy / len) * speed * dt;
 
-        const speed = 135;
-        const moveX = dx * speed * dt;
-        const moveY = dy * speed * dt;
-
-        let curPos = playerPosRef.current;
-
+        const curPos = playerPosRef.current;
         if (!checkCollisionAt(curPos.x + moveX, curPos.y)) {
           curPos.x += moveX;
         }
@@ -212,6 +215,13 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
       } else {
         animFrameRef.current = 0;
         stepSoundTimerRef.current = 0.2;
+
+        // Idle subtle breathing cycle
+        idleTimerRef.current += dt;
+        if (idleTimerRef.current > 0.6) {
+          idleTimerRef.current = 0;
+          idleFrameRef.current = idleFrameRef.current === 0 ? 1 : 0;
+        }
       }
 
       // Monster positions
@@ -226,7 +236,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
 
       for (let i = 0; i < monstersRef.current.length; i++) {
         const m = monstersRef.current[i];
-        if (Math.hypot(pX - m.x, pY - m.y) < 26) {
+        if (Math.hypot(pX - m.x, pY - m.y) < 28) {
           playSound.encounter();
           const enemy = getRandomEnemy();
           monstersRef.current.splice(i, 1);
@@ -279,23 +289,36 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
       });
 
       // Draw Player Shadow
-      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
       ctx.beginPath();
-      ctx.ellipse(pX, pY + 20, 10, 4, 0, 0, Math.PI * 2);
+      ctx.ellipse(pX, pY + 24, 14, 5, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Pick correct sprite based on direction & animation frame
-      let activeSpriteKey = 'front_idle';
+      // Pick correct 2-frame sprite based on direction & movement state
+      let activeSpriteKey = 'idle_front_1';
       const dir = playerDirRef.current;
-      const isWalk = isMovingRef.current && animFrameRef.current === 1;
+      const walkFrame = animFrameRef.current;
+      const idleFrame = idleFrameRef.current;
 
-      if (dir === 'down') {
-        activeSpriteKey = isWalk ? 'front_walk' : 'front_idle';
-      } else if (dir === 'up') {
-        activeSpriteKey = 'back_idle';
+      if (isMoving) {
+        if (dir === 'down') {
+          activeSpriteKey = walkFrame === 0 ? 'walk_front_1' : 'walk_front_2';
+        } else if (dir === 'up') {
+          activeSpriteKey = walkFrame === 0 ? 'walk_back_1' : 'walk_back_2';
+        } else {
+          // left / right side walk
+          activeSpriteKey = walkFrame === 0 ? 'walk_side_1' : 'walk_side_2';
+        }
       } else {
-        // side
-        activeSpriteKey = 'side_walk';
+        // Idle states
+        if (dir === 'down') {
+          activeSpriteKey = idleFrame === 0 ? 'idle_front_1' : 'idle_front_2';
+        } else if (dir === 'up') {
+          activeSpriteKey = 'walk_back_1';
+        } else {
+          // Standing sideways
+          activeSpriteKey = 'walk_side_2';
+        }
       }
 
       const img = spriteImgRefs.current[activeSpriteKey];
@@ -304,11 +327,15 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
       ctx.translate(pX, pY);
 
       if (dir === 'left') {
-        ctx.scale(-1, 1); // Flip horizontally for left
+        ctx.scale(-1, 1); // Flip horizontally for left walk
       }
 
+      // Render upscaled 16-bit retro sprite (~54x76 px)
       if (img && img.complete && img.naturalWidth > 0) {
-        ctx.drawImage(img, -20, -26, 40, 48);
+        const aspect = img.naturalWidth / img.naturalHeight;
+        const targetH = 74;
+        const targetW = targetH * aspect;
+        ctx.drawImage(img, -targetW / 2, -44, targetW, targetH);
       } else {
         const fallbackId = `hero_${dir}_${animFrameRef.current}` as SpriteId;
         const fallbackCanvas = getSprite(fallbackId);
@@ -342,7 +369,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
             HP: <strong className="text-green-400">{player.hp}/{player.maxHp}</strong>
           </span>
           <span className="text-cyan-400 font-bold bg-[#1e293b] px-2 py-0.5 border border-[#334155]">
-            4 ARAH AKTIF
+            4 ARAH AKTIF (2-FRAME)
           </span>
         </div>
       </div>
@@ -362,7 +389,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
       <div className="w-full max-w-[640px] mt-3 bg-[#161622] border-2 border-[#323246] p-3 text-xs flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="text-neutral-300">
           <p className="font-bold text-yellow-400 mb-1">🎮 KONTROL GERAK BEBAS 4-ARAH:</p>
-          <p>Tahan tombol <strong className="text-white">WASD</strong> atau <strong className="text-white">Panah</strong>. Karakter bisa hadap depan, belakang, dan samping dengan sprite animasi asli!</p>
+          <p>Tahan tombol <strong className="text-white">WASD</strong> atau <strong className="text-white">Panah</strong>. Karakter melangkah natural 2 frame ke 4 arah dengan ukuran sprite pas!</p>
         </div>
 
         <div className="grid grid-cols-3 gap-1 w-28">
