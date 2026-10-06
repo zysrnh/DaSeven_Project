@@ -49,14 +49,14 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
   const playerDirRef = useRef<Direction>('right');
   const isMovingRef = useRef(false);
   const animTimerRef = useRef(0);
-  const animFrameRef = useRef(0);
+  const animFrameRef = useRef(0); // 0, 1, 2, 3 (4-phase cycle)
   const idleTimerRef = useRef(0);
   const idleFrameRef = useRef(0);
   const stepSoundTimerRef = useRef(0);
 
   const keysDownRef = useRef<Set<string>>(new Set());
 
-  // 4-Directional 2-Frame Sprites
+  // Multi-Frame Sliced Sprites
   const spriteImgRefs = useRef<Record<string, HTMLImageElement>>({});
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
@@ -64,6 +64,8 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
     const list: Record<string, string> = {
       walk_front_1: '/assets/Maine/hero_walk_front_1.png',
       walk_front_2: '/assets/Maine/hero_walk_front_2.png',
+      walk_front_3: '/assets/Maine/hero_walk_front_3.png',
+      walk_front_4: '/assets/Maine/hero_walk_front_4.png',
       walk_back_1: '/assets/Maine/hero_walk_back_1.png',
       walk_back_2: '/assets/Maine/hero_walk_back_2.png',
       walk_side_1: '/assets/Maine/hero_walk_side_1.png',
@@ -186,10 +188,10 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
       const isMoving = dx !== 0 || dy !== 0;
       isMovingRef.current = isMoving;
 
-      // Analog sliding movement
+      // Gesit & Tangkas: Kecepatan dinaikkan ke 175 px/detik
       if (isMoving) {
         const len = Math.hypot(dx, dy) || 1;
-        const speed = 120;
+        const speed = 175;
         const moveX = (dx / len) * speed * dt;
         const moveY = (dy / len) * speed * dt;
 
@@ -202,21 +204,22 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         }
 
         stepSoundTimerRef.current += dt;
-        if (stepSoundTimerRef.current > 0.28) {
+        if (stepSoundTimerRef.current > 0.22) {
           stepSoundTimerRef.current = 0;
           playSound.step();
         }
 
+        // Tempo animasi dipercepat ke 0.11s per phase untuk pergerakan lincah & halus
         animTimerRef.current += dt;
-        if (animTimerRef.current > 0.16) {
+        if (animTimerRef.current > 0.11) {
           animTimerRef.current = 0;
-          animFrameRef.current = animFrameRef.current === 0 ? 1 : 0;
+          animFrameRef.current = (animFrameRef.current + 1) % 4; // 0, 1, 2, 3
         }
       } else {
         animFrameRef.current = 0;
-        stepSoundTimerRef.current = 0.2;
+        stepSoundTimerRef.current = 0.15;
 
-        // Idle subtle breathing cycle
+        // Idle bernapas santai
         idleTimerRef.current += dt;
         if (idleTimerRef.current > 0.6) {
           idleTimerRef.current = 0;
@@ -294,20 +297,29 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
       ctx.ellipse(pX, pY + 24, 14, 5, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Pick correct 2-frame sprite based on direction & movement state
+      // 4-Phase Walk Cycle Selection
       let activeSpriteKey = 'idle_front_1';
       const dir = playerDirRef.current;
-      const walkFrame = animFrameRef.current;
+      const phase = animFrameRef.current; // 0, 1, 2, 3
       const idleFrame = idleFrameRef.current;
 
       if (isMoving) {
         if (dir === 'down') {
-          activeSpriteKey = walkFrame === 0 ? 'walk_front_1' : 'walk_front_2';
+          // Jalan ke bawah lurus (4-Phase: Kaki Kiri -> Kaki Tengah -> Kaki Kanan -> Kaki Tengah)
+          if (phase === 0) activeSpriteKey = 'walk_front_1';
+          else if (phase === 1) activeSpriteKey = 'walk_front_2';
+          else if (phase === 2) activeSpriteKey = 'walk_front_3';
+          else activeSpriteKey = 'walk_front_4';
         } else if (dir === 'up') {
-          activeSpriteKey = walkFrame === 0 ? 'walk_back_1' : 'walk_back_2';
+          // Jalan ke atas / belakang (4-Phase)
+          if (phase === 0) activeSpriteKey = 'walk_back_1';
+          else if (phase === 1) activeSpriteKey = 'walk_back_1';
+          else if (phase === 2) activeSpriteKey = 'walk_back_2';
+          else activeSpriteKey = 'walk_back_1';
         } else {
-          // left / right side walk
-          activeSpriteKey = walkFrame === 0 ? 'walk_side_1' : 'walk_side_2';
+          // Jalan ke samping (4-Phase: Maju -> Passing -> Maju -> Passing)
+          if (phase === 0 || phase === 2) activeSpriteKey = 'walk_side_1';
+          else activeSpriteKey = 'walk_side_2';
         }
       } else {
         // Idle states
@@ -316,7 +328,6 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         } else if (dir === 'up') {
           activeSpriteKey = 'walk_back_1';
         } else {
-          // Standing sideways
           activeSpriteKey = 'walk_side_2';
         }
       }
@@ -330,16 +341,19 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         ctx.scale(-1, 1); // Flip horizontally for left walk
       }
 
-      // Render upscaled 16-bit retro sprite (~54x76 px)
+      // Micro-bobbing (langkah kaki ada hentakan halus 1-2px)
+      const stepBob = isMoving && (phase === 1 || phase === 3) ? -2 : 0;
+
+      // Render 16-bit retro sprite
       if (img && img.complete && img.naturalWidth > 0) {
         const aspect = img.naturalWidth / img.naturalHeight;
         const targetH = 74;
         const targetW = targetH * aspect;
-        ctx.drawImage(img, -targetW / 2, -44, targetW, targetH);
+        ctx.drawImage(img, -targetW / 2, -44 + stepBob, targetW, targetH);
       } else {
-        const fallbackId = `hero_${dir}_${animFrameRef.current}` as SpriteId;
+        const fallbackId = `hero_${dir}_${phase % 2}` as SpriteId;
         const fallbackCanvas = getSprite(fallbackId);
-        ctx.drawImage(fallbackCanvas, -16, -16, 32, 32);
+        ctx.drawImage(fallbackCanvas, -16, -16 + stepBob, 32, 32);
       }
 
       ctx.restore();
@@ -369,7 +383,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
             HP: <strong className="text-green-400">{player.hp}/{player.maxHp}</strong>
           </span>
           <span className="text-cyan-400 font-bold bg-[#1e293b] px-2 py-0.5 border border-[#334155]">
-            4 ARAH AKTIF (2-FRAME)
+            4-PHASE SMOOTH WALK
           </span>
         </div>
       </div>
@@ -389,7 +403,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
       <div className="w-full max-w-[640px] mt-3 bg-[#161622] border-2 border-[#323246] p-3 text-xs flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="text-neutral-300">
           <p className="font-bold text-yellow-400 mb-1">🎮 KONTROL GERAK BEBAS 4-ARAH:</p>
-          <p>Tahan tombol <strong className="text-white">WASD</strong> atau <strong className="text-white">Panah</strong>. Karakter melangkah natural 2 frame ke 4 arah dengan ukuran sprite pas!</p>
+          <p>Tahan tombol <strong className="text-white">WASD</strong> atau <strong className="text-white">Panah</strong>. Karakter melangkah lincah & responsif dengan 4-phase walk cycle!</p>
         </div>
 
         <div className="grid grid-cols-3 gap-1 w-28">

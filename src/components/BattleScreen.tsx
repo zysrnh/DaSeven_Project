@@ -227,7 +227,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
     setTimeout(() => {
       if (player.hp - finalDmg <= 0) {
-        setHeroPose('defeat'); // Pose KO telentang di lantai!
+        // Menggunakan hero_defeat_1 (berlutut lemas & menunduk) sesuai permintaan
+        setHeroPose('defeat');
         setTimeout(() => {
           onDefeat();
         }, 1400);
@@ -256,7 +257,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   } else if (heroPose === 'victory') {
     heroSpriteSrc = '/assets/Maine/hero_victory_2.png';
   } else if (heroPose === 'defeat') {
-    heroSpriteSrc = '/assets/Maine/hero_defeat_2.png';
+    // Sesuai permintaan user: Menggunakan hero_defeat_1.png (berlutut lemas)
+    heroSpriteSrc = '/assets/Maine/hero_defeat_1.png';
   }
 
   const enemySpriteUrl = getSpriteDataUrl(`${enemy.spriteKey}_0`);
@@ -317,7 +319,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
                     : heroPose === 'hurt'
                     ? 'opacity-70 -translate-x-2'
                     : heroPose === 'defeat'
-                    ? 'translate-y-6 scale-90'
+                    ? 'opacity-90'
                     : ''
                 }`}
               />
