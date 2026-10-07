@@ -4,312 +4,128 @@ import { getSprite, type SpriteId } from '../utils/sprites';
 import { getRandomEnemy } from '../data/enemies';
 import { playSound } from '../utils/audio';
 
-interface OverworldProps {
+interface StreetMapProps {
   player: Player;
   onEncounter: (enemy: Enemy) => void;
-  onSwitchToStreet?: () => void;
+  onReturnToSchool: () => void;
 }
 
 const TILE_SIZE = 64;
-const MAP_COLS = 36;
-const MAP_ROWS = 26;
+const MAP_COLS = 40;
+const MAP_ROWS = 28;
 const WORLD_WIDTH = MAP_COLS * TILE_SIZE;
 const WORLD_HEIGHT = MAP_ROWS * TILE_SIZE;
 
-// Floor Types: 0: Paved Outdoor, 1: Solid Wall, 2: Hallway White Ceramic, 3: Lab Blue Anti-static, 4: Green Grass Garden
-const MAP_TILES: number[][] = Array.from({ length: MAP_ROWS }, (_, r) => {
+// 0: Asphalt Plain, 1: Solid Wall / Boundary, 2: Road Curb Strip, 3: Dirt/Grass Edge, 4: Gravel Asphalt
+const STREET_TILES: number[][] = Array.from({ length: MAP_ROWS }, (_, r) => {
   return Array.from({ length: MAP_COLS }, (_, c) => {
-    // Outer Borders
+    // Outer boundaries
     if (r === 0 || r === MAP_ROWS - 1 || c === 0 || c === MAP_COLS - 1) return 1;
-    
-    // Zone 1: Outdoor Courtyard & Parking (Rows 1 to 7)
-    if (r < 8) {
-      if (r < 3 && c > 11 && c < 25) return 4; // Green garden lawn
-      return 0; // Paved courtyard
-    }
-    
-    // Building Exterior Wall & Entrance (Row 8)
-    if (r === 8) {
-      if (c === 17 || c === 18) return 2; // Main entrance doorway
-      return 1; // Wall
-    }
-    
-    // Zone 2: Main Hallway (Rows 9 to 13)
-    if (r >= 9 && r <= 13) {
-      return 2; // White ceramic hallway
-    }
-    
-    // Wall Divider between Hallway & Lab (Row 14)
-    if (r === 14) {
-      if (c === 8 || c === 9 || c === 17 || c === 18 || c === 26 || c === 27) return 2; // Door openings
-      return 1;
-    }
-    
-    // Zone 3: Computer Lab TKJ/RPL (Rows 15 to 24, Cols 1 to 24)
-    if (c <= 24) {
-      return 3; // Blue anti-static floor
-    }
-    
-    // Zone 4: Ruang UKS & Tata Usaha (Rows 15 to 24, Cols 25 to 34)
-    return 2; // White floor
+
+    // Top sidewalk curb line (Row 1)
+    if (r === 1) return 2;
+
+    // Bottom dirt transition (Row 26)
+    if (r >= 25) return 3;
+
+    // Gravel side strip (Cols 1-2 and 37-38)
+    if (c <= 2 || c >= 37) return 4;
+
+    // Default asphalt road
+    return 0;
   });
 });
 
-interface PropObject {
+interface StreetProp {
   id: string;
   imgKey: string;
   x: number;
   y: number;
   w: number;
   h: number;
+  isDecal?: boolean;
   collision?: { ox: number; oy: number; ow: number; oh: number };
 }
 
-// Map Props Placed in SMKN 7 Baleendah
-const MAP_PROPS: PropObject[] = [
-  // 1. OUTDOOR GERBANG & PARKIRAN (Y: 100 - 450)
-  {
-    id: 'monumen_smkn7',
-    imgKey: 'prop_monumen_smkn7',
-    x: 1020,
-    y: 110,
-    w: 270,
-    h: 215,
-    collision: { ox: 20, oy: 90, ow: 230, oh: 115 },
-  },
-  {
-    id: 'tanaman_pot_kiri',
-    imgKey: 'tile_tanaman_pot',
-    x: 960,
-    y: 220,
-    w: 60,
-    h: 100,
-    collision: { ox: 10, oy: 50, ow: 40, oh: 45 },
-  },
-  {
-    id: 'tanaman_pot_kanan',
-    imgKey: 'tile_tanaman_pot',
-    x: 1300,
-    y: 220,
-    w: 60,
-    h: 100,
-    collision: { ox: 10, oy: 50, ow: 40, oh: 45 },
-  },
-  {
-    id: 'parkiran_motor_1',
-    imgKey: 'prop_parkiran_motor',
-    x: 220,
-    y: 160,
-    w: 340,
-    h: 147,
-    collision: { ox: 15, oy: 50, ow: 310, oh: 90 },
-  },
-  {
-    id: 'motor_matic_parkir',
-    imgKey: 'prop_motor_matic_1',
-    x: 600,
-    y: 230,
-    w: 80,
-    h: 72,
-    collision: { ox: 5, oy: 25, ow: 70, oh: 45 },
-  },
-  {
-    id: 'tempat_sampah_outdoor',
-    imgKey: 'prop_tempat_sampah_3',
-    x: 1420,
-    y: 220,
-    w: 140,
-    h: 78,
-    collision: { ox: 10, oy: 30, ow: 120, oh: 45 },
-  },
+// Street Map Objects & Road Markings Placed
+const STREET_PROPS: StreetProp[] = [
+  // 1. JALAN RAYA UTAMA (MAIN ROADWAY) - Y: 700 - 1100
+  // Double Yellow Centerline Horizontal
+  { id: 'road_yellow_h1', imgKey: 'tile_road_yellow_h', x: 200, y: 880, w: 450, h: 40, isDecal: true },
+  { id: 'road_yellow_h2', imgKey: 'tile_road_yellow_h', x: 650, y: 880, w: 450, h: 40, isDecal: true },
+  { id: 'road_yellow_cross', imgKey: 'tile_road_yellow_intersection_1', x: 1100, y: 780, w: 220, h: 220, isDecal: true },
+  { id: 'road_yellow_h3', imgKey: 'tile_road_yellow_h', x: 1320, y: 880, w: 500, h: 40, isDecal: true },
+  { id: 'road_yellow_h4', imgKey: 'tile_road_yellow_h', x: 1820, y: 880, w: 500, h: 40, isDecal: true },
 
-  // 2. KORIDOR KELAS & DINDING ATAS (Y: 460 - 850)
-  {
-    id: 'door_lab_tkj',
-    imgKey: 'tile_door_lab',
-    x: 1080,
-    y: 470,
-    w: 95,
-    h: 145,
-  },
-  {
-    id: 'door_kelas_rpl',
-    imgKey: 'tile_door_kelas',
-    x: 550,
-    y: 470,
-    w: 90,
-    h: 145,
-  },
-  {
-    id: 'door_kelas_multimedia',
-    imgKey: 'tile_door_kelas',
-    x: 1550,
-    y: 470,
-    w: 90,
-    h: 145,
-  },
-  {
-    id: 'banner_smk_bisa',
-    imgKey: 'tile_banner_smk_bisa',
-    x: 820,
-    y: 490,
-    w: 105,
-    h: 75,
-  },
-  {
-    id: 'foto_presiden',
-    imgKey: 'tile_presiden_garuda',
-    x: 1350,
-    y: 490,
-    w: 110,
-    h: 60,
-  },
-  {
-    id: 'lemari_piala_koridor',
-    imgKey: 'tile_lemari_piala',
-    x: 350,
-    y: 495,
-    w: 130,
-    h: 120,
-    collision: { ox: 10, oy: 40, ow: 110, oh: 75 },
-  },
-  {
-    id: 'kursi_tunggu_koridor',
-    imgKey: 'prop_kursi_susun',
-    x: 1750,
-    y: 540,
-    w: 130,
-    h: 60,
-    collision: { ox: 10, oy: 20, ow: 110, oh: 35 },
-  },
+  // Double Yellow Centerline Vertical (Persimpangan)
+  { id: 'road_yellow_v1', imgKey: 'tile_road_yellow_v', x: 1180, y: 350, w: 60, h: 430, isDecal: true },
+  { id: 'road_yellow_v2', imgKey: 'tile_road_yellow_v', x: 1180, y: 1000, w: 60, h: 500, isDecal: true },
 
-  // 3. LAB KOMPUTER / RUANG KELAS (Y: 920 - 1500, X: 100 - 1500)
-  {
-    id: 'blackboard_lab',
-    imgKey: 'tile_blackboard',
-    x: 320,
-    y: 915,
-    w: 220,
-    h: 90,
-  },
-  {
-    id: 'whiteboard_lab',
-    imgKey: 'tile_whiteboard',
-    x: 1120,
-    y: 915,
-    w: 200,
-    h: 90,
-  },
-  {
-    id: 'server_rack_1',
-    imgKey: 'tile_server_racks',
-    x: 140,
-    y: 920,
-    w: 125,
-    h: 155,
-    collision: { ox: 10, oy: 60, ow: 105, oh: 90 },
-  },
-  {
-    id: 'pc_row_1',
-    imgKey: 'tile_pc_desk_row',
-    x: 240,
-    y: 1120,
-    w: 390,
-    h: 140,
-    collision: { ox: 15, oy: 40, ow: 360, oh: 90 },
-  },
-  {
-    id: 'pc_row_2',
-    imgKey: 'tile_pc_desk_row',
-    x: 720,
-    y: 1120,
-    w: 390,
-    h: 140,
-    collision: { ox: 15, oy: 40, ow: 360, oh: 90 },
-  },
-  {
-    id: 'pc_row_3',
-    imgKey: 'tile_pc_desk_row',
-    x: 1200,
-    y: 1120,
-    w: 310,
-    h: 140,
-    collision: { ox: 15, oy: 40, ow: 280, oh: 90 },
-  },
-  {
-    id: 'plang_lab_gantung',
-    imgKey: 'prop_plang_gantung',
-    x: 930,
-    y: 935,
-    w: 155,
-    h: 90,
-  },
-  {
-    id: 'podium_guru_lab',
-    imgKey: 'prop_podium',
-    x: 650,
-    y: 950,
-    w: 85,
-    h: 120,
-    collision: { ox: 10, oy: 45, ow: 65, oh: 70 },
-  },
-  {
-    id: 'meja_router_lab',
-    imgKey: 'prop_router',
-    x: 1320,
-    y: 960,
-    w: 85,
-    h: 75,
-    collision: { ox: 5, oy: 25, ow: 75, oh: 50 },
-  },
-  {
-    id: 'dispenser_lab',
-    imgKey: 'prop_dispenser_1',
-    x: 1430,
-    y: 940,
-    w: 49,
-    h: 134,
-    collision: { ox: 5, oy: 50, ow: 40, oh: 80 },
-  },
+  // White Dashed Lane Dividers (Jalur Utara & Selatan)
+  { id: 'white_dash_1', imgKey: 'tile_road_white_dashed', x: 300, y: 800, w: 140, h: 45, isDecal: true },
+  { id: 'white_dash_2', imgKey: 'tile_road_white_dashed', x: 600, y: 800, w: 140, h: 45, isDecal: true },
+  { id: 'white_dash_3', imgKey: 'tile_road_white_dashed', x: 1450, y: 800, w: 140, h: 45, isDecal: true },
+  { id: 'white_dash_4', imgKey: 'tile_road_white_dashed', x: 1750, y: 800, w: 140, h: 45, isDecal: true },
 
-  // 4. RUANG TU & UKS (Y: 960 - 1500, X: 1600 - 2100)
-  {
-    id: 'fotokopi_tu',
-    imgKey: 'prop_fotokopi_1',
-    x: 1680,
-    y: 1040,
-    w: 98,
-    h: 120,
-    collision: { ox: 5, oy: 40, ow: 88, oh: 75 },
-  },
-  {
-    id: 'meja_siswa_uks_1',
-    imgKey: 'prop_meja_siswa_top',
-    x: 1840,
-    y: 1040,
-    w: 155,
-    h: 158,
-    collision: { ox: 10, oy: 50, ow: 135, oh: 100 },
-  },
-  {
-    id: 'kotak_uks_box',
-    imgKey: 'prop_kotak_uks',
-    x: 1700,
-    y: 940,
-    w: 60,
-    h: 77,
-  },
-  {
-    id: 'apar_koridor',
-    imgKey: 'prop_apar_1',
-    x: 1580,
-    y: 940,
-    w: 38,
-    h: 76,
-  },
+  { id: 'white_dash_b1', imgKey: 'tile_road_white_dashed', x: 300, y: 980, w: 140, h: 45, isDecal: true },
+  { id: 'white_dash_b2', imgKey: 'tile_road_white_dashed', x: 600, y: 980, w: 140, h: 45, isDecal: true },
+  { id: 'white_dash_b3', imgKey: 'tile_road_white_dashed', x: 1450, y: 980, w: 140, h: 45, isDecal: true },
+  { id: 'white_dash_b4', imgKey: 'tile_road_white_dashed', x: 1750, y: 980, w: 140, h: 45, isDecal: true },
+
+  // Marka Panah Arah Jalan
+  { id: 'arrow_str_1', imgKey: 'tile_arrow_straight', x: 450, y: 790, w: 45, h: 60, isDecal: true },
+  { id: 'arrow_str_2', imgKey: 'tile_arrow_straight', x: 1600, y: 790, w: 45, h: 60, isDecal: true },
+  { id: 'arrow_turn_1', imgKey: 'tile_arrow_turn_right', x: 950, y: 790, w: 50, h: 60, isDecal: true },
+  { id: 'arrow_combo_1', imgKey: 'tile_arrow_combo', x: 1180, y: 650, w: 55, h: 60, isDecal: true },
+
+  // 2. AREA PARKIRAN MOTOR BALEENDAH (Y: 200 - 550, X: 200 - 1000)
+  { id: 'parkir_slots_top1', imgKey: 'tile_parking_motor_slots_top', x: 260, y: 220, w: 260, h: 75, isDecal: true },
+  { id: 'parkir_slots_top2', imgKey: 'tile_parking_motor_slots_top', x: 540, y: 220, w: 260, h: 75, isDecal: true },
+  { id: 'parkir_diagonal_top', imgKey: 'tile_parking_diagonal_box_top', x: 820, y: 220, w: 200, h: 75, isDecal: true },
+
+  { id: 'parkir_slots_bot1', imgKey: 'tile_parking_motor_slots_bottom', x: 260, y: 380, w: 260, h: 75, isDecal: true },
+  { id: 'parkir_slots_bot2', imgKey: 'tile_parking_motor_slots_bottom', x: 540, y: 380, w: 260, h: 75, isDecal: true },
+  { id: 'parkir_diagonal_bot', imgKey: 'tile_parking_diagonal_box_bottom', x: 820, y: 380, w: 200, h: 75, isDecal: true },
+
+  // Parkiran Motor Kendaraan
+  { id: 'motor_parkir_1', imgKey: 'prop_motor_matic_1', x: 300, y: 230, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
+  { id: 'motor_parkir_2', imgKey: 'prop_motor_matic_2', x: 380, y: 230, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
+  { id: 'motor_parkir_3', imgKey: 'prop_motor_matic_1', x: 580, y: 230, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
+  { id: 'motor_parkir_4', imgKey: 'prop_motor_matic_2', x: 660, y: 230, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
+  { id: 'motor_parkir_5', imgKey: 'prop_motor_matic_1', x: 340, y: 390, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
+  { id: 'motor_parkir_6', imgKey: 'prop_motor_matic_2', x: 620, y: 390, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
+
+  // Tempat Sampah & Pot di Area Parkir
+  { id: 'trash_parkir', imgKey: 'prop_tempat_sampah_3', x: 1040, y: 240, w: 140, h: 78, collision: { ox: 10, oy: 30, ow: 120, oh: 45 } },
+  { id: 'pot_parkir_1', imgKey: 'tile_tanaman_pot', x: 200, y: 220, w: 55, h: 90, collision: { ox: 5, oy: 40, ow: 45, oh: 45 } },
+  { id: 'pot_parkir_2', imgKey: 'tile_tanaman_pot', x: 200, y: 380, w: 55, h: 90, collision: { ox: 5, oy: 40, ow: 45, oh: 45 } },
+
+  // 3. JALANAN RUSAK, RETAKAN, LUBANG, DAN GENANGAN AIR (ROAD DETAILS)
+  { id: 'crack_sp1', imgKey: 'tile_crack_spider', x: 500, y: 1150, w: 65, h: 65, isDecal: true },
+  { id: 'crack_sp2', imgKey: 'tile_crack_spider', x: 1550, y: 700, w: 65, h: 65, isDecal: true },
+  { id: 'crack_deep1', imgKey: 'tile_crack_deep', x: 800, y: 1250, w: 70, h: 70, isDecal: true },
+  { id: 'crack_deep2', imgKey: 'tile_crack_deep', x: 1950, y: 920, w: 70, h: 70, isDecal: true },
+
+  { id: 'pothole_sh1', imgKey: 'tile_pothole_shallow', x: 350, y: 1300, w: 75, h: 75, isDecal: true },
+  { id: 'pothole_sh2', imgKey: 'tile_pothole_shallow', x: 1700, y: 1100, w: 75, h: 75, isDecal: true },
+  { id: 'pothole_dp1', imgKey: 'tile_pothole_deep', x: 1050, y: 1350, w: 85, h: 80, isDecal: true },
+  { id: 'pothole_lg1', imgKey: 'tile_pothole_large', x: 1400, y: 1300, w: 90, h: 80, isDecal: true },
+
+  { id: 'puddle_1', imgKey: 'tile_puddle_water', x: 600, y: 1350, w: 90, h: 70, isDecal: true },
+  { id: 'puddle_2', imgKey: 'tile_puddle_water', x: 1850, y: 1320, w: 90, h: 70, isDecal: true },
+  { id: 'oil_stain_1', imgKey: 'tile_asphalt_oil_stain', x: 920, y: 950, w: 75, h: 70, isDecal: true },
+  { id: 'oil_splat_1', imgKey: 'tile_road_oil_splatter', x: 1250, y: 1180, w: 70, h: 70, isDecal: true },
+
+  // 4. PINGGIRAN TANAH & SAMPAH TEPI JALAN
+  { id: 'dirt_edge_l1', imgKey: 'tile_road_dirt_edge_left', x: 150, y: 1450, w: 70, h: 140, isDecal: true },
+  { id: 'dirt_edge_r1', imgKey: 'tile_road_dirt_edge_right', x: 2200, y: 1450, w: 70, h: 140, isDecal: true },
+  { id: 'grass_moss_1', imgKey: 'tile_road_grass_moss_edge', x: 750, y: 1480, w: 80, h: 140, isDecal: true },
+  { id: 'grass_moss_2', imgKey: 'tile_road_grass_moss_edge', x: 1600, y: 1480, w: 80, h: 140, isDecal: true },
+  { id: 'debris_1', imgKey: 'tile_road_debris_litter', x: 420, y: 1480, w: 75, h: 80, isDecal: true },
+  { id: 'debris_2', imgKey: 'tile_road_debris_litter', x: 1350, y: 1480, w: 75, h: 80, isDecal: true },
 ];
 
-interface RoamingMonster {
+interface RoamingThug {
   id: string;
   x: number;
   y: number;
@@ -317,12 +133,12 @@ interface RoamingMonster {
   spriteKey: 'void_eyeball' | 'glitch_monolith' | 'cosmic_slime';
 }
 
-export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwitchToStreet }) => {
+export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onReturnToSchool }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // Position & Direction
-  const playerPosRef = useRef({ x: 1140, y: 360 });
+  // Position & Direction in Street Map
+  const playerPosRef = useRef({ x: 1180, y: 800 });
   const playerDirRef = useRef<Direction>('down');
   const isMovingRef = useRef(false);
   const animTimerRef = useRef(0);
@@ -332,7 +148,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
   const stepSoundTimerRef = useRef(0);
 
   // Camera coordinates (Smooth Follow)
-  const cameraRef = useRef({ x: 1140, y: 360 });
+  const cameraRef = useRef({ x: 1180, y: 800 });
   const [viewportSize, setViewportSize] = useState({ w: 1024, h: 640 });
 
   const keysDownRef = useRef<Set<string>>(new Set());
@@ -375,37 +191,45 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
       walk_up_3: '/assets/characters/maine/walk_up_3.png',
       hero_avatar: '/assets/characters/maine/avatar.png',
 
-      // Sliced Props (SMKN 7)
-      prop_monumen_smkn7: '/assets/maps/smkn7/props/prop_monumen_smkn7.png',
-      prop_plang_gantung: '/assets/maps/smkn7/props/prop_plang_gantung.png',
-      prop_podium: '/assets/maps/smkn7/props/prop_podium.png',
-      prop_meja_siswa_top: '/assets/maps/smkn7/props/prop_meja_siswa_top.png',
-      prop_fotokopi_1: '/assets/maps/smkn7/props/prop_fotokopi_1.png',
-      prop_router: '/assets/maps/smkn7/props/prop_router.png',
-      prop_dispenser_1: '/assets/maps/smkn7/props/prop_dispenser_1.png',
-      prop_kursi_susun: '/assets/maps/smkn7/props/prop_kursi_susun.png',
-      prop_apar_1: '/assets/maps/smkn7/props/prop_apar_1.png',
-      prop_kotak_uks: '/assets/maps/smkn7/props/prop_kotak_uks.png',
-      prop_tempat_sampah_3: '/assets/maps/smkn7/props/prop_tempat_sampah_3.png',
-      prop_kursi_tas_1: '/assets/maps/smkn7/props/prop_kursi_tas_1.png',
-      prop_parkiran_motor: '/assets/maps/smkn7/props/prop_parkiran_motor.png',
-      prop_motor_matic_1: '/assets/maps/smkn7/props/prop_motor_matic_1.png',
+      // Sliced Street Map Tiles
+      tile_asphalt_plain: '/assets/maps/street/asphalt_plain.png',
+      tile_asphalt_worn: '/assets/maps/street/asphalt_worn.png',
+      tile_asphalt_gravel: '/assets/maps/street/asphalt_gravel_dark.png',
+      tile_asphalt_pebbles: '/assets/maps/street/asphalt_pebbles.png',
+      tile_asphalt_curb: '/assets/maps/street/asphalt_curb_strip.png',
 
-      // Sliced Tiles (SMKN 7)
-      tile_floor_white: '/assets/maps/smkn7/tiles/tile_floor_white.png',
-      tile_floor_blue: '/assets/maps/smkn7/tiles/tile_floor_blue.png',
-      tile_wall_brick: '/assets/maps/smkn7/tiles/tile_wall_brick.png',
-      tile_wall_hallway: '/assets/maps/smkn7/tiles/tile_wall_hallway.png',
-      tile_door_wood: '/assets/maps/smkn7/tiles/tile_door_wood.png',
-      tile_door_lab: '/assets/maps/smkn7/tiles/tile_door_lab.png',
-      tile_door_kelas: '/assets/maps/smkn7/tiles/tile_door_kelas.png',
-      tile_pc_desk_row: '/assets/maps/smkn7/tiles/tile_pc_desk_row.png',
-      tile_server_racks: '/assets/maps/smkn7/tiles/tile_server_racks.png',
-      tile_blackboard: '/assets/maps/smkn7/tiles/tile_blackboard.png',
-      tile_whiteboard: '/assets/maps/smkn7/tiles/tile_whiteboard.png',
-      tile_banner_smk_bisa: '/assets/maps/smkn7/tiles/tile_banner_smk_bisa.png',
-      tile_presiden_garuda: '/assets/maps/smkn7/tiles/tile_presiden_garuda.png',
-      tile_lemari_piala: '/assets/maps/smkn7/tiles/tile_lemari_piala.png',
+      tile_crack_spider: '/assets/maps/street/crack_spider.png',
+      tile_crack_deep: '/assets/maps/street/crack_deep.png',
+      tile_pothole_shallow: '/assets/maps/street/pothole_shallow.png',
+      tile_pothole_deep: '/assets/maps/street/pothole_deep.png',
+      tile_pothole_large: '/assets/maps/street/pothole_large.png',
+      tile_puddle_water: '/assets/maps/street/puddle_water.png',
+      tile_asphalt_oil_stain: '/assets/maps/street/asphalt_oil_stain.png',
+      tile_road_oil_splatter: '/assets/maps/street/road_oil_splatter.png',
+
+      tile_parking_motor_slots_top: '/assets/maps/street/parking_motor_slots_top.png',
+      tile_parking_motor_slots_bottom: '/assets/maps/street/parking_motor_slots_bottom.png',
+      tile_parking_diagonal_box_top: '/assets/maps/street/parking_diagonal_box_top.png',
+      tile_parking_diagonal_box_bottom: '/assets/maps/street/parking_diagonal_box_bottom.png',
+
+      tile_road_yellow_h: '/assets/maps/street/road_yellow_double_h.png',
+      tile_road_yellow_v: '/assets/maps/street/road_yellow_double_v.png',
+      tile_road_yellow_intersection_1: '/assets/maps/street/road_yellow_intersection_1.png',
+
+      tile_road_white_dashed: '/assets/maps/street/road_white_dashed.png',
+      tile_arrow_straight: '/assets/maps/street/arrow_straight.png',
+      tile_arrow_turn_right: '/assets/maps/street/arrow_turn_right.png',
+      tile_arrow_combo: '/assets/maps/street/arrow_combo.png',
+
+      tile_road_dirt_edge_left: '/assets/maps/street/road_dirt_edge_left.png',
+      tile_road_dirt_edge_right: '/assets/maps/street/road_dirt_edge_right.png',
+      tile_road_grass_moss_edge: '/assets/maps/street/road_grass_moss_edge.png',
+      tile_road_debris_litter: '/assets/maps/street/road_debris_litter.png',
+
+      // Props
+      prop_motor_matic_1: '/assets/maps/smkn7/props/prop_motor_matic_1.png',
+      prop_motor_matic_2: '/assets/maps/smkn7/props/prop_motor_matic_2.png',
+      prop_tempat_sampah_3: '/assets/maps/smkn7/props/prop_tempat_sampah_3.png',
       tile_tanaman_pot: '/assets/maps/smkn7/tiles/tile_tanaman_pot.png',
     };
 
@@ -427,12 +251,12 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
     });
   }, []);
 
-  // Roaming Monsters
-  const monstersRef = useRef<RoamingMonster[]>([
-    { id: 'm1', x: 450, y: 700, vx: 35, spriteKey: 'void_eyeball' },
-    { id: 'm2', x: 1350, y: 700, vx: -30, spriteKey: 'glitch_monolith' },
-    { id: 'm3', x: 800, y: 1100, vx: 25, spriteKey: 'cosmic_slime' },
-    { id: 'm4', x: 1250, y: 1350, vx: -28, spriteKey: 'void_eyeball' },
+  // Roaming Street Monsters
+  const monstersRef = useRef<RoamingThug[]>([
+    { id: 's1', x: 450, y: 850, vx: 45, spriteKey: 'void_eyeball' },
+    { id: 's2', x: 1550, y: 850, vx: -40, spriteKey: 'glitch_monolith' },
+    { id: 's3', x: 800, y: 1300, vx: 35, spriteKey: 'cosmic_slime' },
+    { id: 's4', x: 1200, y: 400, vx: -30, spriteKey: 'void_eyeball' },
   ]);
 
   const tickRef = useRef(0);
@@ -458,7 +282,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
     for (let r = minRow; r <= maxRow; r++) {
       for (let c = minCol; c <= maxCol; c++) {
         if (r >= 0 && r < MAP_ROWS && c >= 0 && c < MAP_COLS) {
-          if (MAP_TILES[r][c] === 1) {
+          if (STREET_TILES[r][c] === 1) {
             return true;
           }
         }
@@ -466,7 +290,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
     }
 
     // Props Collision
-    for (const prop of MAP_PROPS) {
+    for (const prop of STREET_PROPS) {
       if (prop.collision) {
         const cLeft = prop.x + prop.collision.ox;
         const cRight = cLeft + prop.collision.ow;
@@ -590,7 +414,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
       // 3. ENCOUNTERS
       monstersRef.current.forEach((m) => {
         m.x += m.vx * dt;
-        if (m.x < 300 || m.x > 1800) m.vx *= -1;
+        if (m.x < 300 || m.x > 2100) m.vx *= -1;
       });
 
       const pX = playerPosRef.current.x;
@@ -608,8 +432,8 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
         }
       }
 
-      // 4. DRAW BASE FLOORS (Clean Seamless Canvas)
-      ctx.fillStyle = '#0e1117';
+      // 4. DRAW BASE FLOORS (Textured Asphalt & Pavement)
+      ctx.fillStyle = '#0a0d12';
       ctx.fillRect(0, 0, viewportSize.w, viewportSize.h);
 
       const startCol = Math.max(0, Math.floor(camX / TILE_SIZE));
@@ -617,45 +441,59 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
       const startRow = Math.max(0, Math.floor(camY / TILE_SIZE));
       const endRow = Math.min(MAP_ROWS, Math.ceil((camY + viewportSize.h) / TILE_SIZE));
 
+      const asphaltImg = imagesRef.current.tile_asphalt_plain;
+      const asphaltWorn = imagesRef.current.tile_asphalt_worn;
+      const asphaltGravel = imagesRef.current.tile_asphalt_gravel;
+      const asphaltCurb = imagesRef.current.tile_asphalt_curb;
+
       for (let r = startRow; r < endRow; r++) {
         for (let c = startCol; c < endCol; c++) {
-          const tType = MAP_TILES[r][c];
+          const tType = STREET_TILES[r][c];
           const scrX = c * TILE_SIZE - camX;
           const scrY = r * TILE_SIZE - camY;
 
           if (tType === 0) {
-            // Outdoor Paved Courtyard
-            ctx.fillStyle = (r + c) % 2 === 0 ? '#1f242d' : '#1a1e26';
-            ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
-            ctx.strokeStyle = '#15181f';
-            ctx.strokeRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
-          } else if (tType === 4) {
-            // Green Lawn Garden
-            ctx.fillStyle = (r + c) % 2 === 0 ? '#1b4332' : '#143628';
-            ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
-          } else if (tType === 1) {
-            // Solid Wall Boundary
-            ctx.fillStyle = '#1e1115';
-            ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
-            ctx.fillStyle = '#4a151b';
-            ctx.fillRect(scrX + 2, scrY + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+            // Main Asphalt Road
+            const img = (r + c) % 3 === 0 ? asphaltWorn : asphaltImg;
+            if (img && img.complete && img.naturalWidth > 0) {
+              ctx.drawImage(img, scrX, scrY, TILE_SIZE, TILE_SIZE);
+            } else {
+              ctx.fillStyle = '#1e242d';
+              ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
+            }
           } else if (tType === 2) {
-            // Hallway Clean White Ceramic
-            ctx.fillStyle = (r + c) % 2 === 0 ? '#e2e8f0' : '#cbd5e1';
-            ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
-            ctx.strokeStyle = '#94a3b8';
-            ctx.strokeRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
+            // Sidewalk / Curb Strip
+            if (asphaltCurb && asphaltCurb.complete && asphaltCurb.naturalWidth > 0) {
+              ctx.drawImage(asphaltCurb, scrX, scrY, TILE_SIZE, TILE_SIZE);
+            } else {
+              ctx.fillStyle = '#64748b';
+              ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
+            }
           } else if (tType === 3) {
-            // Lab Anti-static Blue Floor
-            ctx.fillStyle = (r + c) % 2 === 0 ? '#1e3a8a' : '#1d4ed8';
+            // Dirt Grass Transition
+            ctx.fillStyle = '#1e293b';
             ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
-            ctx.strokeStyle = '#1e40af';
-            ctx.strokeRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = '#152019';
+            ctx.fillRect(scrX, scrY + 20, TILE_SIZE, TILE_SIZE - 20);
+          } else if (tType === 4) {
+            // Gravel Side Pavement
+            if (asphaltGravel && asphaltGravel.complete && asphaltGravel.naturalWidth > 0) {
+              ctx.drawImage(asphaltGravel, scrX, scrY, TILE_SIZE, TILE_SIZE);
+            } else {
+              ctx.fillStyle = '#334155';
+              ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
+            }
+          } else if (tType === 1) {
+            // Solid Outer Road Barrier
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(scrX + 2, scrY + 2, TILE_SIZE - 4, TILE_SIZE - 4);
           }
         }
       }
 
-      // 5. Y-SORTED ENTITIES (Props, Monsters, Player)
+      // 5. Y-SORTED ENTITIES (Props, Decals, Monsters, Player)
       interface RenderEntity {
         yOrder: number;
         draw: () => void;
@@ -663,19 +501,20 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
 
       const entities: RenderEntity[] = [];
 
-      // Add Props
-      MAP_PROPS.forEach((prop) => {
+      // Add Props & Street Markings
+      STREET_PROPS.forEach((prop) => {
         const scrX = prop.x - camX;
         const scrY = prop.y - camY;
 
         if (
-          scrX + prop.w >= -50 &&
-          scrX <= viewportSize.w + 50 &&
-          scrY + prop.h >= -50 &&
-          scrY <= viewportSize.h + 50
+          scrX + prop.w >= -100 &&
+          scrX <= viewportSize.w + 100 &&
+          scrY + prop.h >= -100 &&
+          scrY <= viewportSize.h + 100
         ) {
           const img = imagesRef.current[prop.imgKey];
-          const yFoot = prop.collision ? prop.y + prop.collision.oy + prop.collision.oh : prop.y + prop.h;
+          // Ground decals stay under characters
+          const yFoot = prop.isDecal ? 50 : (prop.collision ? prop.y + prop.collision.oy + prop.collision.oh : prop.y + prop.h);
 
           entities.push({
             yOrder: yFoot,
@@ -699,7 +538,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
         entities.push({
           yOrder: m.y + 16,
           draw: () => {
-            ctx.fillStyle = 'rgba(192, 38, 211, 0.3)';
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.3)';
             ctx.beginPath();
             ctx.arc(scrX, scrY + 16, 24, 0, Math.PI * 2);
             ctx.fill();
@@ -732,7 +571,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
         yOrder: pY + 36,
         draw: () => {
           // Shadow
-          ctx.fillStyle = 'rgba(0,0,0,0.45)';
+          ctx.fillStyle = 'rgba(0,0,0,0.5)';
           ctx.beginPath();
           ctx.ellipse(pScrX, pScrY + 36, 20, 7, 0, 0, Math.PI * 2);
           ctx.fill();
@@ -777,26 +616,24 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
   const startVirtualKey = (key: string) => keysDownRef.current.add(key);
   const stopVirtualKey = (key: string) => keysDownRef.current.delete(key);
 
-  // Dynamic Zone Name
-  const curX = playerPosRef.current.x;
+  // Dynamic Street Zone
   const curY = playerPosRef.current.y;
-  let currentZoneName = 'GERBANG & MONUMEN UTAMA';
-  if (curY > 520 && curY <= 900) currentZoneName = 'KORIDOR KELAS & PRESTASI';
-  else if (curY > 900 && curX <= 1600) currentZoneName = 'LAB KOMPUTER & JARINGAN (TKJ/RPL)';
-  else if (curY > 900 && curX > 1600) currentZoneName = 'RUANG TATA USAHA & UKS';
+  let currentZoneName = 'JALAN RAYA BALEENDAH (JALUR UTAMA)';
+  if (curY < 600) currentZoneName = 'PARKIRAN MOTOR & TROTOAR LUAR';
+  else if (curY > 1100) currentZoneName = 'GANG ASPAL RETAK & TEPI TANAH';
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-screen overflow-hidden bg-[#0a0a0f] text-white font-mono select-none flex flex-col justify-between"
+      className="relative w-full h-screen overflow-hidden bg-[#07090e] text-white font-mono select-none flex flex-col justify-between"
     >
       {/* TOP HUD BAR */}
       <div className="absolute top-3 left-3 right-3 z-30 flex items-center justify-between pointer-events-none">
-        <div className="flex items-center space-x-3 bg-[#12121c]/90 backdrop-blur border-2 border-[#383850] p-2.5 shadow-2xl">
+        <div className="flex items-center space-x-3 bg-[#111827]/95 backdrop-blur border-2 border-[#374151] p-2.5 shadow-2xl">
           <img
             src="/assets/characters/maine/avatar.png"
             alt="Hero Avatar"
-            className="w-11 h-11 object-contain bg-[#09090e] border border-yellow-500/70 p-0.5 shadow"
+            className="w-11 h-11 object-contain bg-[#0f172a] border border-yellow-500/70 p-0.5 shadow"
           />
           <div>
             <div className="flex items-center space-x-2">
@@ -806,25 +643,23 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
               </span>
             </div>
             <div className="flex items-center space-x-2 text-[11px] text-neutral-300 mt-0.5">
-              <span>🏫 SMK NEGERI 7 BALEENDAH</span>
+              <span>🛣 MAP JALAN RAYA (STREET)</span>
               <span className="text-yellow-500">•</span>
-              <span className="text-emerald-400 font-bold uppercase">{currentZoneName}</span>
+              <span className="text-amber-400 font-bold uppercase">{currentZoneName}</span>
             </div>
           </div>
         </div>
 
         <div className="flex items-center space-x-3 pointer-events-auto">
-          {onSwitchToStreet && (
-            <button
-              onClick={onSwitchToStreet}
-              className="px-3.5 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] active:bg-[#1e40af] text-white font-bold text-xs uppercase tracking-wider border-2 border-[#60a5fa] shadow-2xl flex items-center gap-1.5 cursor-pointer"
-            >
-              <span>🛣 KE JALAN RAYA (STREET MAP)</span>
-              <span>➔</span>
-            </button>
-          )}
+          <button
+            onClick={onReturnToSchool}
+            className="px-3.5 py-2 bg-[#059669] hover:bg-[#047857] active:bg-[#065f46] text-white font-bold text-xs uppercase tracking-wider border-2 border-[#34d399] shadow-2xl flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>🏫 KEMBALI KE SMKN 7</span>
+            <span>➔</span>
+          </button>
 
-          <div className="flex items-center space-x-3 bg-[#12121c]/90 backdrop-blur border-2 border-[#383850] px-4 py-2.5 shadow-2xl">
+          <div className="flex items-center space-x-3 bg-[#111827]/95 backdrop-blur border-2 border-[#374151] px-4 py-2.5 shadow-2xl">
             <div className="flex flex-col items-end">
               <span className="text-[10px] text-neutral-400 font-bold uppercase">STAMINA & HP SISWA</span>
               <div className="flex items-center space-x-2">
@@ -839,7 +674,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
                 </span>
               </div>
             </div>
-            <div className="w-3.5 h-3.5 bg-red-500 animate-ping rounded-full" />
+            <div className="w-3.5 h-3.5 bg-yellow-400 animate-ping rounded-full" />
           </div>
         </div>
       </div>
@@ -856,14 +691,14 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
 
       {/* BOTTOM CONTROLS */}
       <div className="absolute bottom-3 left-3 right-3 z-30 flex items-end justify-between pointer-events-none">
-        <div className="bg-[#12121c]/90 backdrop-blur border-2 border-[#383850] p-3 text-xs max-w-md pointer-events-auto">
-          <p className="font-bold text-yellow-400 mb-0.5">🎮 KONTROL JELAJAH SMKN 7 BALEENDAH:</p>
+        <div className="bg-[#111827]/95 backdrop-blur border-2 border-[#374151] p-3 text-xs max-w-md pointer-events-auto">
+          <p className="font-bold text-yellow-400 mb-0.5">🎮 KONTROL MAP JALAN RAYA (STREET):</p>
           <p className="text-neutral-300 text-[11px] leading-tight">
-            Gunakan tombol <strong className="text-white">WASD</strong> atau <strong className="text-white">Panah</strong>. Jelajahi Monumen Utama, Parkiran Motor, Koridor Kelas, dan Lab Komputer!
+            Gunakan tombol <strong className="text-white">WASD</strong> atau <strong className="text-white">Panah</strong>. Jelajahi Persimpangan Jalan Raya, Area Parkir Motor, Jalur Cepat Bergaris Putih, dan Gang Aspal Berlubang!
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-1.5 w-32 pointer-events-auto bg-[#12121c]/90 p-2 border-2 border-[#383850]">
+        <div className="grid grid-cols-3 gap-1.5 w-32 pointer-events-auto bg-[#111827]/95 p-2 border-2 border-[#374151]">
           <div />
           <button
             onMouseDown={() => startVirtualKey('KeyW')}
@@ -871,7 +706,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
             onMouseLeave={() => stopVirtualKey('KeyW')}
             onTouchStart={() => startVirtualKey('KeyW')}
             onTouchEnd={() => stopVirtualKey('KeyW')}
-            className="p-2.5 bg-[#262638] hover:bg-[#3b3b54] active:bg-[#4f4f6e] text-white border border-[#4a4a66] font-black text-sm text-center"
+            className="p-2.5 bg-[#1f2937] hover:bg-[#374151] active:bg-[#4b5563] text-white border border-[#4b5563] font-black text-sm text-center"
           >
             ▲
           </button>
@@ -882,7 +717,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
             onMouseLeave={() => stopVirtualKey('KeyA')}
             onTouchStart={() => startVirtualKey('KeyA')}
             onTouchEnd={() => stopVirtualKey('KeyA')}
-            className="p-2.5 bg-[#262638] hover:bg-[#3b3b54] active:bg-[#4f4f6e] text-white border border-[#4a4a66] font-black text-sm text-center"
+            className="p-2.5 bg-[#1f2937] hover:bg-[#374151] active:bg-[#4b5563] text-white border border-[#4b5563] font-black text-sm text-center"
           >
             ◀
           </button>
@@ -892,7 +727,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
             onMouseLeave={() => stopVirtualKey('KeyS')}
             onTouchStart={() => startVirtualKey('KeyS')}
             onTouchEnd={() => stopVirtualKey('KeyS')}
-            className="p-2.5 bg-[#262638] hover:bg-[#3b3b54] active:bg-[#4f4f6e] text-white border border-[#4a4a66] font-black text-sm text-center"
+            className="p-2.5 bg-[#1f2937] hover:bg-[#374151] active:bg-[#4b5563] text-white border border-[#4b5563] font-black text-sm text-center"
           >
             ▼
           </button>
@@ -902,7 +737,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
             onMouseLeave={() => stopVirtualKey('KeyD')}
             onTouchStart={() => startVirtualKey('KeyD')}
             onTouchEnd={() => stopVirtualKey('KeyD')}
-            className="p-2.5 bg-[#262638] hover:bg-[#3b3b54] active:bg-[#4f4f6e] text-white border border-[#4a4a66] font-black text-sm text-center"
+            className="p-2.5 bg-[#1f2937] hover:bg-[#374151] active:bg-[#4b5563] text-white border border-[#4b5563] font-black text-sm text-center"
           >
             ▶
           </button>
