@@ -1,13 +1,20 @@
-﻿import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import type { Card, QteGrade } from '../types/game';
 import { playSound } from '../utils/audio';
 
 interface ActionTimingBarProps {
   card: Card;
-  onComplete: (grade: QteGrade, multiplier: number) => void;
+  onResolve?: (grade: QteGrade, multiplier: number) => void;
+  onComplete?: (grade: QteGrade, multiplier: number) => void;
+  onCancel?: () => void;
 }
 
-export const ActionTimingBar: React.FC<ActionTimingBarProps> = ({ card, onComplete }) => {
+export const ActionTimingBar: React.FC<ActionTimingBarProps> = ({
+  card,
+  onResolve,
+  onComplete,
+  onCancel,
+}) => {
   const [needlePos, setNeedlePos] = useState(0);
   const [isResolved, setIsResolved] = useState(false);
   const [grade, setGrade] = useState<QteGrade>(null);
@@ -83,7 +90,8 @@ export const ActionTimingBar: React.FC<ActionTimingBarProps> = ({ card, onComple
     setGrade(hitGrade);
 
     setTimeout(() => {
-      onComplete(hitGrade, mult);
+      if (onResolve) onResolve(hitGrade, mult);
+      if (onComplete) onComplete(hitGrade, mult);
     }, 750);
   };
 
@@ -92,12 +100,14 @@ export const ActionTimingBar: React.FC<ActionTimingBarProps> = ({ card, onComple
       if (e.code === 'Space') {
         e.preventDefault();
         triggerHit();
+      } else if (e.code === 'Escape' && onCancel) {
+        onCancel();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isResolved]);
+  }, [isResolved, onCancel]);
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
