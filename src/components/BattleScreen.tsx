@@ -4,7 +4,6 @@ import { getSpriteDataUrl } from '../utils/sprites';
 import { playSound } from '../utils/audio';
 import { ActionTimingBar } from './ActionTimingBar';
 import { EnemyDefenseQte } from './EnemyDefenseQte';
-import { DefenseBarrierEffect } from './DefenseBarrierEffect';
 
 interface BattleScreenProps {
   player: Player;
@@ -165,6 +164,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     if (isHeavy) {
       setHeroPose('attack_heavy');
       setAnimSubFrame(2);
+      setTimeout(() => setAnimSubFrame(3), 250);
     } else {
       setHeroPose('attack_light');
       setAnimSubFrame(2);
@@ -287,28 +287,28 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   };
 
   // Sprite Selector based on HeroPose & animation subframes
-  let heroSpriteSrc = `/assets/Maine/hero_battle_idle_${idleFrame + 1}.png`;
+  let heroSpriteSrc = `/assets/characters/maine/battle_idle_${idleFrame + 1}.png`;
 
   if (heroPose === 'windup_light') {
-    heroSpriteSrc = '/assets/Maine/hero_attack_light_1.png';
+    heroSpriteSrc = '/assets/characters/maine/attack_light_1.png';
   } else if (heroPose === 'attack_light') {
-    heroSpriteSrc = `/assets/Maine/hero_attack_light_${animSubFrame}.png`;
+    heroSpriteSrc = `/assets/characters/maine/attack_light_${animSubFrame}.png`;
   } else if (heroPose === 'windup_heavy') {
-    heroSpriteSrc = '/assets/Maine/hero_attack_heavy_1.png';
+    heroSpriteSrc = '/assets/characters/maine/attack_heavy_1.png';
   } else if (heroPose === 'attack_heavy') {
-    heroSpriteSrc = `/assets/Maine/hero_attack_heavy_${animSubFrame}.png`;
+    heroSpriteSrc = `/assets/characters/maine/attack_heavy_${animSubFrame}.png`;
   } else if (heroPose === 'block') {
-    heroSpriteSrc = `/assets/Maine/hero_battle_block_${animSubFrame}.png`;
+    heroSpriteSrc = `/assets/characters/maine/block_${animSubFrame}.png`;
   } else if (heroPose === 'buff') {
-    heroSpriteSrc = `/assets/Maine/hero_battle_buff_${animSubFrame}.png`;
+    heroSpriteSrc = `/assets/characters/maine/buff_${animSubFrame}.png`;
   } else if (heroPose === 'heal') {
-    heroSpriteSrc = `/assets/Maine/hero_battle_heal_${animSubFrame}.png`;
+    heroSpriteSrc = `/assets/characters/maine/heal_${animSubFrame}.png`;
   } else if (heroPose === 'hurt') {
-    heroSpriteSrc = `/assets/Maine/hero_battle_hurt_${animSubFrame}.png`;
+    heroSpriteSrc = `/assets/characters/maine/hurt_${animSubFrame}.png`;
   } else if (heroPose === 'victory') {
-    heroSpriteSrc = `/assets/Maine/hero_battle_victory_${animSubFrame}.png`;
+    heroSpriteSrc = `/assets/characters/maine/victory_${animSubFrame}.png`;
   } else if (heroPose === 'defeat') {
-    heroSpriteSrc = '/assets/Maine/hero_battle_hurt_3.png';
+    heroSpriteSrc = '/assets/characters/maine/hurt_3.png';
   }
 
   const enemySpriteUrl = getSpriteDataUrl(`${enemy.spriteKey}_0`);
@@ -337,7 +337,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
             <div className="bg-[#1e1e2d] border-2 border-[#474766] p-2.5 mb-2 w-48 shadow-md">
               <div className="flex items-center space-x-2 mb-1.5">
                 <img
-                  src="/assets/Maine/hero_avatar.png"
+                  src="/assets/characters/maine/avatar.png"
                   alt="Player Avatar"
                   className="w-8 h-8 object-contain bg-[#0a0a0f] border border-yellow-400/60 p-0.5"
                 />
@@ -361,15 +361,11 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
               </div>
             </div>
 
-            {/* Dynamic Battle Sprite Frame with Defense Barrier Overlay */}
+            {/* Battle Sprite Frame */}
             <div className="relative w-44 h-36 flex items-center justify-center">
-              <DefenseBarrierEffect
-                isActive={heroPose === 'block' || player.shield > 0}
-                shieldValue={player.shield}
-              />
               <img
                 src={heroSpriteSrc}
-                alt="Hero Anak SMK"
+                alt="Hero Karakter"
                 className={`max-h-36 object-contain [image-rendering:pixelated] drop-shadow-[0_8px_0_rgba(0,0,0,0.5)] transition-transform duration-150 ${
                   heroPose === 'attack_light' || heroPose === 'attack_heavy'
                     ? 'scale-110 translate-x-4'
