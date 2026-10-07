@@ -15,39 +15,42 @@ const MAP_ROWS = 26;
 const WORLD_WIDTH = MAP_COLS * TILE_SIZE;
 const WORLD_HEIGHT = MAP_ROWS * TILE_SIZE;
 
-// 0: Paving/Floor Outdoor, 1: Wall Solid, 2: Hallway Floor White, 3: Lab Blue Floor, 4: Grass/Garden
-// Generated Map Layout of SMKN 7 BALEENDAH
+// Floor Types: 0: Paved Outdoor, 1: Solid Wall, 2: Hallway White Ceramic, 3: Lab Blue Anti-static, 4: Green Grass Garden
 const MAP_TILES: number[][] = Array.from({ length: MAP_ROWS }, (_, r) => {
   return Array.from({ length: MAP_COLS }, (_, c) => {
     // Outer Borders
     if (r === 0 || r === MAP_ROWS - 1 || c === 0 || c === MAP_COLS - 1) return 1;
     
-    // Zone 1: Outdoor Courtyard & Parking (Rows 1 to 9)
-    if (r < 9) {
-      if (r < 3 && c > 10 && c < 26) return 4; // Garden grass
-      return 0; // Paved courtyard
+    // Zone 1: Outdoor Courtyard & Parking (Rows 1 to 7)
+    if (r < 8) {
+      if (r < 3 && c > 11 && c < 25) return 4; // Green garden lawn
+      return 0; // Dark asphalt/paved courtyard
     }
     
-    // Main School Building Wall Divider (Row 9)
-    if (r === 9) {
-      // Entrance doors at cols 17-18
-      if (c === 17 || c === 18) return 2;
-      return 1; // Solid brick exterior wall
+    // Building Exterior Wall & Entrance (Row 8)
+    if (r === 8) {
+      if (c === 17 || c === 18) return 2; // Main entrance doorway
+      return 1; // Wall
     }
     
-    // Zone 2: Main Hallway (Rows 10 to 14)
-    if (r >= 10 && r <= 14) {
-      if (r === 14 && (c < 16 || c > 19)) return 1; // Wall separating hallway and Lab
-      return 2; // White ceramic hallway floor
+    // Zone 2: Main Hallway (Rows 9 to 13)
+    if (r >= 9 && r <= 13) {
+      return 2; // White ceramic hallway
+    }
+    
+    // Wall Divider between Hallway & Lab (Row 14)
+    if (r === 14) {
+      if (c === 8 || c === 9 || c === 17 || c === 18 || c === 26 || c === 27) return 2; // Door openings
+      return 1;
     }
     
     // Zone 3: Computer Lab TKJ/RPL (Rows 15 to 24, Cols 1 to 24)
     if (c <= 24) {
-      return 3; // Blue anti-static lab floor
+      return 3; // Blue anti-static floor
     }
     
     // Zone 4: Ruang UKS & Tata Usaha (Rows 15 to 24, Cols 25 to 34)
-    return 2; // White ceramic floor for UKS/TU
+    return 2; // White floor
   });
 });
 
@@ -61,283 +64,256 @@ interface PropObject {
   collision?: { ox: number; oy: number; ow: number; oh: number };
 }
 
-// Props Placed in SMKN 7 Baleendah Map
+// Map Props Placed in SMKN 7 Baleendah
 const MAP_PROPS: PropObject[] = [
-  // OUTDOOR / GERBANG / PARKIRAN
+  // 1. OUTDOOR GERBANG & PARKIRAN (Y: 100 - 450)
   {
     id: 'monumen_smkn7',
     imgKey: 'prop_monumen_smkn7',
-    x: 1050,
-    y: 120,
-    w: 240,
-    h: 190,
-    collision: { ox: 20, oy: 80, ow: 200, oh: 95 },
+    x: 1020,
+    y: 110,
+    w: 270,
+    h: 215,
+    collision: { ox: 20, oy: 90, ow: 230, oh: 115 },
+  },
+  {
+    id: 'tanaman_pot_kiri',
+    imgKey: 'tile_tanaman_pot',
+    x: 960,
+    y: 220,
+    w: 60,
+    h: 100,
+    collision: { ox: 10, oy: 50, ow: 40, oh: 45 },
+  },
+  {
+    id: 'tanaman_pot_kanan',
+    imgKey: 'tile_tanaman_pot',
+    x: 1300,
+    y: 220,
+    w: 60,
+    h: 100,
+    collision: { ox: 10, oy: 50, ow: 40, oh: 45 },
   },
   {
     id: 'parkiran_motor_1',
     imgKey: 'prop_parkiran_motor',
     x: 220,
     y: 160,
-    w: 260,
-    h: 170,
-    collision: { ox: 15, oy: 60, ow: 230, oh: 95 },
+    w: 340,
+    h: 147,
+    collision: { ox: 15, oy: 50, ow: 310, oh: 90 },
   },
   {
-    id: 'parkiran_motor_2',
-    imgKey: 'prop_parkiran_motor',
-    x: 520,
-    y: 160,
-    w: 260,
-    h: 170,
-    collision: { ox: 15, oy: 60, ow: 230, oh: 95 },
-  },
-  {
-    id: 'motor_matic_1',
+    id: 'motor_matic_parkir',
     imgKey: 'prop_motor_matic_1',
-    x: 800,
+    x: 600,
     y: 230,
-    w: 75,
-    h: 85,
-    collision: { ox: 5, oy: 30, ow: 65, oh: 50 },
-  },
-  {
-    id: 'motor_matic_2',
-    imgKey: 'prop_motor_matic_2',
-    x: 880,
-    y: 235,
-    w: 70,
-    h: 80,
-    collision: { ox: 5, oy: 30, ow: 60, oh: 45 },
+    w: 80,
+    h: 72,
+    collision: { ox: 5, oy: 25, ow: 70, oh: 45 },
   },
   {
     id: 'tempat_sampah_outdoor',
     imgKey: 'prop_tempat_sampah_3',
-    x: 1350,
+    x: 1420,
     y: 220,
-    w: 120,
-    h: 105,
-    collision: { ox: 10, oy: 40, ow: 100, oh: 55 },
-  },
-  {
-    id: 'tanaman_gerbang_1',
-    imgKey: 'tile_tanaman_pot',
-    x: 1000,
-    y: 240,
-    w: 60,
-    h: 100,
-    collision: { ox: 10, oy: 50, ow: 40, oh: 45 },
-  },
-  {
-    id: 'tanaman_gerbang_2',
-    imgKey: 'tile_tanaman_pot',
-    x: 1300,
-    y: 240,
-    w: 60,
-    h: 100,
-    collision: { ox: 10, oy: 50, ow: 40, oh: 45 },
+    w: 140,
+    h: 78,
+    collision: { ox: 10, oy: 30, ow: 120, oh: 45 },
   },
 
-  // KORIDOR UTAMA (Row 9-14)
+  // 2. KORIDOR KELAS & DINDING ATAS (Y: 460 - 850)
   {
     id: 'door_lab_tkj',
     imgKey: 'tile_door_lab',
     x: 1080,
-    y: 530,
-    w: 100,
+    y: 470,
+    w: 95,
     h: 145,
   },
   {
     id: 'door_kelas_rpl',
     imgKey: 'tile_door_kelas',
     x: 550,
-    y: 530,
-    w: 95,
+    y: 470,
+    w: 90,
     h: 145,
   },
   {
     id: 'door_kelas_multimedia',
     imgKey: 'tile_door_kelas',
     x: 1550,
-    y: 530,
-    w: 95,
+    y: 470,
+    w: 90,
     h: 145,
   },
   {
     id: 'banner_smk_bisa',
     imgKey: 'tile_banner_smk_bisa',
     x: 820,
-    y: 560,
-    w: 115,
-    h: 80,
+    y: 490,
+    w: 105,
+    h: 75,
   },
   {
     id: 'foto_presiden',
     imgKey: 'tile_presiden_garuda',
     x: 960,
-    y: 565,
-    w: 75,
-    h: 80,
+    y: 490,
+    w: 70,
+    h: 75,
   },
   {
     id: 'lemari_piala_lks',
     imgKey: 'tile_lemari_piala',
     x: 1300,
-    y: 570,
-    w: 75,
-    h: 105,
-    collision: { ox: 5, oy: 40, ow: 65, oh: 60 },
+    y: 495,
+    w: 70,
+    h: 100,
+    collision: { ox: 5, oy: 40, ow: 60, oh: 55 },
   },
   {
     id: 'plang_gantung_koridor',
     imgKey: 'prop_plang_gantung',
     x: 1100,
-    y: 670,
-    w: 120,
+    y: 590,
+    w: 130,
     h: 75,
   },
 
-  // LAB KOMPUTER & JARINGAN (TKJ & RPL)
+  // 3. LAB KOMPUTER & JARINGAN (TKJ & RPL) (Y: 960 - 1500)
   {
     id: 'server_rack_1',
     imgKey: 'tile_server_racks',
     x: 150,
-    y: 980,
-    w: 300,
-    h: 150,
-    collision: { ox: 10, oy: 40, ow: 280, oh: 105 },
+    y: 1000,
+    w: 295,
+    h: 145,
+    collision: { ox: 10, oy: 40, ow: 275, oh: 100 },
   },
   {
     id: 'server_rack_2',
     imgKey: 'tile_server_racks',
     x: 150,
-    y: 1180,
-    w: 300,
-    h: 150,
-    collision: { ox: 10, oy: 40, ow: 280, oh: 105 },
+    y: 1200,
+    w: 295,
+    h: 145,
+    collision: { ox: 10, oy: 40, ow: 275, oh: 100 },
   },
   {
     id: 'pc_row_1',
     imgKey: 'tile_pc_desk_row',
     x: 540,
-    y: 1020,
-    w: 420,
-    h: 100,
-    collision: { ox: 10, oy: 30, ow: 400, oh: 65 },
+    y: 1050,
+    w: 410,
+    h: 95,
+    collision: { ox: 10, oy: 25, ow: 390, oh: 65 },
   },
   {
     id: 'pc_row_2',
     imgKey: 'tile_pc_desk_row',
     x: 540,
-    y: 1200,
-    w: 420,
-    h: 100,
-    collision: { ox: 10, oy: 30, ow: 400, oh: 65 },
+    y: 1240,
+    w: 410,
+    h: 95,
+    collision: { ox: 10, oy: 25, ow: 390, oh: 65 },
   },
   {
     id: 'pc_row_3',
     imgKey: 'tile_pc_desk_row',
     x: 1040,
-    y: 1020,
-    w: 420,
-    h: 100,
-    collision: { ox: 10, oy: 30, ow: 400, oh: 65 },
+    y: 1050,
+    w: 410,
+    h: 95,
+    collision: { ox: 10, oy: 25, ow: 390, oh: 65 },
   },
   {
     id: 'pc_row_4',
     imgKey: 'tile_pc_desk_row',
     x: 1040,
-    y: 1200,
-    w: 420,
-    h: 100,
-    collision: { ox: 10, oy: 30, ow: 400, oh: 65 },
+    y: 1240,
+    w: 410,
+    h: 95,
+    collision: { ox: 10, oy: 25, ow: 390, oh: 65 },
   },
   {
     id: 'papan_tulis_lab',
     imgKey: 'tile_blackboard',
     x: 750,
-    y: 910,
-    w: 140,
-    h: 100,
+    y: 930,
+    w: 130,
+    h: 95,
   },
   {
     id: 'whiteboard_lab',
     imgKey: 'tile_whiteboard',
     x: 930,
-    y: 915,
-    w: 160,
-    h: 95,
+    y: 935,
+    w: 155,
+    h: 90,
   },
   {
     id: 'podium_guru_lab',
     imgKey: 'prop_podium',
     x: 650,
-    y: 930,
-    w: 90,
-    h: 125,
-    collision: { ox: 10, oy: 50, ow: 70, oh: 70 },
+    y: 950,
+    w: 85,
+    h: 120,
+    collision: { ox: 10, oy: 45, ow: 65, oh: 70 },
   },
   {
     id: 'meja_router_lab',
     imgKey: 'prop_router',
     x: 1320,
-    y: 930,
-    w: 80,
-    h: 125,
-    collision: { ox: 5, oy: 40, ow: 70, oh: 80 },
+    y: 960,
+    w: 85,
+    h: 75,
+    collision: { ox: 5, oy: 25, ow: 75, oh: 50 },
   },
   {
     id: 'dispenser_lab',
     imgKey: 'prop_dispenser_1',
-    x: 1420,
-    y: 930,
-    w: 60,
-    h: 175,
-    collision: { ox: 5, oy: 70, ow: 50, oh: 95 },
+    x: 1430,
+    y: 940,
+    w: 49,
+    h: 134,
+    collision: { ox: 5, oy: 50, ow: 40, oh: 80 },
   },
 
-  // RUANG UKS & TATA USAHA (TU)
+  // 4. RUANG TU & UKS (Y: 960 - 1500, X: 1600 - 2100)
   {
     id: 'fotokopi_tu',
     imgKey: 'prop_fotokopi_1',
     x: 1680,
-    y: 1020,
-    w: 95,
-    h: 180,
-    collision: { ox: 5, oy: 70, ow: 85, oh: 100 },
+    y: 1040,
+    w: 98,
+    h: 120,
+    collision: { ox: 5, oy: 40, ow: 88, oh: 75 },
   },
   {
     id: 'meja_siswa_uks_1',
     imgKey: 'prop_meja_siswa_top',
     x: 1840,
-    y: 1020,
-    w: 120,
-    h: 185,
-    collision: { ox: 10, oy: 60, ow: 100, oh: 115 },
-  },
-  {
-    id: 'meja_siswa_uks_2',
-    imgKey: 'prop_meja_siswa_mid',
-    x: 1840,
-    y: 1220,
-    w: 120,
-    h: 145,
-    collision: { ox: 10, oy: 45, ow: 100, oh: 90 },
+    y: 1040,
+    w: 155,
+    h: 158,
+    collision: { ox: 10, oy: 50, ow: 135, oh: 100 },
   },
   {
     id: 'kotak_uks_box',
     imgKey: 'prop_kotak_uks',
     x: 1700,
-    y: 920,
-    w: 115,
-    h: 130,
+    y: 940,
+    w: 60,
+    h: 77,
   },
   {
     id: 'apar_koridor',
-    imgKey: 'prop_apar',
-    x: 1560,
-    y: 920,
-    w: 75,
-    h: 135,
+    imgKey: 'prop_apar_1',
+    x: 1580,
+    y: 940,
+    w: 38,
+    h: 76,
   },
 ];
 
@@ -353,27 +329,27 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // Position & Direction in SMKN 7 Baleendah
-  const playerPosRef = useRef({ x: 1140, y: 380 }); // Start di depan monumen SMKN 7
+  // Position & Direction
+  const playerPosRef = useRef({ x: 1140, y: 360 });
   const playerDirRef = useRef<Direction>('down');
   const isMovingRef = useRef(false);
   const animTimerRef = useRef(0);
-  const animFrameRef = useRef(0); // 0, 1, 2, 3
+  const animFrameRef = useRef(0);
   const idleTimerRef = useRef(0);
-  const idleFrameRef = useRef(0); // 0, 1, 2
+  const idleFrameRef = useRef(0);
   const stepSoundTimerRef = useRef(0);
 
   // Camera coordinates (Smooth Follow)
-  const cameraRef = useRef({ x: 1140, y: 380 });
+  const cameraRef = useRef({ x: 1140, y: 360 });
   const [viewportSize, setViewportSize] = useState({ w: 1024, h: 640 });
 
   const keysDownRef = useRef<Set<string>>(new Set());
 
-  // Multi-Frame & Prop Images Cache
+  // Images Cache
   const imagesRef = useRef<Record<string, HTMLImageElement>>({});
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
-  // Handle Resize for Fullscreen / Responsive Viewport
+  // Handle Resize
   useEffect(() => {
     const handleResize = () => {
       if (containerRef.current) {
@@ -389,10 +365,10 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Preload all character sprites and sliced props/tiles
+  // Preload all assets
   useEffect(() => {
     const assetList: Record<string, string> = {
-      // Character
+      // Character Sprites
       idle_1: '/assets/Maine/hero_idle_1.png',
       idle_2: '/assets/Maine/hero_idle_2.png',
       idle_3: '/assets/Maine/hero_idle_3.png',
@@ -407,24 +383,23 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
       walk_up_3: '/assets/Maine/hero_walk_up_3.png',
       hero_avatar: '/assets/Maine/hero_avatar.png',
 
-      // Props & Tiles SMKN 7 Baleendah
+      // Sliced Props
       prop_monumen_smkn7: '/assets/tiles/prop_monumen_smkn7.png',
       prop_plang_gantung: '/assets/tiles/prop_plang_gantung.png',
       prop_podium: '/assets/tiles/prop_podium.png',
       prop_meja_siswa_top: '/assets/tiles/prop_meja_siswa_top.png',
-      prop_meja_siswa_mid: '/assets/tiles/prop_meja_siswa_mid.png',
       prop_fotokopi_1: '/assets/tiles/prop_fotokopi_1.png',
       prop_router: '/assets/tiles/prop_router.png',
       prop_dispenser_1: '/assets/tiles/prop_dispenser_1.png',
       prop_kursi_susun: '/assets/tiles/prop_kursi_susun.png',
-      prop_apar: '/assets/tiles/prop_apar.png',
+      prop_apar_1: '/assets/tiles/prop_apar_1.png',
       prop_kotak_uks: '/assets/tiles/prop_kotak_uks.png',
       prop_tempat_sampah_3: '/assets/tiles/prop_tempat_sampah_3.png',
-      prop_kursi_tas: '/assets/tiles/prop_kursi_tas.png',
+      prop_kursi_tas_1: '/assets/tiles/prop_kursi_tas_1.png',
       prop_parkiran_motor: '/assets/tiles/prop_parkiran_motor.png',
       prop_motor_matic_1: '/assets/tiles/prop_motor_matic_1.png',
-      prop_motor_matic_2: '/assets/tiles/prop_motor_matic_2.png',
 
+      // Sliced Tiles
       tile_floor_white: '/assets/tiles/tile_floor_white.png',
       tile_floor_blue: '/assets/tiles/tile_floor_blue.png',
       tile_wall_brick: '/assets/tiles/tile_wall_brick.png',
@@ -460,29 +435,29 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
     });
   }, []);
 
-  // Roaming Monsters (Alien Anomalies)
+  // Roaming Monsters
   const monstersRef = useRef<RoamingMonster[]>([
-    { id: 'm1', x: 450, y: 720, vx: 35, spriteKey: 'void_eyeball' },
-    { id: 'm2', x: 1350, y: 720, vx: -30, spriteKey: 'glitch_monolith' },
+    { id: 'm1', x: 450, y: 700, vx: 35, spriteKey: 'void_eyeball' },
+    { id: 'm2', x: 1350, y: 700, vx: -30, spriteKey: 'glitch_monolith' },
     { id: 'm3', x: 800, y: 1100, vx: 25, spriteKey: 'cosmic_slime' },
     { id: 'm4', x: 1250, y: 1350, vx: -28, spriteKey: 'void_eyeball' },
   ]);
 
   const tickRef = useRef(0);
 
-  // Accurate Collision Check with Wall Grid & Props
+  // Collision Checking
   const checkCollisionAt = (px: number, py: number): boolean => {
     const feetLeft = px - 16;
     const feetRight = px + 16;
     const feetTop = py + 20;
-    const feetBottom = py + 40;
+    const feetBottom = py + 38;
 
-    // World Boundary Check
+    // Boundaries
     if (feetLeft < 64 || feetRight >= WORLD_WIDTH - 64 || feetTop < 64 || feetBottom >= WORLD_HEIGHT - 64) {
       return true;
     }
 
-    // Grid Tile Collision
+    // Grid Wall Collision
     const minCol = Math.floor(feetLeft / TILE_SIZE);
     const maxCol = Math.floor(feetRight / TILE_SIZE);
     const minRow = Math.floor(feetTop / TILE_SIZE);
@@ -515,7 +490,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
     return false;
   };
 
-  // Keyboard input
+  // Keyboard events
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const code = e.code;
@@ -538,7 +513,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
     };
   }, []);
 
-  // Main Game Loop (Camera, Render, Movement)
+  // Main Loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -575,7 +550,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
 
       if (isMoving) {
         const len = Math.hypot(dx, dy) || 1;
-        const speed = 200; // Kecepatan lari gesit
+        const speed = 210;
         const moveX = (dx / len) * speed * dt;
         const moveY = (dy / len) * speed * dt;
 
@@ -592,7 +567,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         animTimerRef.current += dt;
         if (animTimerRef.current > 0.12) {
           animTimerRef.current = 0;
-          animFrameRef.current = (animFrameRef.current + 1) % 4; // 0, 1, 2, 3
+          animFrameRef.current = (animFrameRef.current + 1) % 4;
         }
       } else {
         animFrameRef.current = 0;
@@ -605,7 +580,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         }
       }
 
-      // 2. SMOOTH CAMERA TRACKING
+      // 2. CAMERA FOLLOW
       const targetCamX = playerPosRef.current.x - viewportSize.w / 2;
       const targetCamY = playerPosRef.current.y - viewportSize.h / 2;
       const maxCamX = WORLD_WIDTH - viewportSize.w;
@@ -614,14 +589,13 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
       const clampedTargetX = Math.max(0, Math.min(maxCamX, targetCamX));
       const clampedTargetY = Math.max(0, Math.min(maxCamY, targetCamY));
 
-      // Lerp camera
       cameraRef.current.x += (clampedTargetX - cameraRef.current.x) * 0.12;
       cameraRef.current.y += (clampedTargetY - cameraRef.current.y) * 0.12;
 
       const camX = Math.round(cameraRef.current.x);
       const camY = Math.round(cameraRef.current.y);
 
-      // 3. UPDATE ROAMING MONSTERS & ENCOUNTERS
+      // 3. ENCOUNTERS
       monstersRef.current.forEach((m) => {
         m.x += m.vx * dt;
         if (m.x < 300 || m.x > 1800) m.vx *= -1;
@@ -642,18 +616,14 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         }
       }
 
-      // 4. DRAW BASE TILES (Clipped to Viewport)
-      ctx.fillStyle = '#08080c';
+      // 4. DRAW BASE FLOORS (Clean Seamless Canvas)
+      ctx.fillStyle = '#0e1117';
       ctx.fillRect(0, 0, viewportSize.w, viewportSize.h);
 
       const startCol = Math.max(0, Math.floor(camX / TILE_SIZE));
       const endCol = Math.min(MAP_COLS, Math.ceil((camX + viewportSize.w) / TILE_SIZE));
       const startRow = Math.max(0, Math.floor(camY / TILE_SIZE));
       const endRow = Math.min(MAP_ROWS, Math.ceil((camY + viewportSize.h) / TILE_SIZE));
-
-      const imgFloorWhite = imagesRef.current['tile_floor_white'];
-      const imgFloorBlue = imagesRef.current['tile_floor_blue'];
-      const imgWallBrick = imagesRef.current['tile_wall_brick'];
 
       for (let r = startRow; r < endRow; r++) {
         for (let c = startCol; c < endCol; c++) {
@@ -662,44 +632,38 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
           const scrY = r * TILE_SIZE - camY;
 
           if (tType === 0) {
-            // Outdoor Paving
-            ctx.fillStyle = (r + c) % 2 === 0 ? '#272c35' : '#21262f';
+            // Outdoor Paved Courtyard
+            ctx.fillStyle = (r + c) % 2 === 0 ? '#1f242d' : '#1a1e26';
             ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
-            ctx.strokeStyle = '#1a1e26';
+            ctx.strokeStyle = '#15181f';
             ctx.strokeRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
           } else if (tType === 4) {
-            // Outdoor Grass
+            // Green Lawn Garden
             ctx.fillStyle = (r + c) % 2 === 0 ? '#1b4332' : '#143628';
             ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
           } else if (tType === 1) {
-            // Wall Brick / Exterior
-            if (imgWallBrick && imgWallBrick.complete) {
-              ctx.drawImage(imgWallBrick, scrX, scrY, TILE_SIZE, TILE_SIZE);
-            } else {
-              ctx.fillStyle = '#4a151b';
-              ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
-            }
+            // Solid Wall Boundary
+            ctx.fillStyle = '#1e1115';
+            ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = '#4a151b';
+            ctx.fillRect(scrX + 2, scrY + 2, TILE_SIZE - 4, TILE_SIZE - 4);
           } else if (tType === 2) {
-            // Hallway White Ceramic
-            if (imgFloorWhite && imgFloorWhite.complete) {
-              ctx.drawImage(imgFloorWhite, scrX, scrY, TILE_SIZE, TILE_SIZE);
-            } else {
-              ctx.fillStyle = (r + c) % 2 === 0 ? '#e2e8f0' : '#cbd5e1';
-              ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
-            }
+            // Hallway Clean White Ceramic
+            ctx.fillStyle = (r + c) % 2 === 0 ? '#e2e8f0' : '#cbd5e1';
+            ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
+            ctx.strokeStyle = '#94a3b8';
+            ctx.strokeRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
           } else if (tType === 3) {
             // Lab Anti-static Blue Floor
-            if (imgFloorBlue && imgFloorBlue.complete) {
-              ctx.drawImage(imgFloorBlue, scrX, scrY, TILE_SIZE, TILE_SIZE);
-            } else {
-              ctx.fillStyle = (r + c) % 2 === 0 ? '#1e3a8a' : '#1d4ed8';
-              ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
-            }
+            ctx.fillStyle = (r + c) % 2 === 0 ? '#1e3a8a' : '#1d4ed8';
+            ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
+            ctx.strokeStyle = '#1e40af';
+            ctx.strokeRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
           }
         }
       }
 
-      // 5. Y-SORTED RENDERABLE ENTITIES (Props + Monsters + Player)
+      // 5. Y-SORTED ENTITIES (Props, Monsters, Player)
       interface RenderEntity {
         yOrder: number;
         draw: () => void;
@@ -712,7 +676,6 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         const scrX = prop.x - camX;
         const scrY = prop.y - camY;
 
-        // Cull offscreen props
         if (
           scrX + prop.w >= -50 &&
           scrX <= viewportSize.w + 50 &&
@@ -776,7 +739,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
       entities.push({
         yOrder: pY + 36,
         draw: () => {
-          // Player Shadow
+          // Shadow
           ctx.fillStyle = 'rgba(0,0,0,0.45)';
           ctx.beginPath();
           ctx.ellipse(pScrX, pScrY + 36, 20, 7, 0, 0, Math.PI * 2);
@@ -793,7 +756,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
 
           if (playerImg && playerImg.complete && playerImg.naturalWidth > 0) {
             const aspect = playerImg.naturalWidth / playerImg.naturalHeight;
-            const targetH = 92; // Proporsi gagah dan jelas
+            const targetH = 92;
             const targetW = targetH * aspect;
             ctx.drawImage(playerImg, -targetW / 2, -56 + stepBob, targetW, targetH);
           }
@@ -801,12 +764,12 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         },
       });
 
-      // Sort by Y-order (Depth sorting) & Draw
+      // Sort and Draw
       entities.sort((a, b) => a.yOrder - b.yOrder);
       entities.forEach((e) => e.draw());
 
-      // 6. SUBTLE RETRO SCANLINE OVERLAY
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+      // Subtle Scanlines
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
       for (let y = 0; y < viewportSize.h; y += 4) {
         ctx.fillRect(0, y, viewportSize.w, 1.5);
       }
@@ -818,24 +781,24 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
     return () => cancelAnimationFrame(animId);
   }, [onEncounter, imagesLoaded, viewportSize]);
 
-  // Virtual D-Pad buttons
+  // Virtual keys
   const startVirtualKey = (key: string) => keysDownRef.current.add(key);
   const stopVirtualKey = (key: string) => keysDownRef.current.delete(key);
 
-  // Determine Current Zone Name for HUD
+  // Dynamic Zone Name
   const curX = playerPosRef.current.x;
   const curY = playerPosRef.current.y;
   let currentZoneName = 'GERBANG & MONUMEN UTAMA';
-  if (curY > 580 && curY <= 960) currentZoneName = 'KORIDOR KELAS & PRESTASI';
-  else if (curY > 960 && curX <= 1600) currentZoneName = 'LAB KOMPUTER & JARINGAN (TKJ/RPL)';
-  else if (curY > 960 && curX > 1600) currentZoneName = 'RUANG TATA USAHA & UKS';
+  if (curY > 520 && curY <= 900) currentZoneName = 'KORIDOR KELAS & PRESTASI';
+  else if (curY > 900 && curX <= 1600) currentZoneName = 'LAB KOMPUTER & JARINGAN (TKJ/RPL)';
+  else if (curY > 900 && curX > 1600) currentZoneName = 'RUANG TATA USAHA & UKS';
 
   return (
     <div
       ref={containerRef}
       className="relative w-full h-screen overflow-hidden bg-[#0a0a0f] text-white font-mono select-none flex flex-col justify-between"
     >
-      {/* TOP HUD BAR (Cyberpunk / Indonesian SMK Theme) */}
+      {/* TOP HUD BAR */}
       <div className="absolute top-3 left-3 right-3 z-30 flex items-center justify-between pointer-events-none">
         <div className="flex items-center space-x-3 bg-[#12121c]/90 backdrop-blur border-2 border-[#383850] p-2.5 shadow-2xl">
           <img
@@ -887,7 +850,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         />
       </div>
 
-      {/* BOTTOM CONTROLS & MINI MAP HINT */}
+      {/* BOTTOM CONTROLS */}
       <div className="absolute bottom-3 left-3 right-3 z-30 flex items-end justify-between pointer-events-none">
         <div className="bg-[#12121c]/90 backdrop-blur border-2 border-[#383850] p-3 text-xs max-w-md pointer-events-auto">
           <p className="font-bold text-yellow-400 mb-0.5">🎮 KONTROL JELAJAH SMKN 7 BALEENDAH:</p>
