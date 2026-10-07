@@ -213,11 +213,13 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
       if (enemy.hp - finalDamage <= 0) {
         setHeroPose('victory');
-        setAnimSubFrame(2);
+        setAnimSubFrame(1);
+        setTimeout(() => setAnimSubFrame(2), 300);
+        setTimeout(() => setAnimSubFrame(3), 600);
         playSound.victory();
         setTimeout(() => {
           onVictory(player);
-        }, 1200);
+        }, 1300);
       } else {
         setHeroPose('idle');
       }
@@ -242,6 +244,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     } else {
       setHeroPose('hurt');
       setAnimSubFrame(1);
+      setTimeout(() => setAnimSubFrame(2), 200);
     }
 
     setPlayer((prev) => {
@@ -272,7 +275,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     setTimeout(() => {
       if (player.hp - finalDmg <= 0) {
         setHeroPose('defeat');
-        setAnimSubFrame(3);
+        setAnimSubFrame(3); // Frame 3: Karakter tumbang di lantai
         setTimeout(() => {
           onDefeat();
         }, 1400);
@@ -301,11 +304,11 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   } else if (heroPose === 'heal') {
     heroSpriteSrc = `/assets/Maine/hero_battle_heal_${animSubFrame}.png`;
   } else if (heroPose === 'hurt') {
-    heroSpriteSrc = '/assets/Maine/hero_battle_block_1.png';
+    heroSpriteSrc = `/assets/Maine/hero_battle_hurt_${animSubFrame}.png`;
   } else if (heroPose === 'victory') {
-    heroSpriteSrc = '/assets/Maine/hero_battle_buff_2.png';
+    heroSpriteSrc = `/assets/Maine/hero_battle_victory_${animSubFrame}.png`;
   } else if (heroPose === 'defeat') {
-    heroSpriteSrc = '/assets/Maine/hero_battle_block_3.png';
+    heroSpriteSrc = '/assets/Maine/hero_battle_hurt_3.png';
   }
 
   const enemySpriteUrl = getSpriteDataUrl(`${enemy.spriteKey}_0`);
