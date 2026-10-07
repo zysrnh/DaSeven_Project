@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import type { Enemy, Player } from './types/game';
 import { STARTER_DECK } from './data/cards';
 import { Overworld } from './components/Overworld';
@@ -74,7 +74,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#09090e] text-white font-mono antialiased">
+    <div className="w-screen h-screen overflow-hidden bg-[#09090e] text-white font-mono antialiased">
       {gameMode === 'OVERWORLD' && (
         <Overworld player={player} onEncounter={handleEncounter} />
       )}
