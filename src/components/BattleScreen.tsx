@@ -13,7 +13,18 @@ interface BattleScreenProps {
   onDefeat: () => void;
 }
 
-type HeroPose = 'idle' | 'windup' | 'attack' | 'defend' | 'hurt' | 'heal' | 'victory' | 'defeat';
+type HeroPose =
+  | 'idle'
+  | 'windup_light'
+  | 'attack_light'
+  | 'windup_heavy'
+  | 'attack_heavy'
+  | 'block'
+  | 'buff'
+  | 'heal'
+  | 'hurt'
+  | 'victory'
+  | 'defeat';
 
 export const BattleScreen: React.FC<BattleScreenProps> = ({
   player: initialPlayer,
@@ -27,17 +38,18 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   const [activeCard, setActiveCard] = useState<Card | null>(null);
   const [isEnemyAttacking, setIsEnemyAttacking] = useState(false);
   const [heroPose, setHeroPose] = useState<HeroPose>('idle');
-  const [idleToggle, setIdleToggle] = useState(false);
+  const [idleFrame, setIdleFrame] = useState(0); // 0, 1, 2 (3-frame breathing)
+  const [animSubFrame, setAnimSubFrame] = useState(1);
   const [enemyFlash, setEnemyFlash] = useState(false);
   const [battleLogs, setBattleLogs] = useState<string[]>([
     `Pertarungan dimulai! ${enemy.name} (${enemy.title}) menghalangi lorong!`,
   ]);
 
-  // Subtle breathing idle animation toggle in battle
+  // Smooth 3-frame breathing idle animation in battle
   useEffect(() => {
     const timer = setInterval(() => {
-      setIdleToggle((prev) => !prev);
-    }, 650);
+      setIdleFrame((prev) => (prev + 1) % 3);
+    }, 450);
     return () => clearInterval(timer);
   }, []);
 
@@ -85,11 +97,23 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
     playSound.cardSelect();
 
-    if (card.type === 'attack' || card.type === 'special') {
+    if (card.type === 'attack') {
       setActiveCard(card);
-      setHeroPose('windup'); // Pose ancang-ancang angkat penggaris
+      // Pembeda attack ringan vs berat berdasarkan value & cost
+      if (card.cost >= 2 || card.timingDifficulty === 'hard') {
+        setHeroPose('windup_heavy');
+      } else {
+        setHeroPose('windup_light');
+      }
+    } else if (card.type === 'special') {
+      setActiveCard(card);
+      setHeroPose('windup_heavy');
     } else if (card.type === 'defense') {
-      setHeroPose('defend'); // Pose pasang buku modul binder rapat sebagai perisai!
+      setHeroPose('block');
+      setAnimSubFrame(1);
+      setTimeout(() => setAnimSubFrame(2), 200);
+      setTimeout(() => setAnimSubFrame(3), 500);
+
       setPlayer((prev) => ({
         ...prev,
         ap: prev.ap - card.cost,
@@ -101,7 +125,11 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       addLog(`Kamu memasang ${card.name}! Mendapatkan +${card.value} Shield!`);
       setTimeout(() => setHeroPose('idle'), 1100);
     } else if (card.type === 'heal') {
-      setHeroPose('heal'); // Pose minum es teh kantin berplastik dengan sedotan!
+      setHeroPose('heal');
+      setAnimSubFrame(1);
+      setTimeout(() => setAnimSubFrame(2), 250);
+      setTimeout(() => setAnimSubFrame(3), 600);
+
       playSound.heal();
       setPlayer((prev) => {
         let deck = [...prev.deck];
@@ -123,7 +151,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         };
       });
       addLog(`Minum ${card.name}! Pulih +${card.value} HP & menarik 1 kartu!`);
-      setTimeout(() => setHeroPose('idle'), 1100);
+      setTimeout(() => setHeroPose('idle'), 1200);
     }
   };
 
@@ -132,8 +160,17 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
     const baseDmg = activeCard.value;
     const finalDamage = Math.round(baseDmg * multiplier);
+    const isHeavy = activeCard.cost >= 2 || activeCard.timingDifficulty === 'hard' || activeCard.type === 'special';
 
-    setHeroPose('attack'); // Pose tebas slash penggaris besi dengan efek putih!
+    if (isHeavy) {
+      setHeroPose('attack_heavy');
+      setAnimSubFrame(2);
+    } else {
+      setHeroPose('attack_light');
+      setAnimSubFrame(2);
+      setTimeout(() => setAnimSubFrame(3), 200);
+    }
+
     setEnemyFlash(true);
 
     setEnemy((prev) => {
@@ -175,7 +212,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       setEnemyFlash(false);
 
       if (enemy.hp - finalDamage <= 0) {
-        setHeroPose('victory'); // Pose menang acung jempol!
+        setHeroPose('victory');
+        setAnimSubFrame(2);
         playSound.victory();
         setTimeout(() => {
           onVictory(player);
@@ -183,7 +221,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       } else {
         setHeroPose('idle');
       }
-    }, 700);
+    }, 750);
   };
 
   const handleEndTurn = () => {
@@ -198,7 +236,13 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     const rawDmg = enemy.intent.value;
     const finalDmg = parried ? Math.max(1, Math.round(rawDmg * 0.2)) : rawDmg;
 
-    setHeroPose(parried ? 'defend' : 'hurt');
+    if (parried) {
+      setHeroPose('block');
+      setAnimSubFrame(2);
+    } else {
+      setHeroPose('hurt');
+      setAnimSubFrame(1);
+    }
 
     setPlayer((prev) => {
       let dmgLeft = finalDmg;
@@ -220,15 +264,15 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     });
 
     if (parried) {
-      addLog(`★ PARRY SUKSES! Kamu menangkis dengan perisai binder! Hanya kena ${finalDmg} DMG!`);
+      addLog(`★ PARRY SUKSES! Kamu menangkis dengan blok tangguh! Hanya kena ${finalDmg} DMG!`);
     } else {
       addLog(`✗ PARRY GAGAL! ${enemy.name} menghantam sebesar ${finalDmg} DMG!`);
     }
 
     setTimeout(() => {
       if (player.hp - finalDmg <= 0) {
-        // Menggunakan hero_defeat_1 (berlutut lemas & menunduk) sesuai permintaan
         setHeroPose('defeat');
+        setAnimSubFrame(3);
         setTimeout(() => {
           onDefeat();
         }, 1400);
@@ -239,26 +283,29 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     }, 900);
   };
 
-  // Dynamic 20-Sprite Asset Mapping
-  let heroSpriteSrc = idleToggle
-    ? '/assets/Maine/hero_battle_idle_2.png'
-    : '/assets/Maine/hero_battle_idle_1.png';
+  // Sprite Selector based on HeroPose & animation subframes
+  let heroSpriteSrc = `/assets/Maine/hero_battle_idle_${idleFrame + 1}.png`;
 
-  if (heroPose === 'windup') {
-    heroSpriteSrc = '/assets/Maine/hero_attack_windup.png';
-  } else if (heroPose === 'attack') {
-    heroSpriteSrc = '/assets/Maine/hero_attack_slash.png';
-  } else if (heroPose === 'defend') {
-    heroSpriteSrc = '/assets/Maine/hero_battle_defend_1.png';
-  } else if (heroPose === 'hurt') {
-    heroSpriteSrc = '/assets/Maine/hero_hurt_1.png';
+  if (heroPose === 'windup_light') {
+    heroSpriteSrc = '/assets/Maine/hero_attack_light_1.png';
+  } else if (heroPose === 'attack_light') {
+    heroSpriteSrc = `/assets/Maine/hero_attack_light_${animSubFrame}.png`;
+  } else if (heroPose === 'windup_heavy') {
+    heroSpriteSrc = '/assets/Maine/hero_attack_heavy_1.png';
+  } else if (heroPose === 'attack_heavy') {
+    heroSpriteSrc = `/assets/Maine/hero_attack_heavy_${animSubFrame}.png`;
+  } else if (heroPose === 'block') {
+    heroSpriteSrc = `/assets/Maine/hero_battle_block_${animSubFrame}.png`;
+  } else if (heroPose === 'buff') {
+    heroSpriteSrc = `/assets/Maine/hero_battle_buff_${animSubFrame}.png`;
   } else if (heroPose === 'heal') {
-    heroSpriteSrc = '/assets/Maine/hero_heal_1.png';
+    heroSpriteSrc = `/assets/Maine/hero_battle_heal_${animSubFrame}.png`;
+  } else if (heroPose === 'hurt') {
+    heroSpriteSrc = '/assets/Maine/hero_battle_block_1.png';
   } else if (heroPose === 'victory') {
-    heroSpriteSrc = '/assets/Maine/hero_victory_2.png';
+    heroSpriteSrc = '/assets/Maine/hero_battle_buff_2.png';
   } else if (heroPose === 'defeat') {
-    // Sesuai permintaan user: Menggunakan hero_defeat_1.png (berlutut lemas)
-    heroSpriteSrc = '/assets/Maine/hero_defeat_1.png';
+    heroSpriteSrc = '/assets/Maine/hero_battle_block_3.png';
   }
 
   const enemySpriteUrl = getSpriteDataUrl(`${enemy.spriteKey}_0`);
@@ -284,12 +331,19 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
           {/* PLAYER */}
           <div className="relative z-10 flex flex-col items-center">
-            <div className="bg-[#1e1e2d] border-2 border-[#474766] p-2.5 mb-2 w-44 shadow-md">
-              <div className="flex justify-between items-center text-xs mb-1">
-                <span className="font-bold text-white">{player.name}</span>
-                <span className="text-[10px] text-cyan-400 bg-[#0f172a] px-1 border border-[#334155]">{player.jurusan}</span>
+            <div className="bg-[#1e1e2d] border-2 border-[#474766] p-2.5 mb-2 w-48 shadow-md">
+              <div className="flex items-center space-x-2 mb-1.5">
+                <img
+                  src="/assets/Maine/hero_avatar.png"
+                  alt="Player Avatar"
+                  className="w-8 h-8 object-contain bg-[#0a0a0f] border border-yellow-400/60 p-0.5"
+                />
+                <div className="overflow-hidden flex-1">
+                  <div className="font-bold text-white text-xs truncate">{player.name}</div>
+                  <div className="text-[9px] text-cyan-400 truncate">{player.jurusan}</div>
+                </div>
               </div>
-              
+
               <div className="h-3 bg-[#331118] border border-[#66222b] overflow-hidden mb-1 relative">
                 <div
                   className="h-full bg-green-500 transition-all duration-300"
@@ -307,14 +361,14 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
             {/* Dynamic Battle Sprite Frame with Defense Barrier Overlay */}
             <div className="relative w-44 h-36 flex items-center justify-center">
               <DefenseBarrierEffect
-                isActive={heroPose === 'defend' || player.shield > 0}
+                isActive={heroPose === 'block' || player.shield > 0}
                 shieldValue={player.shield}
               />
               <img
                 src={heroSpriteSrc}
                 alt="Hero Anak SMK"
                 className={`max-h-36 object-contain [image-rendering:pixelated] drop-shadow-[0_8px_0_rgba(0,0,0,0.5)] transition-transform duration-150 ${
-                  heroPose === 'attack'
+                  heroPose === 'attack_light' || heroPose === 'attack_heavy'
                     ? 'scale-110 translate-x-4'
                     : heroPose === 'hurt'
                     ? 'opacity-70 -translate-x-2'
@@ -431,28 +485,18 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
                       {card.cost}
                     </span>
                   </div>
-
-                  <div className="text-[11px] text-neutral-300 mb-2 leading-tight">
+                  <div className="text-[11px] text-yellow-300 font-bold mb-1">
+                    {card.type === 'attack' && `⚔ Serangan: ${card.value} DMG`}
+                    {card.type === 'defense' && `🛡 Perisai: +${card.value} Shield`}
+                    {card.type === 'heal' && `🧪 Pemulihan: +${card.value} HP`}
+                    {card.type === 'special' && `⚡ Tembus Shield: ${card.value} DMG`}
+                  </div>
+                  <p className="text-[10px] text-neutral-300 leading-tight mb-2">
                     {card.description}
-                  </div>
+                  </p>
                 </div>
-
-                <div>
-                  <div className="text-[9px] text-neutral-400 italic mb-1.5 border-t border-[#262636] pt-1">
-                    "{card.flavor}"
-                  </div>
-
-                  <div className="flex justify-between items-center text-[10px]">
-                    <span
-                      className="px-1.5 py-0.5 font-bold uppercase"
-                      style={{ backgroundColor: card.color, color: '#ffffff' }}
-                    >
-                      {card.type}
-                    </span>
-                    <span className="text-yellow-400 font-bold">
-                      {card.type === 'attack' || card.type === 'special' ? `⚔ ${card.value} DMG` : card.type === 'defense' ? `🛡 +${card.value}` : `♥ +${card.value}`}
-                    </span>
-                  </div>
+                <div className="text-[9px] text-neutral-500 italic border-t border-[#262638] pt-1">
+                  "{card.flavor}"
                 </div>
               </div>
             );
@@ -460,17 +504,24 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         </div>
       </div>
 
+      {/* TIMING QTE MODAL UNTUK SERANGAN */}
       {activeCard && (
         <ActionTimingBar
           card={activeCard}
-          onComplete={handleResolvePlayerQte}
+          onResolve={handleResolvePlayerQte}
+          onCancel={() => {
+            setActiveCard(null);
+            setHeroPose('idle');
+          }}
         />
       )}
 
+      {/* TIMING QTE MODAL UNTUK PARRY / REAKSI BERTAHAN */}
       {isEnemyAttacking && (
         <EnemyDefenseQte
-          enemy={enemy}
-          onComplete={handleResolveEnemyDefense}
+          enemyName={enemy.name}
+          intentValue={enemy.intent.value}
+          onResolve={handleResolveEnemyDefense}
         />
       )}
     </div>

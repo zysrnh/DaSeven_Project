@@ -49,9 +49,9 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
   const playerDirRef = useRef<Direction>('right');
   const isMovingRef = useRef(false);
   const animTimerRef = useRef(0);
-  const animFrameRef = useRef(0); // 0, 1, 2, 3 (4-phase cycle)
+  const animFrameRef = useRef(0); // 0, 1, 2 (3-phase walk cycle)
   const idleTimerRef = useRef(0);
-  const idleFrameRef = useRef(0);
+  const idleFrameRef = useRef(0); // 0, 1, 2 (3-frame idle)
   const stepSoundTimerRef = useRef(0);
 
   const keysDownRef = useRef<Set<string>>(new Set());
@@ -62,17 +62,24 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
 
   useEffect(() => {
     const list: Record<string, string> = {
+      // Idle overworld
+      idle_1: '/assets/Maine/hero_idle_1.png',
+      idle_2: '/assets/Maine/hero_idle_2.png',
+      idle_3: '/assets/Maine/hero_idle_3.png',
+      // Walk Down / Front
       walk_front_1: '/assets/Maine/hero_walk_front_1.png',
       walk_front_2: '/assets/Maine/hero_walk_front_2.png',
       walk_front_3: '/assets/Maine/hero_walk_front_3.png',
-      walk_front_4: '/assets/Maine/hero_walk_front_4.png',
-      walk_back_1: '/assets/Maine/hero_walk_back_1.png',
-      walk_back_2: '/assets/Maine/hero_walk_back_2.png',
-      // Menggunakan pose jalan diagonal (3/4 view) yang ekspresif untuk arah kiri/kanan
-      walk_diag_1: '/assets/Maine/hero_walk_diag_1.png',
-      walk_diag_2: '/assets/Maine/hero_walk_diag_2.png',
-      idle_front_1: '/assets/Maine/hero_idle_front_1.png',
-      idle_front_2: '/assets/Maine/hero_idle_front_2.png',
+      // Walk Side (Horizontal)
+      walk_side_1: '/assets/Maine/hero_walk_side_1.png',
+      walk_side_2: '/assets/Maine/hero_walk_side_2.png',
+      walk_side_3: '/assets/Maine/hero_walk_side_3.png',
+      // Walk Up / Back
+      walk_up_1: '/assets/Maine/hero_walk_up_1.png',
+      walk_up_2: '/assets/Maine/hero_walk_up_2.png',
+      walk_up_3: '/assets/Maine/hero_walk_up_3.png',
+      // Avatar
+      hero_avatar: '/assets/Maine/hero_avatar.png',
     };
 
     let loadedCount = 0;
@@ -189,7 +196,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
       const isMoving = dx !== 0 || dy !== 0;
       isMovingRef.current = isMoving;
 
-      // Gesit & Tangkas: Kecepatan 175 px/detik
+      // Kecepatan 175 px/detik
       if (isMoving) {
         const len = Math.hypot(dx, dy) || 1;
         const speed = 175;
@@ -210,9 +217,9 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
           playSound.step();
         }
 
-        // Tempo animasi dipercepat ke 0.11s per phase untuk pergerakan lincah & halus
+        // Tempo animasi jalan 0.12s per frame (Cycle 0 -> 1 -> 2 -> 1)
         animTimerRef.current += dt;
-        if (animTimerRef.current > 0.11) {
+        if (animTimerRef.current > 0.12) {
           animTimerRef.current = 0;
           animFrameRef.current = (animFrameRef.current + 1) % 4; // 0, 1, 2, 3
         }
@@ -220,11 +227,11 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         animFrameRef.current = 0;
         stepSoundTimerRef.current = 0.15;
 
-        // Idle bernapas santai
+        // Idle bernapas santai 3 frame
         idleTimerRef.current += dt;
-        if (idleTimerRef.current > 0.6) {
+        if (idleTimerRef.current > 0.45) {
           idleTimerRef.current = 0;
-          idleFrameRef.current = idleFrameRef.current === 0 ? 1 : 0;
+          idleFrameRef.current = (idleFrameRef.current + 1) % 3;
         }
       }
 
@@ -298,39 +305,29 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
       ctx.ellipse(pX, pY + 24, 14, 5, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // 4-Phase Walk Cycle Selection
-      let activeSpriteKey = 'idle_front_1';
+      // Sprite Selection Logic
+      let activeSpriteKey = 'idle_1';
       const dir = playerDirRef.current;
-      const phase = animFrameRef.current; // 0, 1, 2, 3
-      const idleFrame = idleFrameRef.current;
+      const stepPhase = animFrameRef.current; // 0, 1, 2, 3
+      // Walk 3-frame ping-pong: frame 1 -> frame 2 -> frame 3 -> frame 2
+      const walkFrameIdx = stepPhase === 3 ? 2 : stepPhase + 1; // 1, 2, 3, 2
 
       if (isMoving) {
         if (dir === 'down') {
-          // Jalan ke bawah lurus (4-Phase: Kaki Kiri -> Kaki Tengah -> Kaki Kanan -> Kaki Tengah)
-          if (phase === 0) activeSpriteKey = 'walk_front_1';
-          else if (phase === 1) activeSpriteKey = 'walk_front_2';
-          else if (phase === 2) activeSpriteKey = 'walk_front_3';
-          else activeSpriteKey = 'walk_front_4';
+          activeSpriteKey = `walk_front_${walkFrameIdx}`;
         } else if (dir === 'up') {
-          // Jalan ke atas / belakang (4-Phase)
-          if (phase === 0) activeSpriteKey = 'walk_back_1';
-          else if (phase === 1) activeSpriteKey = 'walk_back_1';
-          else if (phase === 2) activeSpriteKey = 'walk_back_2';
-          else activeSpriteKey = 'walk_back_1';
+          activeSpriteKey = `walk_up_${walkFrameIdx}`;
         } else {
-          // Jalan ke samping pakai pose diagonal 3/4 yang dinamis & keren!
-          if (phase === 0 || phase === 1) activeSpriteKey = 'walk_diag_1';
-          else activeSpriteKey = 'walk_diag_2';
+          activeSpriteKey = `walk_side_${walkFrameIdx}`;
         }
       } else {
         // Idle states
         if (dir === 'down') {
-          activeSpriteKey = idleFrame === 0 ? 'idle_front_1' : 'idle_front_2';
+          activeSpriteKey = `idle_${idleFrameRef.current + 1}`;
         } else if (dir === 'up') {
-          activeSpriteKey = 'walk_back_1';
+          activeSpriteKey = 'walk_up_2';
         } else {
-          // Saat diam hadap samping, pakai pose diagonal 3/4 yang rileks
-          activeSpriteKey = 'walk_diag_1';
+          activeSpriteKey = 'walk_side_2';
         }
       }
 
@@ -343,17 +340,17 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         ctx.scale(-1, 1); // Flip horizontally saat hadap kiri
       }
 
-      // Micro-bobbing (langkah kaki ada hentakan halus 1-2px)
-      const stepBob = isMoving && (phase === 1 || phase === 3) ? -2 : 0;
+      // Micro-bobbing
+      const stepBob = isMoving && (stepPhase === 1 || stepPhase === 3) ? -2 : 0;
 
-      // Render 16-bit retro sprite
+      // Render sliced sprite
       if (img && img.complete && img.naturalWidth > 0) {
         const aspect = img.naturalWidth / img.naturalHeight;
         const targetH = 74;
         const targetW = targetH * aspect;
         ctx.drawImage(img, -targetW / 2, -44 + stepBob, targetW, targetH);
       } else {
-        const fallbackId = `hero_${dir}_${phase % 2}` as SpriteId;
+        const fallbackId = `hero_${dir}_${stepPhase % 2}` as SpriteId;
         const fallbackCanvas = getSprite(fallbackId);
         ctx.drawImage(fallbackCanvas, -16, -16 + stepBob, 32, 32);
       }
@@ -375,18 +372,26 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#0d0d12] text-white p-4 font-mono select-none">
       <div className="w-full max-w-[640px] bg-[#161622] border-2 border-[#323246] p-3 mb-2 flex items-center justify-between text-xs">
         <div className="flex items-center space-x-3">
-          <div className="w-3 h-3 bg-red-500 animate-ping" />
-          <span className="font-bold text-yellow-400">
-            SMK NEGERI 1 KOSMIK • KORIDOR & LAB TKJ
-          </span>
+          <img
+            src="/assets/Maine/hero_avatar.png"
+            alt="Hero Icon"
+            className="w-10 h-10 object-contain bg-[#09090e] border border-yellow-500/50 p-0.5 shadow"
+          />
+          <div>
+            <div className="flex items-center space-x-2">
+              <span className="font-bold text-yellow-400">{player.name}</span>
+              <span className="text-[10px] text-cyan-400 bg-[#1e293b] px-1.5 py-0.2 border border-[#334155]">
+                {player.jurusan}
+              </span>
+            </div>
+            <div className="text-[10px] text-neutral-400 mt-0.5">SMK NEGERI 1 KOSMIK • KORIDOR TKJ</div>
+          </div>
         </div>
         <div className="flex items-center space-x-4">
           <span className="text-neutral-400">
             HP: <strong className="text-green-400">{player.hp}/{player.maxHp}</strong>
           </span>
-          <span className="text-cyan-400 font-bold bg-[#1e293b] px-2 py-0.5 border border-[#334155]">
-            DIAGONAL 3/4 WALK AKTIF
-          </span>
+          <div className="w-3 h-3 bg-red-500 animate-ping" />
         </div>
       </div>
 
@@ -405,7 +410,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
       <div className="w-full max-w-[640px] mt-3 bg-[#161622] border-2 border-[#323246] p-3 text-xs flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="text-neutral-300">
           <p className="font-bold text-yellow-400 mb-1">🎮 KONTROL GERAK BEBAS 4-ARAH:</p>
-          <p>Tahan tombol <strong className="text-white">WASD</strong> atau <strong className="text-white">Panah</strong>. Karakter jalan serong 3/4 view yang ekspresif saat ke kiri/kanan!</p>
+          <p>Tahan tombol <strong className="text-white">WASD</strong> atau <strong className="text-white">Panah</strong> untuk menjelajahi lab & koridor sekolah!</p>
         </div>
 
         <div className="grid grid-cols-3 gap-1 w-28">
