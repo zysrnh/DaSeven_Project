@@ -15,7 +15,7 @@ const MAP_ROWS = 26;
 const WORLD_WIDTH = MAP_COLS * TILE_SIZE;
 const WORLD_HEIGHT = MAP_ROWS * TILE_SIZE;
 
-// Floor Types: 0: Paved Outdoor, 1: Solid Wall, 2: Hallway White Ceramic, 3: Lab Blue Anti-static, 4: Green Grass Garden
+// Floor Types: 0: Paved Outdoor / Asphalt, 1: Solid Wall, 2: Hallway White Ceramic, 3: Lab Blue Anti-static, 4: Green Grass Garden
 const MAP_TILES: number[][] = Array.from({ length: MAP_ROWS }, (_, r) => {
   return Array.from({ length: MAP_COLS }, (_, c) => {
     // Outer Borders
@@ -24,7 +24,7 @@ const MAP_TILES: number[][] = Array.from({ length: MAP_ROWS }, (_, r) => {
     // Zone 1: Outdoor Courtyard & Parking (Rows 1 to 7)
     if (r < 8) {
       if (r < 3 && c > 11 && c < 25) return 4; // Green garden lawn
-      return 0; // Dark asphalt/paved courtyard
+      return 0; // Dark asphalt ground
     }
     
     // Building Exterior Wall & Entrance (Row 8)
@@ -66,7 +66,104 @@ interface PropObject {
 
 // Map Props Placed in SMKN 7 Baleendah
 const MAP_PROPS: PropObject[] = [
-  // 1. OUTDOOR GERBANG & PARKIRAN (Y: 100 - 450)
+  // 1. OUTDOOR GERBANG, JALAN ASPAL & PARKIRAN (Y: 100 - 450)
+  // Double Yellow Center Road Line (Depan Gerbang)
+  {
+    id: 'road_yellow_1',
+    imgKey: 'tile_road_yellow_h',
+    x: 120,
+    y: 390,
+    w: 500,
+    h: 40,
+  },
+  {
+    id: 'road_yellow_2',
+    imgKey: 'tile_road_yellow_h',
+    x: 620,
+    y: 390,
+    w: 500,
+    h: 40,
+  },
+  {
+    id: 'road_yellow_3',
+    imgKey: 'tile_road_yellow_h',
+    x: 1120,
+    y: 390,
+    w: 500,
+    h: 40,
+  },
+  {
+    id: 'road_yellow_4',
+    imgKey: 'tile_road_yellow_h',
+    x: 1620,
+    y: 390,
+    w: 500,
+    h: 40,
+  },
+
+  // Road White Dashed Line (Jalur Masuk)
+  {
+    id: 'road_dashed_1',
+    imgKey: 'tile_road_white_dashed',
+    x: 1000,
+    y: 330,
+    w: 120,
+    h: 45,
+  },
+  {
+    id: 'road_dashed_2',
+    imgKey: 'tile_road_white_dashed',
+    x: 1150,
+    y: 330,
+    w: 120,
+    h: 45,
+  },
+
+  // Directional Arrows
+  {
+    id: 'arrow_in',
+    imgKey: 'tile_arrow_straight',
+    x: 1080,
+    y: 280,
+    w: 45,
+    h: 60,
+  },
+  {
+    id: 'arrow_turn',
+    imgKey: 'tile_arrow_turn_right',
+    x: 1240,
+    y: 280,
+    w: 50,
+    h: 60,
+  },
+
+  // Parking Motor Slots (Marka Parkir Resmi)
+  {
+    id: 'parkir_slots_top',
+    imgKey: 'tile_parking_motor_slots_top',
+    x: 200,
+    y: 130,
+    w: 240,
+    h: 70,
+  },
+  {
+    id: 'parkir_slots_bottom',
+    imgKey: 'tile_parking_motor_slots_bottom',
+    x: 200,
+    y: 260,
+    w: 220,
+    h: 65,
+  },
+  {
+    id: 'parkir_diagonal_box',
+    imgKey: 'tile_parking_diagonal_box_top',
+    x: 440,
+    y: 130,
+    w: 180,
+    h: 65,
+  },
+
+  // Monumen Utama SMKN 7
   {
     id: 'monumen_smkn7',
     imgKey: 'prop_monumen_smkn7',
@@ -94,23 +191,34 @@ const MAP_PROPS: PropObject[] = [
     h: 100,
     collision: { ox: 10, oy: 50, ow: 40, oh: 45 },
   },
+
+  // Kendaraan & Props Parkiran
   {
-    id: 'parkiran_motor_1',
-    imgKey: 'prop_parkiran_motor',
-    x: 220,
-    y: 160,
-    w: 340,
-    h: 147,
-    collision: { ox: 15, oy: 50, ow: 310, oh: 90 },
+    id: 'motor_matic_1',
+    imgKey: 'prop_motor_matic_1',
+    x: 230,
+    y: 140,
+    w: 75,
+    h: 68,
+    collision: { ox: 5, oy: 25, ow: 65, oh: 40 },
   },
   {
-    id: 'motor_matic_parkir',
+    id: 'motor_matic_2',
+    imgKey: 'prop_motor_matic_2',
+    x: 310,
+    y: 140,
+    w: 75,
+    h: 68,
+    collision: { ox: 5, oy: 25, ow: 65, oh: 40 },
+  },
+  {
+    id: 'motor_matic_3',
     imgKey: 'prop_motor_matic_1',
-    x: 600,
-    y: 230,
-    w: 80,
-    h: 72,
-    collision: { ox: 5, oy: 25, ow: 70, oh: 45 },
+    x: 240,
+    y: 270,
+    w: 75,
+    h: 68,
+    collision: { ox: 5, oy: 25, ow: 65, oh: 40 },
   },
   {
     id: 'tempat_sampah_outdoor',
@@ -120,6 +228,40 @@ const MAP_PROPS: PropObject[] = [
     w: 140,
     h: 78,
     collision: { ox: 10, oy: 30, ow: 120, oh: 45 },
+  },
+
+  // Retakan & Detail Jalan
+  {
+    id: 'crack_aspal_1',
+    imgKey: 'tile_crack_spider',
+    x: 750,
+    y: 220,
+    w: 65,
+    h: 65,
+  },
+  {
+    id: 'pothole_aspal_1',
+    imgKey: 'tile_pothole_shallow',
+    x: 850,
+    y: 290,
+    w: 65,
+    h: 65,
+  },
+  {
+    id: 'puddle_air_1',
+    imgKey: 'tile_puddle_water',
+    x: 1540,
+    y: 280,
+    w: 80,
+    h: 65,
+  },
+  {
+    id: 'debris_jalan',
+    imgKey: 'tile_road_debris_litter',
+    x: 1680,
+    y: 220,
+    w: 70,
+    h: 80,
   },
 
   // 2. KORIDOR KELAS & DINDING ATAS (Y: 460 - 850)
@@ -374,6 +516,23 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
       walk_up_3: '/assets/characters/maine/walk_up_3.png',
       hero_avatar: '/assets/characters/maine/avatar.png',
 
+      // Sliced Street & Road Assets
+      tile_asphalt_plain: '/assets/maps/smkn7/tiles/street/asphalt_plain.png',
+      tile_asphalt_gravel: '/assets/maps/smkn7/tiles/street/asphalt_gravel_dark.png',
+      tile_asphalt_pebbles: '/assets/maps/smkn7/tiles/street/asphalt_pebbles.png',
+      tile_asphalt_worn: '/assets/maps/smkn7/tiles/street/asphalt_worn.png',
+      tile_crack_spider: '/assets/maps/smkn7/tiles/street/crack_spider.png',
+      tile_pothole_shallow: '/assets/maps/smkn7/tiles/street/pothole_shallow.png',
+      tile_puddle_water: '/assets/maps/smkn7/tiles/street/puddle_water.png',
+      tile_parking_motor_slots_top: '/assets/maps/smkn7/tiles/street/parking_motor_slots_top.png',
+      tile_parking_motor_slots_bottom: '/assets/maps/smkn7/tiles/street/parking_motor_slots_bottom.png',
+      tile_parking_diagonal_box_top: '/assets/maps/smkn7/tiles/street/parking_diagonal_box_top.png',
+      tile_road_yellow_h: '/assets/maps/smkn7/tiles/street/road_yellow_double_h.png',
+      tile_road_white_dashed: '/assets/maps/smkn7/tiles/street/road_white_dashed.png',
+      tile_arrow_straight: '/assets/maps/smkn7/tiles/street/arrow_straight.png',
+      tile_arrow_turn_right: '/assets/maps/smkn7/tiles/street/arrow_turn_right.png',
+      tile_road_debris_litter: '/assets/maps/smkn7/tiles/street/road_debris_litter.png',
+
       // Sliced Props (SMKN 7)
       prop_monumen_smkn7: '/assets/maps/smkn7/props/prop_monumen_smkn7.png',
       prop_plang_gantung: '/assets/maps/smkn7/props/prop_plang_gantung.png',
@@ -389,6 +548,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
       prop_kursi_tas_1: '/assets/maps/smkn7/props/prop_kursi_tas_1.png',
       prop_parkiran_motor: '/assets/maps/smkn7/props/prop_parkiran_motor.png',
       prop_motor_matic_1: '/assets/maps/smkn7/props/prop_motor_matic_1.png',
+      prop_motor_matic_2: '/assets/maps/smkn7/props/prop_motor_matic_2.png',
 
       // Sliced Tiles (SMKN 7)
       tile_floor_white: '/assets/maps/smkn7/tiles/tile_floor_white.png',
@@ -607,7 +767,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         }
       }
 
-      // 4. DRAW BASE FLOORS (Clean Seamless Canvas)
+      // 4. DRAW BASE FLOORS (Seamless Pixel Tile Texture)
       ctx.fillStyle = '#0e1117';
       ctx.fillRect(0, 0, viewportSize.w, viewportSize.h);
 
@@ -616,6 +776,9 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
       const startRow = Math.max(0, Math.floor(camY / TILE_SIZE));
       const endRow = Math.min(MAP_ROWS, Math.ceil((camY + viewportSize.h) / TILE_SIZE));
 
+      const asphaltImg = imagesRef.current.tile_asphalt_plain;
+      const asphaltWorn = imagesRef.current.tile_asphalt_worn;
+
       for (let r = startRow; r < endRow; r++) {
         for (let c = startCol; c < endCol; c++) {
           const tType = MAP_TILES[r][c];
@@ -623,11 +786,14 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
           const scrY = r * TILE_SIZE - camY;
 
           if (tType === 0) {
-            // Outdoor Paved Courtyard
-            ctx.fillStyle = (r + c) % 2 === 0 ? '#1f242d' : '#1a1e26';
-            ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
-            ctx.strokeStyle = '#15181f';
-            ctx.strokeRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
+            // Outdoor Asphalt Ground with Pixel Texture
+            const img = (r + c) % 3 === 0 ? asphaltWorn : asphaltImg;
+            if (img && img.complete && img.naturalWidth > 0) {
+              ctx.drawImage(img, scrX, scrY, TILE_SIZE, TILE_SIZE);
+            } else {
+              ctx.fillStyle = (r + c) % 2 === 0 ? '#1f242d' : '#1a1e26';
+              ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
+            }
           } else if (tType === 4) {
             // Green Lawn Garden
             ctx.fillStyle = (r + c) % 2 === 0 ? '#1b4332' : '#143628';
@@ -662,19 +828,21 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
 
       const entities: RenderEntity[] = [];
 
-      // Add Props
+      // Add Props & Street Markings
       MAP_PROPS.forEach((prop) => {
         const scrX = prop.x - camX;
         const scrY = prop.y - camY;
 
         if (
-          scrX + prop.w >= -50 &&
-          scrX <= viewportSize.w + 50 &&
-          scrY + prop.h >= -50 &&
-          scrY <= viewportSize.h + 50
+          scrX + prop.w >= -100 &&
+          scrX <= viewportSize.w + 100 &&
+          scrY + prop.h >= -100 &&
+          scrY <= viewportSize.h + 100
         ) {
           const img = imagesRef.current[prop.imgKey];
-          const yFoot = prop.collision ? prop.y + prop.collision.oy + prop.collision.oh : prop.y + prop.h;
+          // If prop is a flat ground decal/marking (like yellow road line or parking line), draw underneath characters
+          const isGroundDecal = prop.id.startsWith('road_') || prop.id.startsWith('parkir_slots') || prop.id.startsWith('parkir_diagonal') || prop.id.startsWith('arrow_') || prop.id.startsWith('crack_') || prop.id.startsWith('pothole_') || prop.id.startsWith('puddle_') || prop.id.startsWith('debris_');
+          const yFoot = isGroundDecal ? 50 : (prop.collision ? prop.y + prop.collision.oy + prop.collision.oh : prop.y + prop.h);
 
           entities.push({
             yOrder: yFoot,
@@ -846,7 +1014,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter }) => 
         <div className="bg-[#12121c]/90 backdrop-blur border-2 border-[#383850] p-3 text-xs max-w-md pointer-events-auto">
           <p className="font-bold text-yellow-400 mb-0.5">🎮 KONTROL JELAJAH SMKN 7 BALEENDAH:</p>
           <p className="text-neutral-300 text-[11px] leading-tight">
-            Gunakan tombol <strong className="text-white">WASD</strong> atau <strong className="text-white">Panah</strong>. Jelajahi Monumen Utama, Parkiran Motor, Koridor Kelas, dan Lab Jaringan!
+            Gunakan tombol <strong className="text-white">WASD</strong> atau <strong className="text-white">Panah</strong>. Jelajahi Monumen Utama, Parkiran Motor Resmi, Jalan Aspal Bergaris Kuning, dan Lab Komputer!
           </p>
         </div>
 
