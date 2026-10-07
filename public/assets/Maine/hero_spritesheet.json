@@ -1,0 +1,432 @@
+{
+  "meta": {
+    "image": "hero_master_spritesheet.png",
+    "size": {
+      "w": 1537,
+      "h": 9663
+    },
+    "format": "RGBA8888"
+  },
+  "frames": {
+    "hero_idle_1": {
+      "frame": {
+        "x": 16,
+        "y": 19,
+        "w": 436,
+        "h": 1172
+      },
+      "category": "idle_overworld"
+    },
+    "hero_idle_2": {
+      "frame": {
+        "x": 468,
+        "y": 16,
+        "w": 454,
+        "h": 1175
+      },
+      "category": "idle_overworld"
+    },
+    "hero_idle_3": {
+      "frame": {
+        "x": 938,
+        "y": 20,
+        "w": 435,
+        "h": 1171
+      },
+      "category": "idle_overworld"
+    },
+    "hero_walk_front_1": {
+      "frame": {
+        "x": 16,
+        "y": 1208,
+        "w": 436,
+        "h": 1171
+      },
+      "category": "walk_front"
+    },
+    "hero_walk_front_2": {
+      "frame": {
+        "x": 468,
+        "y": 1207,
+        "w": 427,
+        "h": 1172
+      },
+      "category": "walk_front"
+    },
+    "hero_walk_front_3": {
+      "frame": {
+        "x": 911,
+        "y": 1209,
+        "w": 472,
+        "h": 1170
+      },
+      "category": "walk_front"
+    },
+    "hero_walk_side_1": {
+      "frame": {
+        "x": 16,
+        "y": 2414,
+        "w": 500,
+        "h": 1153
+      },
+      "category": "walk_side"
+    },
+    "hero_walk_side_2": {
+      "frame": {
+        "x": 532,
+        "y": 2395,
+        "w": 427,
+        "h": 1172
+      },
+      "category": "walk_side"
+    },
+    "hero_walk_side_3": {
+      "frame": {
+        "x": 975,
+        "y": 2405,
+        "w": 546,
+        "h": 1162
+      },
+      "category": "walk_side"
+    },
+    "hero_walk_up_1": {
+      "frame": {
+        "x": 16,
+        "y": 3588,
+        "w": 206,
+        "h": 543
+      },
+      "category": "walk_up"
+    },
+    "hero_walk_up_2": {
+      "frame": {
+        "x": 238,
+        "y": 3583,
+        "w": 202,
+        "h": 548
+      },
+      "category": "walk_up"
+    },
+    "hero_walk_up_3": {
+      "frame": {
+        "x": 456,
+        "y": 3592,
+        "w": 211,
+        "h": 539
+      },
+      "category": "walk_up"
+    },
+    "hero_battle_idle_1": {
+      "frame": {
+        "x": 16,
+        "y": 4156,
+        "w": 286,
+        "h": 470
+      },
+      "category": "battle_idle"
+    },
+    "hero_battle_idle_2": {
+      "frame": {
+        "x": 318,
+        "y": 4147,
+        "w": 282,
+        "h": 479
+      },
+      "category": "battle_idle"
+    },
+    "hero_battle_idle_3": {
+      "frame": {
+        "x": 616,
+        "y": 4156,
+        "w": 273,
+        "h": 470
+      },
+      "category": "battle_idle"
+    },
+    "hero_attack_light_1": {
+      "frame": {
+        "x": 16,
+        "y": 4642,
+        "w": 240,
+        "h": 417
+      },
+      "category": "attack_light"
+    },
+    "hero_attack_light_2": {
+      "frame": {
+        "x": 272,
+        "y": 4649,
+        "w": 351,
+        "h": 410
+      },
+      "category": "attack_light"
+    },
+    "hero_attack_light_3": {
+      "frame": {
+        "x": 639,
+        "y": 4642,
+        "w": 226,
+        "h": 417
+      },
+      "category": "attack_light"
+    },
+    "hero_attack_heavy_1": {
+      "frame": {
+        "x": 16,
+        "y": 5075,
+        "w": 278,
+        "h": 425
+      },
+      "category": "attack_heavy"
+    },
+    "hero_attack_heavy_2": {
+      "frame": {
+        "x": 310,
+        "y": 5115,
+        "w": 664,
+        "h": 385
+      },
+      "category": "attack_heavy"
+    },
+    "hero_battle_block_1": {
+      "frame": {
+        "x": 16,
+        "y": 5516,
+        "w": 219,
+        "h": 539
+      },
+      "category": "battle_block"
+    },
+    "hero_battle_block_2": {
+      "frame": {
+        "x": 251,
+        "y": 5524,
+        "w": 282,
+        "h": 531
+      },
+      "category": "battle_block"
+    },
+    "hero_battle_block_3": {
+      "frame": {
+        "x": 549,
+        "y": 5516,
+        "w": 243,
+        "h": 539
+      },
+      "category": "battle_block"
+    },
+    "hero_battle_buff_1": {
+      "frame": {
+        "x": 16,
+        "y": 6097,
+        "w": 167,
+        "h": 504
+      },
+      "category": "battle_buff"
+    },
+    "hero_battle_buff_2": {
+      "frame": {
+        "x": 199,
+        "y": 6071,
+        "w": 355,
+        "h": 530
+      },
+      "category": "battle_buff"
+    },
+    "hero_battle_buff_3": {
+      "frame": {
+        "x": 570,
+        "y": 6119,
+        "w": 248,
+        "h": 482
+      },
+      "category": "battle_buff"
+    },
+    "hero_battle_heal_1": {
+      "frame": {
+        "x": 16,
+        "y": 6622,
+        "w": 228,
+        "h": 548
+      },
+      "category": "battle_heal"
+    },
+    "hero_battle_heal_2": {
+      "frame": {
+        "x": 260,
+        "y": 6617,
+        "w": 185,
+        "h": 553
+      },
+      "category": "battle_heal"
+    },
+    "hero_battle_heal_3": {
+      "frame": {
+        "x": 461,
+        "y": 6622,
+        "w": 215,
+        "h": 548
+      },
+      "category": "battle_heal"
+    },
+    "hero_battle_hurt_1": {
+      "frame": {
+        "x": 16,
+        "y": 7186,
+        "w": 240,
+        "h": 468
+      },
+      "category": "battle_hurt"
+    },
+    "hero_battle_hurt_2": {
+      "frame": {
+        "x": 272,
+        "y": 7303,
+        "w": 304,
+        "h": 351
+      },
+      "category": "battle_hurt"
+    },
+    "hero_battle_hurt_3": {
+      "frame": {
+        "x": 592,
+        "y": 7376,
+        "w": 278,
+        "h": 278
+      },
+      "category": "battle_hurt"
+    },
+    "hero_battle_victory_1": {
+      "frame": {
+        "x": 16,
+        "y": 7671,
+        "w": 273,
+        "h": 543
+      },
+      "category": "battle_victory"
+    },
+    "hero_battle_victory_2": {
+      "frame": {
+        "x": 305,
+        "y": 7670,
+        "w": 278,
+        "h": 544
+      },
+      "category": "battle_victory"
+    },
+    "hero_battle_victory_3": {
+      "frame": {
+        "x": 599,
+        "y": 7671,
+        "w": 275,
+        "h": 543
+      },
+      "category": "battle_victory"
+    },
+    "hero_talk_1": {
+      "frame": {
+        "x": 16,
+        "y": 8230,
+        "w": 220,
+        "h": 550
+      },
+      "category": "talk"
+    },
+    "hero_talk_2": {
+      "frame": {
+        "x": 252,
+        "y": 8231,
+        "w": 296,
+        "h": 549
+      },
+      "category": "talk"
+    },
+    "hero_talk_3": {
+      "frame": {
+        "x": 564,
+        "y": 8231,
+        "w": 206,
+        "h": 549
+      },
+      "category": "talk"
+    },
+    "hero_avatar": {
+      "frame": {
+        "x": 16,
+        "y": 8796,
+        "w": 761,
+        "h": 851
+      },
+      "category": "avatar"
+    }
+  },
+  "animations": {
+    "idle_overworld": [
+      "hero_idle_1",
+      "hero_idle_2",
+      "hero_idle_3"
+    ],
+    "walk_front": [
+      "hero_walk_front_1",
+      "hero_walk_front_2",
+      "hero_walk_front_3"
+    ],
+    "walk_side": [
+      "hero_walk_side_1",
+      "hero_walk_side_2",
+      "hero_walk_side_3"
+    ],
+    "walk_up": [
+      "hero_walk_up_1",
+      "hero_walk_up_2",
+      "hero_walk_up_3"
+    ],
+    "battle_idle": [
+      "hero_battle_idle_1",
+      "hero_battle_idle_2",
+      "hero_battle_idle_3"
+    ],
+    "attack_light": [
+      "hero_attack_light_1",
+      "hero_attack_light_2",
+      "hero_attack_light_3"
+    ],
+    "attack_heavy": [
+      "hero_attack_heavy_1",
+      "hero_attack_heavy_2"
+    ],
+    "battle_block": [
+      "hero_battle_block_1",
+      "hero_battle_block_2",
+      "hero_battle_block_3"
+    ],
+    "battle_buff": [
+      "hero_battle_buff_1",
+      "hero_battle_buff_2",
+      "hero_battle_buff_3"
+    ],
+    "battle_heal": [
+      "hero_battle_heal_1",
+      "hero_battle_heal_2",
+      "hero_battle_heal_3"
+    ],
+    "battle_hurt": [
+      "hero_battle_hurt_1",
+      "hero_battle_hurt_2",
+      "hero_battle_hurt_3"
+    ],
+    "battle_victory": [
+      "hero_battle_victory_1",
+      "hero_battle_victory_2",
+      "hero_battle_victory_3"
+    ],
+    "talk": [
+      "hero_talk_1",
+      "hero_talk_2",
+      "hero_talk_3"
+    ],
+    "avatar": [
+      "hero_avatar"
+    ]
+  }
+}
