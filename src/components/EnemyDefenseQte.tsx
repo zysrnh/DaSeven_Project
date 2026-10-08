@@ -1,23 +1,43 @@
-﻿import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import type { Enemy } from '../types/game';
 import { playSound } from '../utils/audio';
 
 interface EnemyDefenseQteProps {
-  enemy: Enemy;
-  onComplete: (parried: boolean) => void;
+  enemy?: Enemy;
+  enemyName?: string;
+  intentValue?: number;
+  attackSpeed?: number;
+  onComplete?: (parried: boolean) => void;
+  onResolve?: (parried: boolean) => void;
 }
 
-export const EnemyDefenseQte: React.FC<EnemyDefenseQteProps> = ({ enemy, onComplete }) => {
+export const EnemyDefenseQte: React.FC<EnemyDefenseQteProps> = ({
+  enemy,
+  enemyName,
+  intentValue,
+  attackSpeed,
+  onComplete,
+  onResolve,
+}) => {
   const [progress, setProgress] = useState(0);
   const [resolved, setResolved] = useState(false);
   const [parried, setParried] = useState<boolean | null>(null);
 
-  const duration = enemy.attackSpeed || 1100;
+  const eName = enemy?.name || enemyName || 'Musuh Anomali';
+  const eDmg = enemy?.intent?.value ?? intentValue ?? 12;
+  const eIntentName = enemy?.intent?.name || 'Serangan Bayangan';
+  const duration = enemy?.attackSpeed || attackSpeed || 1100;
+
   const parryWindowStart = 65;
   const parryWindowEnd = 92;
 
   const startTimeRef = useRef<number>(performance.now());
   const animFrameRef = useRef<number | null>(null);
+
+  const finish = (isSuccess: boolean) => {
+    if (onComplete) onComplete(isSuccess);
+    if (onResolve) onResolve(isSuccess);
+  };
 
   useEffect(() => {
     const loop = (now: number) => {
@@ -30,7 +50,7 @@ export const EnemyDefenseQte: React.FC<EnemyDefenseQteProps> = ({ enemy, onCompl
           setResolved(true);
           setParried(false);
           playSound.alienHit();
-          setTimeout(() => onComplete(false), 600);
+          setTimeout(() => finish(false), 600);
         }
         return;
       }
@@ -45,7 +65,7 @@ export const EnemyDefenseQte: React.FC<EnemyDefenseQteProps> = ({ enemy, onCompl
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [duration, resolved, onComplete]);
+  }, [duration, resolved]);
 
   const triggerDefend = () => {
     if (resolved) return;
@@ -62,7 +82,7 @@ export const EnemyDefenseQte: React.FC<EnemyDefenseQteProps> = ({ enemy, onCompl
     }
 
     setTimeout(() => {
-      onComplete(isSuccess);
+      finish(isSuccess);
     }, 700);
   };
 
@@ -82,15 +102,15 @@ export const EnemyDefenseQte: React.FC<EnemyDefenseQteProps> = ({ enemy, onCompl
       <div className="bg-[#181014] border-2 border-red-600 p-6 w-full max-w-md text-white font-mono shadow-2xl animate-pulse">
         <div className="flex items-center justify-between pb-2 mb-4 border-b border-red-800">
           <span className="text-red-400 font-bold uppercase tracking-wider text-xs">
-            ⚠ PERINGATAN SERANGAN ALIEN!
+            ⚠ PERINGATAN SERANGAN ANOMALI!
           </span>
           <span className="text-xs text-red-300 font-bold">
-            {enemy.intent.name}
+            {eIntentName}
           </span>
         </div>
 
         <p className="text-sm font-bold text-center text-red-200 mb-4">
-          Alien menyerang sebesar <span className="text-yellow-400">{enemy.intent.value} DMG</span>!
+          {eName} menyerang sebesar <span className="text-yellow-400 font-black">{eDmg} DMG</span>!
         </p>
 
         <div className="relative h-10 bg-[#2d1217] border-2 border-red-500 mb-4 overflow-hidden">

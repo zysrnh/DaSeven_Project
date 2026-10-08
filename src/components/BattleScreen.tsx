@@ -10,6 +10,7 @@ interface BattleScreenProps {
   enemy: Enemy;
   onVictory: (updatedPlayer: Player) => void;
   onDefeat: () => void;
+  onRetreat?: () => void;
 }
 
 type HeroPose =
@@ -25,11 +26,14 @@ type HeroPose =
   | 'victory'
   | 'defeat';
 
+type MenuMode = 'main' | 'skill' | 'item';
+
 export const BattleScreen: React.FC<BattleScreenProps> = ({
   player: initialPlayer,
   enemy: initialEnemy,
   onVictory,
   onDefeat,
+  onRetreat,
 }) => {
   const [player, setPlayer] = useState<Player>({ ...initialPlayer });
   const [enemy, setEnemy] = useState<Enemy>({ ...initialEnemy });
@@ -37,14 +41,25 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   const [activeCard, setActiveCard] = useState<Card | null>(null);
   const [isEnemyAttacking, setIsEnemyAttacking] = useState(false);
   const [heroPose, setHeroPose] = useState<HeroPose>('idle');
-  const [idleFrame, setIdleFrame] = useState(0); // 0, 1, 2 (3-frame breathing)
+  const [idleFrame, setIdleFrame] = useState(0);
   const [animSubFrame, setAnimSubFrame] = useState(1);
   const [enemyFlash, setEnemyFlash] = useState(false);
+  const [enemyAttackAnim, setEnemyAttackAnim] = useState(false);
+  const [selectedActionIndex, setSelectedActionIndex] = useState(0);
+  const [menuMode, setMenuMode] = useState<MenuMode>('main');
+
   const [battleLogs, setBattleLogs] = useState<string[]>([
-    `Pertarungan dimulai! ${enemy.name} (${enemy.title}) menghalangi lorong!`,
+    `Pertarungan dimulai! ${enemy.name} menghalangi jalan!`,
   ]);
 
-  // Smooth 3-frame breathing idle animation in battle
+  // Items ransel siswa
+  const [inventory, setInventory] = useState([
+    { id: 'item_kopi', name: 'Kopi Joss Kuningan', healHp: 18, healSp: 2, count: 2, desc: 'Memulihkan 18 HP & 2 SP' },
+    { id: 'item_gorengan', name: 'Gorengan Hangat', healHp: 28, healSp: 0, count: 3, desc: 'Memulihkan 28 HP' },
+    { id: 'item_p3k', name: 'P3K Jurusan TKJ', healHp: 45, healSp: 3, count: 1, desc: 'Memulihkan 45 HP & 3 SP' },
+  ]);
+
+  // Animasi breathing idle hero
   useEffect(() => {
     const timer = setInterval(() => {
       setIdleFrame((prev) => (prev + 1) % 3);
@@ -53,113 +68,144 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   }, []);
 
   const addLog = (msg: string) => {
-    setBattleLogs((prev) => [msg, ...prev.slice(0, 4)]);
+    setBattleLogs((prev) => [msg, ...prev.slice(0, 3)]);
   };
 
   const startTurn = () => {
-    setPlayer((prev) => {
-      let deck = [...prev.deck];
-      let discard = [...prev.discard];
-      let hand = [...prev.hand];
-
-      while (hand.length < 4) {
-        if (deck.length === 0) {
-          if (discard.length === 0) break;
-          deck = [...discard];
-          discard = [];
-        }
-        const drawn = deck.pop();
-        if (drawn) hand.push(drawn);
-      }
-
-      return {
-        ...prev,
-        ap: prev.maxAp,
-        shield: 0,
-        deck,
-        discard,
-        hand,
-      };
-    });
+    setPlayer((prev) => ({
+      ...prev,
+      ap: prev.maxAp,
+      shield: 0,
+    }));
     setHeroPose('idle');
+    setMenuMode('main');
   };
 
-  useEffect(() => {
-    startTurn();
-  }, []);
-
-  const handlePlayCard = (card: Card) => {
-    if (player.ap < card.cost) {
-      addLog(`AP tidak cukup untuk memainkan ${card.name}!`);
+  // 1. ACTION: ATTACK (Serangan Dasar)
+  const handleActionAttack = () => {
+    if (player.ap < 1) {
+      addLog('SP/Energi tidak cukup untuk menyerang!');
       return;
     }
-
     playSound.cardSelect();
 
-    if (card.type === 'attack') {
-      setActiveCard(card);
-      // Pembeda attack ringan vs berat berdasarkan value & cost
-      if (card.cost >= 2 || card.timingDifficulty === 'hard') {
-        setHeroPose('windup_heavy');
-      } else {
-        setHeroPose('windup_light');
-      }
-    } else if (card.type === 'special') {
+    // Kartu serangan dasar
+    const basicAttackCard: Card = {
+      id: 'basic_attack',
+      name: 'Pukulan Presisi',
+      cost: 1,
+      type: 'attack',
+      value: 14,
+      description: 'Serangan fisik langsung ke titik vital anomali.',
+      flavor: 'Pukulan berjarak dekat hasil latihan fisik.',
+      iconName: 'sword',
+      color: '#e11d48',
+      timingDifficulty: 'normal',
+    };
+
+    setActiveCard(basicAttackCard);
+    setHeroPose('windup_light');
+  };
+
+  // 2. ACTION: SKILL (Memilih Jurus Kejuruan)
+  const handleSelectSkill = (card: Card) => {
+    if (player.ap < card.cost) {
+      addLog(`SP tidak cukup untuk memainkan ${card.name}!`);
+      return;
+    }
+    playSound.cardSelect();
+    setMenuMode('main');
+
+    if (card.type === 'attack' || card.type === 'special') {
       setActiveCard(card);
       setHeroPose('windup_heavy');
     } else if (card.type === 'defense') {
       setHeroPose('block');
       setAnimSubFrame(1);
       setTimeout(() => setAnimSubFrame(2), 200);
-      setTimeout(() => setAnimSubFrame(3), 500);
 
       setPlayer((prev) => ({
         ...prev,
         ap: prev.ap - card.cost,
         shield: prev.shield + card.value,
-        hand: prev.hand.filter((c) => c.id !== card.id),
-        discard: [...prev.discard, card],
       }));
       playSound.attackHit(false);
-      addLog(`Kamu memasang ${card.name}! Mendapatkan +${card.value} Shield!`);
-      setTimeout(() => setHeroPose('idle'), 1100);
-    } else if (card.type === 'heal') {
+      addLog(`Memasang ${card.name}! Shield bertambah +${card.value}!`);
+      setTimeout(() => {
+        setHeroPose('idle');
+        checkEnemyTurn();
+      }, 900);
+    } else if (card.type === 'heal' || card.type === 'buff') {
       setHeroPose('heal');
       setAnimSubFrame(1);
       setTimeout(() => setAnimSubFrame(2), 250);
-      setTimeout(() => setAnimSubFrame(3), 600);
 
       playSound.heal();
-      setPlayer((prev) => {
-        let deck = [...prev.deck];
-        let discard = [...prev.discard];
-        let hand = prev.hand.filter((c) => c.id !== card.id);
-
-        if (deck.length > 0) {
-          const drawn = deck.pop()!;
-          hand.push(drawn);
-        }
-
-        return {
-          ...prev,
-          hp: Math.min(prev.maxHp, prev.hp + card.value),
-          ap: prev.ap - card.cost,
-          deck,
-          discard: [...discard, card],
-          hand,
-        };
-      });
-      addLog(`Minum ${card.name}! Pulih +${card.value} HP & menarik 1 kartu!`);
-      setTimeout(() => setHeroPose('idle'), 1200);
+      setPlayer((prev) => ({
+        ...prev,
+        hp: Math.min(prev.maxHp, prev.hp + card.value),
+        ap: prev.ap - card.cost,
+      }));
+      addLog(`Menggunakan ${card.name}! Pulih +${card.value} HP!`);
+      setTimeout(() => {
+        setHeroPose('idle');
+        checkEnemyTurn();
+      }, 1000);
     }
   };
 
+  // 3. ACTION: ITEM (Memakai Barang Bawaan)
+  const handleUseItem = (itemId: string) => {
+    const item = inventory.find((i) => i.id === itemId);
+    if (!item || item.count <= 0) return;
+
+    playSound.heal();
+    setInventory((prev) =>
+      prev.map((i) => (i.id === itemId ? { ...i, count: i.count - 1 } : i))
+    );
+
+    setPlayer((prev) => ({
+      ...prev,
+      hp: Math.min(prev.maxHp, prev.hp + item.healHp),
+      ap: Math.min(prev.maxAp, prev.ap + item.healSp),
+    }));
+
+    addLog(`Mengonsumsi ${item.name}! Pulih +${item.healHp} HP & +${item.healSp} SP!`);
+    setMenuMode('main');
+    setHeroPose('heal');
+    setTimeout(() => {
+      setHeroPose('idle');
+      checkEnemyTurn();
+    }, 900);
+  };
+
+  // 4. ACTION: RETREAT (Kabur dari Pertarungan)
+  const handleRetreat = () => {
+    playSound.cardSelect();
+    addLog('Kamu mencoba kabur dari pertempuran...');
+    setTimeout(() => {
+      if (onRetreat) onRetreat();
+      else onDefeat();
+    }, 600);
+  };
+
+  // Menjalankan giliran musuh setelah player beraksi atau AP habis
+  const checkEnemyTurn = () => {
+    setTimeout(() => {
+      if (enemy.hp > 0) {
+        addLog(`Giliran kamu selesai. ${enemy.name} bersiap menyerang!`);
+        setIsEnemyAttacking(true);
+      }
+    }, 600);
+  };
+
+  // Resolusi QTE Serangan Player
   const handleResolvePlayerQte = (grade: QteGrade, multiplier: number) => {
     if (!activeCard) return;
 
     const baseDmg = activeCard.value;
     const finalDamage = Math.round(baseDmg * multiplier);
-    const isHeavy = activeCard.cost >= 2 || activeCard.timingDifficulty === 'hard' || activeCard.type === 'special';
+    const isHeavy = activeCard.cost >= 2 || activeCard.type === 'special';
 
     if (isHeavy) {
       setHeroPose('attack_heavy');
@@ -173,21 +219,19 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
     setEnemyFlash(true);
 
+    const nextEnemyHp = Math.max(0, enemy.hp - finalDamage);
+
     setEnemy((prev) => {
       let dmgLeft = finalDamage;
       let newShield = prev.shield;
       let newHp = prev.hp;
 
-      if (activeCard.type === 'special') {
-        newHp = Math.max(0, newHp - dmgLeft);
-      } else {
-        if (newShield > 0) {
-          const absorbed = Math.min(newShield, dmgLeft);
-          newShield -= absorbed;
-          dmgLeft -= absorbed;
-        }
-        newHp = Math.max(0, newHp - dmgLeft);
+      if (newShield > 0) {
+        const absorbed = Math.min(newShield, dmgLeft);
+        newShield -= absorbed;
+        dmgLeft -= absorbed;
       }
+      newHp = Math.max(0, newHp - dmgLeft);
 
       return {
         ...prev,
@@ -196,14 +240,12 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       };
     });
 
-    const gradeText = grade === 'PERFECT' ? 'CRITICAL HIT (x2.0)' : grade === 'GOOD' ? 'GOOD HIT' : 'MISS';
+    const gradeText = grade === 'PERFECT' ? 'CRITICAL HIT (x2.0)' : grade === 'GOOD' ? 'GOOD HIT (x1.3)' : 'HIT';
     addLog(`[${gradeText}] ${activeCard.name} menghasilkan ${finalDamage} Damage ke ${enemy.name}!`);
 
     setPlayer((prev) => ({
       ...prev,
-      ap: prev.ap - activeCard.cost,
-      hand: prev.hand.filter((c) => c.id !== activeCard.id),
-      discard: [...prev.discard, activeCard],
+      ap: Math.max(0, prev.ap - activeCard.cost),
     }));
 
     setActiveCard(null);
@@ -211,7 +253,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     setTimeout(() => {
       setEnemyFlash(false);
 
-      if (enemy.hp - finalDamage <= 0) {
+      if (nextEnemyHp <= 0) {
         setHeroPose('victory');
         setAnimSubFrame(1);
         setTimeout(() => setAnimSubFrame(2), 300);
@@ -222,20 +264,18 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         }, 1300);
       } else {
         setHeroPose('idle');
+        checkEnemyTurn();
       }
     }, 750);
   };
 
-  const handleEndTurn = () => {
-    if (activeCard || isEnemyAttacking) return;
-    addLog(`Giliran kamu selesai. ${enemy.name} bersiap menyerang!`);
-    setIsEnemyAttacking(true);
-  };
-
+  // Resolusi Serangan Musuh (Parry / Pertahanan)
   const handleResolveEnemyDefense = (parried: boolean) => {
     setIsEnemyAttacking(false);
+    setEnemyAttackAnim(true);
+    setTimeout(() => setEnemyAttackAnim(false), 500);
 
-    const rawDmg = enemy.intent.value;
+    const rawDmg = enemy?.intent?.value ?? 14;
     const finalDmg = parried ? Math.max(1, Math.round(rawDmg * 0.2)) : rawDmg;
 
     if (parried) {
@@ -246,6 +286,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       setAnimSubFrame(1);
       setTimeout(() => setAnimSubFrame(2), 200);
     }
+
+    const nextPlayerHp = Math.max(0, player.hp - finalDmg);
 
     setPlayer((prev) => {
       let dmgLeft = finalDmg;
@@ -267,15 +309,15 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     });
 
     if (parried) {
-      addLog(`★ PARRY SUKSES! Kamu menangkis dengan blok tangguh! Hanya kena ${finalDmg} DMG!`);
+      addLog(`★ PARRY BERHASIL! Menahan serangan ${enemy.name}! Hanya kena ${finalDmg} DMG!`);
     } else {
       addLog(`✗ PARRY GAGAL! ${enemy.name} menghantam sebesar ${finalDmg} DMG!`);
     }
 
     setTimeout(() => {
-      if (player.hp - finalDmg <= 0) {
+      if (nextPlayerHp <= 0) {
         setHeroPose('defeat');
-        setAnimSubFrame(3); // Frame 3: Karakter tumbang di lantai
+        setAnimSubFrame(3);
         setTimeout(() => {
           onDefeat();
         }, 1400);
@@ -286,224 +328,331 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     }, 900);
   };
 
-  // Sprite Selector based on HeroPose & animation subframes
+  // Sprite Hero Berdasarkan Pose
   let heroSpriteSrc = `/assets/characters/maine/battle_idle_${idleFrame + 1}.png`;
-
-  if (heroPose === 'windup_light') {
-    heroSpriteSrc = '/assets/characters/maine/attack_light_1.png';
-  } else if (heroPose === 'attack_light') {
-    heroSpriteSrc = `/assets/characters/maine/attack_light_${animSubFrame}.png`;
-  } else if (heroPose === 'windup_heavy') {
-    heroSpriteSrc = '/assets/characters/maine/attack_heavy_1.png';
-  } else if (heroPose === 'attack_heavy') {
-    heroSpriteSrc = `/assets/characters/maine/attack_heavy_${animSubFrame}.png`;
-  } else if (heroPose === 'block') {
-    heroSpriteSrc = `/assets/characters/maine/block_${animSubFrame}.png`;
-  } else if (heroPose === 'buff') {
-    heroSpriteSrc = `/assets/characters/maine/buff_${animSubFrame}.png`;
-  } else if (heroPose === 'heal') {
-    heroSpriteSrc = `/assets/characters/maine/heal_${animSubFrame}.png`;
-  } else if (heroPose === 'hurt') {
-    heroSpriteSrc = `/assets/characters/maine/hurt_${animSubFrame}.png`;
-  } else if (heroPose === 'victory') {
-    heroSpriteSrc = `/assets/characters/maine/victory_${animSubFrame}.png`;
-  } else if (heroPose === 'defeat') {
-    heroSpriteSrc = '/assets/characters/maine/hurt_3.png';
-  }
+  if (heroPose === 'windup_light') heroSpriteSrc = '/assets/characters/maine/attack_light_1.png';
+  else if (heroPose === 'attack_light') heroSpriteSrc = `/assets/characters/maine/attack_light_${animSubFrame}.png`;
+  else if (heroPose === 'windup_heavy') heroSpriteSrc = '/assets/characters/maine/attack_heavy_1.png';
+  else if (heroPose === 'attack_heavy') heroSpriteSrc = `/assets/characters/maine/attack_heavy_${animSubFrame}.png`;
+  else if (heroPose === 'block') heroSpriteSrc = `/assets/characters/maine/block_${animSubFrame}.png`;
+  else if (heroPose === 'buff') heroSpriteSrc = `/assets/characters/maine/buff_${animSubFrame}.png`;
+  else if (heroPose === 'heal') heroSpriteSrc = `/assets/characters/maine/heal_${animSubFrame}.png`;
+  else if (heroPose === 'hurt') heroSpriteSrc = `/assets/characters/maine/hurt_${animSubFrame}.png`;
+  else if (heroPose === 'victory') heroSpriteSrc = `/assets/characters/maine/victory_${animSubFrame}.png`;
+  else if (heroPose === 'defeat') heroSpriteSrc = '/assets/characters/maine/hurt_3.png';
 
   const enemySpriteUrl = getSpriteDataUrl(`${enemy.spriteKey}_0`);
 
+  // Default daftar skill jurusan
+  const availableSkills: Card[] = player.deck.length > 0 ? player.deck : [
+    { id: 's1', name: 'Crimson Slash', cost: 2, type: 'attack', value: 24, description: 'Tebasan keras berkecepatan tinggi.', flavor: 'Jurus andalan siswa.', iconName: 'sword', color: '#e11d48', timingDifficulty: 'hard' },
+    { id: 's2', name: 'Overclock Hardware', cost: 1, type: 'buff', value: 10, description: 'Meningkatkan fokus dan memulihkan 10 HP.', flavor: 'Overclock sistem saraf.', iconName: 'chip', color: '#0284c7', timingDifficulty: 'easy' },
+    { id: 's3', name: 'Perisai Fiber Optik', cost: 1, type: 'defense', value: 16, description: 'Membentangkan perisai data +16 Shield.', flavor: 'Pertahanan jaringan kuat.', iconName: 'shield', color: '#10b981', timingDifficulty: 'normal' },
+  ];
+
+  const mainActions = [
+    { label: 'Attack', action: handleActionAttack },
+    { label: 'Skill', action: () => setMenuMode('skill') },
+    { label: 'Item', action: () => setMenuMode('item') },
+    { label: 'Retreat', action: handleRetreat },
+  ];
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#0d0d12] text-white p-3 font-mono select-none">
-      <div className="w-full max-w-[640px] bg-[#161622] border-2 border-[#323246] p-2.5 mb-2 flex items-center justify-between text-xs">
-        <div className="flex items-center space-x-2">
-          <div className="w-2.5 h-2.5 bg-yellow-400" />
-          <span className="font-bold text-yellow-400 uppercase tracking-wider">
-            ANOMALI PERTEMPURAN • TURN-BASED ACTION
-          </span>
-        </div>
-        <div className="text-neutral-400 text-[11px]">
-          Fase: <strong className="text-white">{isEnemyAttacking ? 'PARRY REACTION' : 'GILIRAN KAMU'}</strong>
-        </div>
-      </div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#090d14] text-white p-2 font-mono select-none">
+      {/* WRAPPER UTAMA BATTLE SCREEN (SESUAI GAMBAR REFERENSI RPG) */}
+      <div className="w-full max-w-[840px] aspect-[16/10] max-h-[580px] bg-[#1a2332] border-4 border-[#2b394e] shadow-2xl relative flex flex-col overflow-hidden rounded-xl">
+        
+        {/* ======================================================== */}
+        {/* 1. ARENA PERTEMPURAN (BACKGROUND PADANG RUMPUT / OUTDOOR) */}
+        {/* ======================================================== */}
+        <div className="relative flex-1 w-full overflow-hidden flex flex-col justify-between">
+          
+          {/* LANGIT BIRU & AWAN PIXEL ART RETRO */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#87ceeb] via-[#bfe3f7] to-[#d8f0fa] z-0">
+            {/* Awan Besar Pixel Art */}
+            <div className="absolute top-2 left-6 w-44 h-16 bg-white/90 rounded-full blur-[0.5px]" />
+            <div className="absolute top-6 left-28 w-60 h-20 bg-white/90 rounded-full blur-[0.5px]" />
+            <div className="absolute top-4 right-16 w-52 h-18 bg-white/80 rounded-full blur-[0.5px]" />
 
-      <div className="w-full max-w-[640px] border-4 border-[#323246] bg-[#0a0a0f] flex flex-col shadow-2xl relative overflow-hidden">
-        {/* ARENA */}
-        <div className="relative h-64 border-b-2 border-[#323246] bg-[#12121c] flex items-center justify-around px-6 overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(#1f1f2e_1px,transparent_1px)] bg-[size:16px_16px] opacity-40" />
-
-          {/* PLAYER */}
-          <div className="relative z-10 flex flex-col items-center">
-            <div className="bg-[#1e1e2d] border-2 border-[#474766] p-2.5 mb-2 w-48 shadow-md">
-              <div className="flex items-center space-x-2 mb-1.5">
-                <img
-                  src="/assets/characters/maine/avatar.png"
-                  alt="Player Avatar"
-                  className="w-8 h-8 object-contain bg-[#0a0a0f] border border-yellow-400/60 p-0.5"
-                />
-                <div className="overflow-hidden flex-1">
-                  <div className="font-bold text-white text-xs truncate">{player.name}</div>
-                  <div className="text-[9px] text-cyan-400 truncate">{player.jurusan}</div>
-                </div>
-              </div>
-
-              <div className="h-3 bg-[#331118] border border-[#66222b] overflow-hidden mb-1 relative">
-                <div
-                  className="h-full bg-green-500 transition-all duration-300"
-                  style={{ width: `${(player.hp / player.maxHp) * 100}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-[10px] text-neutral-300">
-                <span>HP: {player.hp}/{player.maxHp}</span>
-                {player.shield > 0 && (
-                  <span className="text-cyan-300 font-bold">🛡 Shield: +{player.shield}</span>
-                )}
-              </div>
-            </div>
-
-            {/* Battle Sprite Frame */}
-            <div className="relative w-44 h-36 flex items-center justify-center">
-              <img
-                src={heroSpriteSrc}
-                alt="Hero Karakter"
-                className={`max-h-36 object-contain [image-rendering:pixelated] drop-shadow-[0_8px_0_rgba(0,0,0,0.5)] transition-transform duration-150 ${
-                  heroPose === 'attack_light' || heroPose === 'attack_heavy'
-                    ? 'scale-110 translate-x-4'
-                    : heroPose === 'hurt'
-                    ? 'opacity-70 -translate-x-2'
-                    : heroPose === 'defeat'
-                    ? 'opacity-90'
-                    : ''
-                }`}
-              />
-            </div>
+            {/* Perbukitan Kejauhan */}
+            <div className="absolute bottom-24 inset-x-0 h-16 bg-[#78ab86] rounded-t-[40%]" />
+            <div className="absolute bottom-20 inset-x-0 h-14 bg-[#5e966e] rounded-t-[60%]" />
           </div>
 
-          <div className="z-10 bg-[#272738] border-2 border-[#4a4a66] px-3 py-1 text-xs font-black text-yellow-400">
-            VS
+          {/* PADANG RUMPUT HIJAU PIXEL ART (LANTAI TEMPAT PIJAKAN KARAKTER) */}
+          <div className="absolute bottom-0 inset-x-0 h-36 bg-[#8ec584] border-t-4 border-[#5b9650] z-0">
+            {/* Rumput Gelap Berbayang */}
+            <div className="absolute inset-x-0 bottom-0 h-20 bg-[#72ab68]" />
+            
+            {/* Patch Tanah & Kerikil Kecil */}
+            <div className="absolute top-5 left-1/3 w-16 h-6 bg-[#d8b888] rounded-full opacity-60" />
+            <div className="absolute bottom-6 right-1/4 w-20 h-6 bg-[#d8b888] rounded-full opacity-50" />
+            
+            {/* Bebatuan Pixel Art Dekoratif */}
+            <div className="absolute top-3 left-10 w-6 h-4 bg-[#4a5568] rounded-sm" />
+            <div className="absolute top-6 left-1/2 w-8 h-5 bg-[#4a5568] rounded-sm" />
+            <div className="absolute top-10 right-12 w-10 h-6 bg-[#4a5568] rounded-sm" />
           </div>
 
-          {/* ENEMY */}
-          <div className="relative z-10 flex flex-col items-center">
-            <div className="bg-[#1e1e2d] border-2 border-[#474766] p-2.5 mb-2 w-48 shadow-md">
-              <div className="flex justify-between items-center text-xs mb-1">
-                <span className="font-bold text-red-400">{enemy.name}</span>
-                <span className="text-[9px] text-neutral-400">{enemy.title}</span>
+          {/* ======================================================== */}
+          {/* SISI KIRI: ENEMY / MONSTER ANOMALI (MENGHADAP KE KANAN) */}
+          {/* ======================================================== */}
+          <div className="absolute top-8 left-12 z-10 flex flex-col items-center">
+            {/* Status Bar Musuh di Atas Kepala */}
+            <div className="bg-[#121824]/90 border-2 border-[#334155] px-3 py-1.5 rounded mb-2 shadow-lg min-w-[170px]">
+              <div className="flex justify-between items-center text-xs mb-1 font-bold">
+                <span className="text-red-400">{enemy.name}</span>
+                <span className="text-[10px] text-yellow-400 font-bold">Lv. 1</span>
               </div>
-
-              <div className="h-3 bg-[#331118] border border-[#66222b] overflow-hidden mb-1">
+              <div className="h-2.5 bg-[#331118] border border-[#551d27] rounded-sm overflow-hidden mb-1">
                 <div
                   className="h-full bg-red-500 transition-all duration-300"
                   style={{ width: `${(enemy.hp / enemy.maxHp) * 100}%` }}
                 />
               </div>
-              <div className="flex justify-between text-[10px] text-neutral-300">
-                <span>HP: {enemy.hp}/{enemy.maxHp}</span>
-                {enemy.shield > 0 && (
-                  <span className="text-cyan-300 font-bold">🛡 Shield: +{enemy.shield}</span>
-                )}
-              </div>
-
-              <div className="mt-1 pt-1 border-t border-[#323246] flex items-center justify-between text-[10px]">
-                <span className="text-yellow-400 font-bold">Niat:</span>
-                <span className="text-neutral-300">⚔ {enemy.intent.name} ({enemy.intent.value} DMG)</span>
+              <div className="flex justify-between text-[9px] text-neutral-300">
+                <span>HP {enemy.hp}/{enemy.maxHp}</span>
+                {enemy.shield > 0 && <span className="text-cyan-300">🛡 +{enemy.shield}</span>}
               </div>
             </div>
 
-            <div className="w-32 h-36 flex items-center justify-center animate-bounce duration-1000">
-              <img
-                src={enemySpriteUrl}
-                alt={enemy.name}
-                className={`w-32 h-32 [image-rendering:pixelated] drop-shadow-[0_8px_0_rgba(0,0,0,0.5)] transition-all ${
-                  enemyFlash ? 'brightness-200 invert' : ''
-                }`}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* COMBAT LOGS */}
-        <div className="bg-[#0e0e14] border-b-2 border-[#323246] px-4 py-2 text-xs text-neutral-300 h-16 flex flex-col justify-center">
-          {battleLogs.slice(0, 2).map((log, idx) => (
-            <div key={idx} className={idx === 0 ? 'text-yellow-300 font-bold' : 'text-neutral-400'}>
-              › {log}
-            </div>
-          ))}
-        </div>
-
-        {/* AP & ACTIONS */}
-        <div className="bg-[#181824] px-4 py-2 border-b-2 border-[#323246] flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <span className="text-xs font-bold text-neutral-300">AP ENERGI:</span>
-            <div className="flex space-x-1">
-              {Array.from({ length: player.maxAp }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-5 h-5 border-2 flex items-center justify-center text-[10px] font-black ${
-                    i < player.ap
-                      ? 'bg-yellow-400 border-yellow-200 text-black'
-                      : 'bg-[#262638] border-[#44445e] text-neutral-500'
-                  }`}
-                >
-                  ⚡
-                </div>
-              ))}
-            </div>
-            <span className="text-xs text-yellow-300 font-bold ml-1">
-              ({player.ap}/{player.maxAp})
-            </span>
-          </div>
-
-          <button
-            onClick={handleEndTurn}
-            disabled={isEnemyAttacking || activeCard !== null}
-            className="px-4 py-1.5 bg-[#e11d48] hover:bg-[#be123c] active:bg-[#9f1239] disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider border border-[#fda4af]"
-          >
-            Akhiri Giliran ➔
-          </button>
-        </div>
-
-        {/* HAND CARDS */}
-        <div className="bg-[#121218] p-4 flex flex-wrap gap-3 justify-center min-h-[180px]">
-          {player.hand.map((card) => {
-            const canAfford = player.ap >= card.cost && !isEnemyAttacking && !activeCard;
-            return (
+            {/* Sprite Musuh dengan Bayangan Oval */}
+            <div className="relative mt-2 flex flex-col items-center">
               <div
-                key={card.id}
-                onClick={() => canAfford && handlePlayCard(card)}
-                className={`w-44 p-3 border-2 transition-all flex flex-col justify-between select-none ${
-                  canAfford
-                    ? 'cursor-pointer hover:-translate-y-2 hover:border-yellow-400 bg-[#1e1e2d] border-[#3e3e56]'
-                    : 'opacity-50 cursor-not-allowed bg-[#161622] border-[#2a2a3b]'
-                }`}
+                className={`w-32 h-32 flex items-center justify-center transition-all ${
+                  enemyFlash ? 'brightness-200 invert scale-105' : ''
+                } ${enemyAttackAnim ? 'translate-x-12 scale-110' : ''}`}
               >
-                <div>
-                  <div className="flex justify-between items-center mb-1.5 pb-1 border-b border-[#323246]">
-                    <span className="font-bold text-xs text-white truncate">{card.name}</span>
-                    <span className="w-5 h-5 bg-yellow-400 text-black font-black text-xs flex items-center justify-center border border-yellow-200">
-                      {card.cost}
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-yellow-300 font-bold mb-1">
-                    {card.type === 'attack' && `⚔ Serangan: ${card.value} DMG`}
-                    {card.type === 'defense' && `🛡 Perisai: +${card.value} Shield`}
-                    {card.type === 'heal' && `🧪 Pemulihan: +${card.value} HP`}
-                    {card.type === 'special' && `⚡ Tembus Shield: ${card.value} DMG`}
-                  </div>
-                  <p className="text-[10px] text-neutral-300 leading-tight mb-2">
-                    {card.description}
-                  </p>
+                <img
+                  src={enemySpriteUrl}
+                  alt={enemy.name}
+                  className="max-h-28 max-w-28 object-contain [image-rendering:pixelated] drop-shadow-[0_6px_0_rgba(0,0,0,0.4)]"
+                />
+              </div>
+              <div className="w-24 h-4 bg-black/35 rounded-full blur-[1px] -mt-2" />
+            </div>
+          </div>
+
+          {/* ======================================================== */}
+          {/* SISI KANAN: PLAYER (MAINE) & REKAN PARTY (MENGHADAP KIRI) */}
+          {/* ======================================================== */}
+          <div className="absolute bottom-16 right-16 z-10 flex items-end gap-10">
+            {/* Karakter Utama: Rian Pratama (Maine) */}
+            <div className="relative flex flex-col items-center">
+              {/* INDIKATOR TURN POINTER SEGITIGA BIRU (SESUAI GAMBAR REFERENSI) */}
+              {!isEnemyAttacking && (
+                <div className="absolute -top-6 text-cyan-400 text-lg animate-bounce drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                  ▼
                 </div>
-                <div className="text-[9px] text-neutral-500 italic border-t border-[#262638] pt-1">
-                  "{card.flavor}"
+              )}
+
+              {/* Sprite Maine Menghadap Kiri */}
+              <div className="relative">
+                <img
+                  src={heroSpriteSrc}
+                  alt="Player Maine"
+                  className={`max-h-36 object-contain scale-x-[-1] [image-rendering:pixelated] drop-shadow-[0_6px_0_rgba(0,0,0,0.45)] transition-transform ${
+                    heroPose === 'attack_light' || heroPose === 'attack_heavy'
+                      ? '-translate-x-10 scale-x-[-1.1] scale-y-[1.1]'
+                      : heroPose === 'hurt'
+                      ? 'translate-x-4 opacity-75'
+                      : ''
+                  }`}
+                />
+              </div>
+              <div className="w-20 h-3.5 bg-black/40 rounded-full blur-[1px] -mt-1" />
+            </div>
+
+            {/* Rekan Party Pelengkap (Hollis / Teman SMKN 7 di Belakang) */}
+            <div className="relative flex flex-col items-center opacity-85 scale-90 mb-6">
+              <div className="w-12 h-20 bg-neutral-800/20 flex items-center justify-center">
+                <img
+                  src="/assets/characters/maine/idle_2.png"
+                  alt="Party Ally"
+                  className="max-h-24 object-contain scale-x-[-1] [image-rendering:pixelated] hue-rotate-60"
+                />
+              </div>
+              <div className="w-16 h-3 bg-black/30 rounded-full blur-[1px] -mt-1" />
+            </div>
+          </div>
+
+          {/* LOG PERTEMPURAN MINI DI POJOK KANAN ATAS */}
+          <div className="absolute top-3 right-3 z-20 bg-[#121824]/90 border border-[#334155] px-3 py-1.5 rounded text-[10px] max-w-xs shadow-md">
+            <div className="text-yellow-300 font-bold truncate">› {battleLogs[0]}</div>
+          </div>
+        </div>
+
+        {/* ======================================================== */}
+        {/* 2. PANEL BAWAH: ACTION MENU (KIRI) & PARTY CARDS (KANAN) */}
+        {/* ======================================================== */}
+        <div className="h-28 bg-[#18202d] border-t-4 border-[#2c3748] px-3 py-2 flex items-center justify-between gap-3 z-30 shadow-inner">
+          
+          {/* MENU AKSI VERTIKAL (Attack, Skill, Item, Retreat) */}
+          <div className="flex flex-col w-32 gap-1">
+            {menuMode === 'main' ? (
+              mainActions.map((btn, idx) => {
+                const isSelected = selectedActionIndex === idx && !isEnemyAttacking;
+                return (
+                  <button
+                    key={btn.label}
+                    onClick={() => {
+                      setSelectedActionIndex(idx);
+                      btn.action();
+                    }}
+                    disabled={isEnemyAttacking}
+                    className={`py-1 px-3 text-left font-bold text-xs uppercase tracking-wider border-2 transition-all rounded ${
+                      isSelected
+                        ? 'bg-[#1e344e] border-[#38bdf8] text-cyan-200 shadow-[0_0_8px_rgba(56,189,248,0.5)]'
+                        : 'bg-[#121722] border-[#293241] text-neutral-300 hover:bg-[#1a2332] hover:border-neutral-500'
+                    } disabled:opacity-40 disabled:cursor-not-allowed`}
+                  >
+                    {btn.label}
+                  </button>
+                );
+              })
+            ) : (
+              <button
+                onClick={() => setMenuMode('main')}
+                className="py-2.5 px-3 bg-[#334155] hover:bg-[#475569] text-white font-bold text-xs uppercase border border-[#64748b] rounded"
+              >
+                ◀ Kembali
+              </button>
+            )}
+          </div>
+
+          {/* POPUP SUB-MENU JIKA MEMILIH SKILL / ITEM */}
+          {menuMode === 'skill' && (
+            <div className="flex-1 bg-[#121722] border-2 border-[#38bdf8] p-2 rounded flex flex-col justify-center h-full overflow-y-auto">
+              <div className="text-[10px] font-bold text-cyan-300 mb-1">PILIH JURUS KEJURUAN:</div>
+              <div className="flex gap-2">
+                {availableSkills.map((sk) => (
+                  <button
+                    key={sk.id}
+                    onClick={() => handleSelectSkill(sk)}
+                    className="flex-1 p-1.5 bg-[#1b2433] hover:bg-[#253347] border border-[#3b4c63] rounded text-left"
+                  >
+                    <div className="flex justify-between text-xs font-bold text-yellow-300">
+                      <span>{sk.name}</span>
+                      <span className="text-[10px] text-cyan-400">⚡{sk.cost} SP</span>
+                    </div>
+                    <div className="text-[9px] text-neutral-300 truncate">{sk.description}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {menuMode === 'item' && (
+            <div className="flex-1 bg-[#121722] border-2 border-[#10b981] p-2 rounded flex flex-col justify-center h-full overflow-y-auto">
+              <div className="text-[10px] font-bold text-emerald-300 mb-1">RANSEL ITEM SISWA:</div>
+              <div className="flex gap-2">
+                {inventory.map((it) => (
+                  <button
+                    key={it.id}
+                    disabled={it.count <= 0}
+                    onClick={() => handleUseItem(it.id)}
+                    className="flex-1 p-1.5 bg-[#1b2433] hover:bg-[#253347] border border-[#3b4c63] rounded text-left disabled:opacity-40"
+                  >
+                    <div className="flex justify-between text-xs font-bold text-emerald-300">
+                      <span>{it.name}</span>
+                      <span className="text-[10px] text-white">x{it.count}</span>
+                    </div>
+                    <div className="text-[9px] text-neutral-300 truncate">{it.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* KARTU STATUS ANGGOTA PARTY HORIZONTAL (SESUAI GAMBAR REFERENSI) */}
+          {menuMode === 'main' && (
+            <div className="flex-1 flex items-center justify-end gap-3 h-full">
+              
+              {/* KARTU 1: Rian Pratama (Maine) */}
+              <div className="bg-[#121722] border-2 border-[#38bdf8] p-2 rounded-lg flex items-center gap-2.5 w-56 shadow-md">
+                <div className="relative">
+                  <img
+                    src="/assets/characters/maine/avatar.png"
+                    alt={player.name}
+                    className="w-12 h-12 object-cover bg-[#1e293b] border-2 border-[#38bdf8] rounded"
+                  />
+                  <span className="absolute -bottom-1 -right-1 text-[8px] font-black bg-cyan-700 text-white px-1 border border-cyan-400 rounded">
+                    Lv.1
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <div className="font-bold text-xs text-white truncate mb-1">
+                    {player.name}
+                  </div>
+                  
+                  {/* HP BAR (MERAH) */}
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-[9px] font-black text-red-400">HP</span>
+                    <div className="flex-1 h-2 bg-[#331118] border border-[#551d27] rounded-sm overflow-hidden relative">
+                      <div
+                        className="h-full bg-[#ef4444] transition-all duration-300"
+                        style={{ width: `${(player.hp / player.maxHp) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-[9px] text-neutral-300 font-bold">{player.hp}/{player.maxHp}</span>
+                  </div>
+
+                  {/* SP BAR (TOSCA / EMERALD) */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-black text-cyan-400">SP</span>
+                    <div className="flex-1 h-2 bg-[#0c2429] border border-[#134e5a] rounded-sm overflow-hidden relative">
+                      <div
+                        className="h-full bg-[#06b6d4] transition-all duration-300"
+                        style={{ width: `${(player.ap / player.maxAp) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-[9px] text-neutral-300 font-bold">{player.ap}/{player.maxAp}</span>
+                  </div>
                 </div>
               </div>
-            );
-          })}
+
+              {/* KARTU 2: Hollis (Rekan Pendukung) */}
+              <div className="bg-[#121722] border-2 border-[#2c3748] p-2 rounded-lg flex items-center gap-2.5 w-56 opacity-85">
+                <div className="relative">
+                  <div className="w-12 h-12 bg-[#1e293b] border-2 border-[#475569] rounded flex items-center justify-center font-bold text-sm text-yellow-400">
+                    H
+                  </div>
+                  <span className="absolute -bottom-1 -right-1 text-[8px] font-black bg-neutral-700 text-white px-1 border border-neutral-500 rounded">
+                    Lv.1
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <div className="font-bold text-xs text-neutral-200 truncate mb-1">
+                    Hollis (Support)
+                  </div>
+                  
+                  {/* HP BAR */}
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-[9px] font-black text-red-400">HP</span>
+                    <div className="flex-1 h-2 bg-[#331118] border border-[#551d27] rounded-sm overflow-hidden">
+                      <div className="h-full bg-[#ef4444]" style={{ width: '100%' }} />
+                    </div>
+                    <span className="text-[9px] text-neutral-300 font-bold">23/23</span>
+                  </div>
+
+                  {/* SP BAR */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-black text-cyan-400">SP</span>
+                    <div className="flex-1 h-2 bg-[#0c2429] border border-[#134e5a] rounded-sm overflow-hidden">
+                      <div className="h-full bg-[#06b6d4]" style={{ width: '70%' }} />
+                    </div>
+                    <span className="text-[9px] text-neutral-300 font-bold">5/7</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          )}
+
         </div>
       </div>
 
-      {/* TIMING QTE MODAL UNTUK SERANGAN */}
+      {/* MODAL QTE SERANGAN PLAYER */}
       {activeCard && (
         <ActionTimingBar
           card={activeCard}
@@ -515,12 +664,14 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         />
       )}
 
-      {/* TIMING QTE MODAL UNTUK PARRY / REAKSI BERTAHAN */}
+      {/* MODAL REAKSI TANGKIS / PARRY SERANGAN MUSUH (100% AMAN TANPA BLANK) */}
       {isEnemyAttacking && (
         <EnemyDefenseQte
+          enemy={enemy}
           enemyName={enemy.name}
           intentValue={enemy.intent.value}
           onResolve={handleResolveEnemyDefense}
+          onComplete={handleResolveEnemyDefense}
         />
       )}
     </div>
