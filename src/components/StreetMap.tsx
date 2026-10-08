@@ -206,8 +206,8 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onRet
   const idleFrameRef = useRef(0);
   const stepSoundTimerRef = useRef(0);
 
-  // Kamera (Ketinggian Y dikunci di 0)
-  const cameraRef = useRef({ x: 1344, y: 0 });
+  // Kamera (Ketinggian Y dikunci terpusat di area trotoar y = 360)
+  const cameraRef = useRef({ x: 1344, y: 100 });
   const [viewportSize, setViewportSize] = useState({ w: 1024, h: 640 });
 
   const keysDownRef = useRef<Set<string>>(new Set());
@@ -441,16 +441,19 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onRet
         return;
       }
 
-      // 2. CAMERA SMOOTH FOLLOW (Horizontal Only, Ketinggian Y Terkunci di 0)
+      // 2. CAMERA SMOOTH FOLLOW (Horizontal Only, Ketinggian Y Terkunci di Trotoar y = 360)
       const targetCamX = pX - viewportSize.w / 2;
       const maxCamX = WORLD_WIDTH - viewportSize.w;
       const clampedTargetX = Math.max(0, Math.min(maxCamX, targetCamX));
 
+      // Ketinggian vertikal dikunci agar pas terpusat di trotoar seperti framing screenshot
+      const fixedCamY = Math.max(0, 360 - viewportSize.h / 2);
+
       cameraRef.current.x += (clampedTargetX - cameraRef.current.x) * 0.12;
-      cameraRef.current.y = 0;
+      cameraRef.current.y = fixedCamY;
 
       const camX = Math.round(cameraRef.current.x);
-      const camY = 0;
+      const camY = Math.round(fixedCamY);
 
       // 3. ROAMING MONSTERS PATROL
       monstersRef.current.forEach((m) => {
