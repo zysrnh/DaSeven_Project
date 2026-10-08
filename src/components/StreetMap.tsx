@@ -1312,7 +1312,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
                 ctx.fillStyle = '#0f172a';
                 ctx.fillRect(scrX + 4, scrY + 20, 42, 30);
                 ctx.fillStyle = '#64748b';
-                ctx.fillRect(sx + 6, scrY + 32, 38, 2);
+                ctx.fillRect(scrX + 6, scrY + 32, 38, 2);
 
                 // Botol Kaca Bensin Pertalite Hijau
                 for (let bx = scrX + 8; bx < scrX + 40; bx += 10) {
