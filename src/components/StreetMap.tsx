@@ -16,18 +16,10 @@ const MAP_ROWS = 26;
 const WORLD_WIDTH = MAP_COLS * TILE_SIZE;   // 2688 px
 const WORLD_HEIGHT = MAP_ROWS * TILE_SIZE; // 1664 px
 
-// Coordinates & Boundaries
-// Y: 0 - 192 (Rows 0-2): Tembok & Gerbang Batas Atas
-// Y: 192 - 448 (Rows 3-6): Trotoar Utara (Paving Pedestrian)
-// Y: 448 - 480: Kerb Trotoar Utara (Batu Tepi Jalan Hitam-Putih)
-// Y: 480 - 1152 (Rows 8-17): Jalan Raya Utama Dua Arah (Aspal Solid)
-// Y: 1152 - 1184: Kerb Trotoar Selatan (Batu Tepi Jalan Hitam-Putih)
-// Y: 1184 - 1408 (Rows 19-21): Trotoar Selatan (Paving Pedestrian)
-// Y: 1408 - 1664 (Rows 22-25): Taman Rumput & Batas Selatan
-
 interface StreetProp {
   id: string;
-  imgKey: string;
+  imgKey?: string;
+  type?: 'pot_plant' | 'street_lamp' | 'bench';
   x: number;
   y: number;
   w: number;
@@ -35,37 +27,43 @@ interface StreetProp {
   collision?: { ox: number; oy: number; ow: number; oh: number };
 }
 
-// Props diletakkan dengan teratur dan selaras
+// Props diletakkan dengan proporsi yang pas dan selaras
 const STREET_PROPS: StreetProp[] = [
-  // 1. AREA PARKIRAN MOTOR TROTOAR UTARA (Sisi Kiri Gerbang)
-  { id: 'motor_u1', imgKey: 'prop_motor_matic_1', x: 260, y: 250, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
-  { id: 'motor_u2', imgKey: 'prop_motor_matic_2', x: 345, y: 250, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
-  { id: 'motor_u3', imgKey: 'prop_motor_matic_1', x: 430, y: 250, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
-  { id: 'motor_u4', imgKey: 'prop_motor_matic_2', x: 515, y: 250, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
-
-  // Pot Tanaman & Tempat Sampah Trotoar Utara
-  { id: 'pot_u1', imgKey: 'tile_tanaman_pot', x: 180, y: 245, w: 55, h: 75, collision: { ox: 5, oy: 30, ow: 45, oh: 40 } },
-  { id: 'pot_u2', imgKey: 'tile_tanaman_pot', x: 610, y: 245, w: 55, h: 75, collision: { ox: 5, oy: 30, ow: 45, oh: 40 } },
-  { id: 'sampah_u1', imgKey: 'prop_tempat_sampah_3', x: 690, y: 250, w: 100, h: 65, collision: { ox: 8, oy: 25, ow: 84, oh: 35 } },
+  // 1. TROTOAR UTARA (Sisi Kiri Gerbang)
+  { id: 'lamp_u1', type: 'street_lamp', x: 140, y: 220, w: 32, h: 90, collision: { ox: 8, oy: 70, ow: 16, oh: 18 } },
+  { id: 'pot_u1', type: 'pot_plant', x: 200, y: 245, w: 48, h: 56, collision: { ox: 4, oy: 20, ow: 40, oh: 32 } },
+  { id: 'motor_u1', imgKey: 'prop_motor_matic_1', x: 280, y: 250, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
+  { id: 'motor_u2', imgKey: 'prop_motor_matic_2', x: 370, y: 250, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
+  { id: 'motor_u3', imgKey: 'prop_motor_matic_1', x: 460, y: 250, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
+  { id: 'pot_u2', type: 'pot_plant', x: 570, y: 245, w: 48, h: 56, collision: { ox: 4, oy: 20, ow: 40, oh: 32 } },
+  { id: 'sampah_u1', imgKey: 'prop_tempat_sampah_3', x: 650, y: 248, w: 100, h: 65, collision: { ox: 8, oy: 25, ow: 84, oh: 35 } },
+  { id: 'bench_u1', type: 'bench', x: 800, y: 250, w: 80, h: 48, collision: { ox: 4, oy: 15, ow: 72, oh: 30 } },
+  { id: 'pot_u3', type: 'pot_plant', x: 910, y: 245, w: 48, h: 56, collision: { ox: 4, oy: 20, ow: 40, oh: 32 } },
+  { id: 'lamp_u2', type: 'street_lamp', x: 1050, y: 220, w: 32, h: 90, collision: { ox: 8, oy: 70, ow: 16, oh: 18 } },
 
   // Sisi Kanan Gerbang (Trotoar Utara)
-  { id: 'pot_u3', imgKey: 'tile_tanaman_pot', x: 1530, y: 245, w: 55, h: 75, collision: { ox: 5, oy: 30, ow: 45, oh: 40 } },
-  { id: 'sampah_u2', imgKey: 'prop_tempat_sampah_3', x: 1610, y: 250, w: 100, h: 65, collision: { ox: 8, oy: 25, ow: 84, oh: 35 } },
-  { id: 'motor_u5', imgKey: 'prop_motor_matic_1', x: 1740, y: 250, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
-  { id: 'motor_u6', imgKey: 'prop_motor_matic_2', x: 1825, y: 250, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
-  { id: 'motor_u7', imgKey: 'prop_motor_matic_1', x: 1910, y: 250, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
-  { id: 'pot_u4', imgKey: 'tile_tanaman_pot', x: 2010, y: 245, w: 55, h: 75, collision: { ox: 5, oy: 30, ow: 45, oh: 40 } },
+  { id: 'lamp_u3', type: 'street_lamp', x: 1510, y: 220, w: 32, h: 90, collision: { ox: 8, oy: 70, ow: 16, oh: 18 } },
+  { id: 'pot_u4', type: 'pot_plant', x: 1570, y: 245, w: 48, h: 56, collision: { ox: 4, oy: 20, ow: 40, oh: 32 } },
+  { id: 'sampah_u2', imgKey: 'prop_tempat_sampah_3', x: 1650, y: 248, w: 100, h: 65, collision: { ox: 8, oy: 25, ow: 84, oh: 35 } },
+  { id: 'motor_u4', imgKey: 'prop_motor_matic_1', x: 1780, y: 250, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
+  { id: 'motor_u5', imgKey: 'prop_motor_matic_2', x: 1870, y: 250, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
+  { id: 'bench_u2', type: 'bench', x: 2000, y: 250, w: 80, h: 48, collision: { ox: 4, oy: 15, ow: 72, oh: 30 } },
+  { id: 'pot_u5', type: 'pot_plant', x: 2110, y: 245, w: 48, h: 56, collision: { ox: 4, oy: 20, ow: 40, oh: 32 } },
+  { id: 'lamp_u4', type: 'street_lamp', x: 2250, y: 220, w: 32, h: 90, collision: { ox: 8, oy: 70, ow: 16, oh: 18 } },
 
   // 2. TROTOAR SELATAN (Sisi Bawah)
-  { id: 'pot_s1', imgKey: 'tile_tanaman_pot', x: 300, y: 1220, w: 55, h: 75, collision: { ox: 5, oy: 30, ow: 45, oh: 40 } },
-  { id: 'sampah_s1', imgKey: 'prop_tempat_sampah_3', x: 380, y: 1225, w: 100, h: 65, collision: { ox: 8, oy: 25, ow: 84, oh: 35 } },
-  { id: 'motor_s1', imgKey: 'prop_motor_matic_2', x: 750, y: 1220, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
-  { id: 'motor_s2', imgKey: 'prop_motor_matic_1', x: 835, y: 1220, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
-  { id: 'pot_s2', imgKey: 'tile_tanaman_pot', x: 1250, y: 1220, w: 55, h: 75, collision: { ox: 5, oy: 30, ow: 45, oh: 40 } },
-  { id: 'motor_s3', imgKey: 'prop_motor_matic_1', x: 1700, y: 1220, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
-  { id: 'motor_s4', imgKey: 'prop_motor_matic_2', x: 1785, y: 1220, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
-  { id: 'pot_s3', imgKey: 'tile_tanaman_pot', x: 2150, y: 1220, w: 55, h: 75, collision: { ox: 5, oy: 30, ow: 45, oh: 40 } },
-  { id: 'sampah_s2', imgKey: 'prop_tempat_sampah_3', x: 2230, y: 1225, w: 100, h: 65, collision: { ox: 8, oy: 25, ow: 84, oh: 35 } },
+  { id: 'lamp_s1', type: 'street_lamp', x: 220, y: 1200, w: 32, h: 90, collision: { ox: 8, oy: 70, ow: 16, oh: 18 } },
+  { id: 'pot_s1', type: 'pot_plant', x: 300, y: 1225, w: 48, h: 56, collision: { ox: 4, oy: 20, ow: 40, oh: 32 } },
+  { id: 'sampah_s1', imgKey: 'prop_tempat_sampah_3', x: 380, y: 1228, w: 100, h: 65, collision: { ox: 8, oy: 25, ow: 84, oh: 35 } },
+  { id: 'motor_s1', imgKey: 'prop_motor_matic_2', x: 700, y: 1225, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
+  { id: 'motor_s2', imgKey: 'prop_motor_matic_1', x: 790, y: 1225, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
+  { id: 'bench_s1', type: 'bench', x: 920, y: 1225, w: 80, h: 48, collision: { ox: 4, oy: 15, ow: 72, oh: 30 } },
+  { id: 'pot_s2', type: 'pot_plant', x: 1250, y: 1225, w: 48, h: 56, collision: { ox: 4, oy: 20, ow: 40, oh: 32 } },
+  { id: 'motor_s3', imgKey: 'prop_motor_matic_1', x: 1650, y: 1225, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
+  { id: 'motor_s4', imgKey: 'prop_motor_matic_2', x: 1740, y: 1225, w: 75, h: 68, collision: { ox: 5, oy: 25, ow: 65, oh: 40 } },
+  { id: 'pot_s3', type: 'pot_plant', x: 1900, y: 1225, w: 48, h: 56, collision: { ox: 4, oy: 20, ow: 40, oh: 32 } },
+  { id: 'sampah_s2', imgKey: 'prop_tempat_sampah_3', x: 2100, y: 1228, w: 100, h: 65, collision: { ox: 8, oy: 25, ow: 84, oh: 35 } },
+  { id: 'lamp_s2', type: 'street_lamp', x: 2280, y: 1200, w: 32, h: 90, collision: { ox: 8, oy: 70, ow: 16, oh: 18 } },
 ];
 
 interface RoamingEnemy {
@@ -75,6 +73,122 @@ interface RoamingEnemy {
   vx: number;
   spriteKey: 'void_eyeball' | 'glitch_monolith' | 'cosmic_slime';
 }
+
+// Helper: Buat Tekstur Aspal Pixel Art (Grain & Dither)
+const createAsphaltPixelPattern = (): HTMLCanvasElement => {
+  const c = document.createElement('canvas');
+  c.width = 32;
+  c.height = 32;
+  const ctx = c.getContext('2d');
+  if (!ctx) return c;
+
+  // Base Dark Asphalt
+  ctx.fillStyle = '#222733';
+  ctx.fillRect(0, 0, 32, 32);
+
+  // Pixel Dithering & Gravel Flecks
+  const tones = ['#1a1e27', '#1f242f', '#262c3a', '#2c3444', '#343d4f'];
+  // Deterministic pseudo-random flecks
+  for (let y = 0; y < 32; y++) {
+    for (let x = 0; x < 32; x++) {
+      const hash = ((x * 374761393 + y * 668265263) ^ 0x5bf03635) >>> 0;
+      const mod = hash % 100;
+      if (mod < 28) {
+        ctx.fillStyle = tones[0];
+        ctx.fillRect(x, y, 1, 1);
+      } else if (mod < 48) {
+        ctx.fillStyle = tones[1];
+        ctx.fillRect(x, y, 1, 1);
+      } else if (mod < 75) {
+        ctx.fillStyle = tones[2];
+        ctx.fillRect(x, y, 1, 1);
+      } else if (mod < 90) {
+        ctx.fillStyle = tones[3];
+        ctx.fillRect(x, y, 1, 1);
+      } else if (mod < 98) {
+        ctx.fillStyle = tones[4];
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
+  }
+  return c;
+};
+
+// Helper: Buat Tekstur Paving Trotoar Pixel Art (Bevelled Paving Blocks)
+const createSidewalkPixelPattern = (): HTMLCanvasElement => {
+  const c = document.createElement('canvas');
+  c.width = 32;
+  c.height = 32;
+  const ctx = c.getContext('2d');
+  if (!ctx) return c;
+
+  // Background Nat Ubin Gelap
+  ctx.fillStyle = '#262d3a';
+  ctx.fillRect(0, 0, 32, 32);
+
+  // 4 Blok Paving 15x15 dalam grid 32x32
+  const blocks = [
+    { x: 1, y: 1 },
+    { x: 17, y: 1 },
+    { x: 1, y: 17 },
+    { x: 17, y: 17 },
+  ];
+
+  blocks.forEach((b, idx) => {
+    // Body Block
+    ctx.fillStyle = (b.x + b.y + idx) % 2 === 0 ? '#424c5e' : '#3d4657';
+    ctx.fillRect(b.x, b.y, 14, 14);
+
+    // Bevel Top & Left (Highlight)
+    ctx.fillStyle = '#59657b';
+    ctx.fillRect(b.x, b.y, 14, 1);
+    ctx.fillRect(b.x, b.y, 1, 14);
+
+    // Bevel Bottom & Right (Shadow)
+    ctx.fillStyle = '#2d3543';
+    ctx.fillRect(b.x, b.y + 13, 14, 1);
+    ctx.fillRect(b.x + 13, b.y, 1, 14);
+
+    // Subtle Surface Grain
+    ctx.fillStyle = '#4b566b';
+    ctx.fillRect(b.x + 4, b.y + 5, 2, 2);
+    ctx.fillRect(b.x + 9, b.y + 8, 2, 2);
+  });
+
+  return c;
+};
+
+// Helper: Buat Tekstur Rumput Hijau Pixel Art
+const createGrassPixelPattern = (): HTMLCanvasElement => {
+  const c = document.createElement('canvas');
+  c.width = 32;
+  c.height = 32;
+  const ctx = c.getContext('2d');
+  if (!ctx) return c;
+
+  // Base Green
+  ctx.fillStyle = '#14532d';
+  ctx.fillRect(0, 0, 32, 32);
+
+  // Pixel Grass Texture Flecks
+  for (let y = 0; y < 32; y++) {
+    for (let x = 0; x < 32; x++) {
+      const hash = ((x * 48271 + y * 16807) ^ 0x2719a3) >>> 0;
+      const mod = hash % 100;
+      if (mod < 25) {
+        ctx.fillStyle = '#0f3f22'; // Dark shade
+        ctx.fillRect(x, y, 1, 1);
+      } else if (mod < 45) {
+        ctx.fillStyle = '#166534'; // Mid green
+        ctx.fillRect(x, y, 1, 1);
+      } else if (mod < 60) {
+        ctx.fillStyle = '#15803d'; // Highlight blade
+        ctx.fillRect(x, y, 1, 2);
+      }
+    }
+  }
+  return c;
+};
 
 export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onReturnToSchool }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -99,7 +213,11 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onRet
 
   // Cache Gambar Karakter & Props
   const imagesRef = useRef<Record<string, HTMLImageElement>>({});
-  const [imagesLoaded, setImagesLoaded] = useState(false);
+
+  // Patterns Cache
+  const asphaltPatternRef = useRef<CanvasPattern | null>(null);
+  const sidewalkPatternRef = useRef<CanvasPattern | null>(null);
+  const grassPatternRef = useRef<CanvasPattern | null>(null);
 
   // Handle Resize Layar
   useEffect(() => {
@@ -137,23 +255,11 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onRet
       prop_motor_matic_1: '/assets/maps/smkn7/props/prop_motor_matic_1.png',
       prop_motor_matic_2: '/assets/maps/smkn7/props/prop_motor_matic_2.png',
       prop_tempat_sampah_3: '/assets/maps/smkn7/props/prop_tempat_sampah_3.png',
-      tile_tanaman_pot: '/assets/maps/smkn7/tiles/tile_tanaman_pot.png',
     };
-
-    let count = 0;
-    const total = Object.keys(assetList).length;
 
     Object.entries(assetList).forEach(([key, src]) => {
       const img = new Image();
       img.src = src;
-      img.onload = () => {
-        count++;
-        if (count >= total) setImagesLoaded(true);
-      };
-      img.onerror = () => {
-        count++;
-        if (count >= total) setImagesLoaded(true);
-      };
       imagesRef.current[key] = img;
     });
   }, []);
@@ -179,7 +285,6 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onRet
     if (feetLeft < 70 || feetRight >= WORLD_WIDTH - 70) return true;
 
     // Batas Map Atas (Pagar Sekolah)
-    // Ada celah gerbang di X: 1240 s/d 1448
     if (feetTop < 200) {
       const inGate = feetLeft >= 1240 && feetRight <= 1448;
       if (!inGate || feetTop < 130) {
@@ -192,11 +297,11 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onRet
 
     // Pilar Gerbang Kiri & Kanan
     if (feetTop < 220) {
-      if (feetRight > 1180 && feetLeft < 1240) return true; // Pilar kiri
-      if (feetRight > 1448 && feetLeft < 1500) return true; // Pilar kanan
+      if (feetRight > 1180 && feetLeft < 1240) return true;
+      if (feetRight > 1448 && feetLeft < 1500) return true;
     }
 
-    // Props Kolisi (Motor, Pot, Tempat Sampah)
+    // Props Kolisi
     for (const prop of STREET_PROPS) {
       if (prop.collision) {
         const cLeft = prop.x + prop.collision.ox;
@@ -260,6 +365,20 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onRet
     if (!ctx) return;
 
     ctx.imageSmoothingEnabled = false;
+
+    // Generate patterns once
+    if (!asphaltPatternRef.current) {
+      const p = ctx.createPattern(createAsphaltPixelPattern(), 'repeat');
+      if (p) asphaltPatternRef.current = p;
+    }
+    if (!sidewalkPatternRef.current) {
+      const p = ctx.createPattern(createSidewalkPixelPattern(), 'repeat');
+      if (p) sidewalkPatternRef.current = p;
+    }
+    if (!grassPatternRef.current) {
+      const p = ctx.createPattern(createGrassPixelPattern(), 'repeat');
+      if (p) grassPatternRef.current = p;
+    }
 
     let lastTime = performance.now();
     let animId: number;
@@ -325,7 +444,6 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onRet
       const isNearGate = pX >= 1220 && pX <= 1460 && pY <= 260;
       setNearSchoolGate(isNearGate);
 
-      // Otomatis pindah jika player jalan masuk ke pintu gerbang
       if (isNearGate && pY <= 150) {
         playSound.select();
         cancelAnimationFrame(animId);
@@ -354,7 +472,6 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onRet
         if (m.x < 350 || m.x > 2300) m.vx *= -1;
       });
 
-      // Encounter Check
       for (let i = 0; i < monstersRef.current.length; i++) {
         const m = monstersRef.current[i];
         if (Math.hypot(pX - m.x, pY - m.y) < 42) {
@@ -367,110 +484,118 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onRet
         }
       }
 
-      // 4. DRAWING CUSTOM PROCEDURAL MAP (Flat, Crisp, Zero Seams)
-      // Background Base Dark
+      // 4. DRAWING TEXTURED MAP (Authentic Pixel Art Textures)
       ctx.fillStyle = '#0b0f17';
       ctx.fillRect(0, 0, viewportSize.w, viewportSize.h);
 
-      // Area Taman Selatan (Rumput Hijau Solid)
+      // Area Taman Selatan (Rumput Hijau Bertekstur Pixel)
       const grassY = 1408 - camY;
-      ctx.fillStyle = '#14532d';
-      ctx.fillRect(-camX, grassY, WORLD_WIDTH, 256);
+      ctx.save();
+      ctx.translate(-camX, grassY);
+      ctx.fillStyle = grassPatternRef.current || '#14532d';
+      ctx.fillRect(0, 0, WORLD_WIDTH, 256);
+      ctx.restore();
 
-      // Paving Trotoar Selatan (Pedestrian Abu-abu Solid)
+      // Trotoar Selatan (Paving Pixel Art Bevelled)
       const southSidewalkY = 1184 - camY;
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(-camX, southSidewalkY, WORLD_WIDTH, 224);
+      ctx.save();
+      ctx.translate(-camX, southSidewalkY);
+      ctx.fillStyle = sidewalkPatternRef.current || '#334155';
+      ctx.fillRect(0, 0, WORLD_WIDTH, 224);
+      ctx.restore();
 
-      // Nat Paving Trotoar Selatan
-      ctx.strokeStyle = '#293548';
-      ctx.lineWidth = 1;
-      for (let x = 0; x < WORLD_WIDTH; x += 32) {
-        ctx.beginPath();
-        ctx.moveTo(x - camX, southSidewalkY);
-        ctx.lineTo(x - camX, southSidewalkY + 224);
-        ctx.stroke();
-      }
-      for (let y = 1184; y <= 1408; y += 32) {
-        ctx.beginPath();
-        ctx.moveTo(-camX, y - camY);
-        ctx.lineTo(WORLD_WIDTH - camX, y - camY);
-        ctx.stroke();
-      }
+      // Trotoar Utara (Paving Pixel Art Bevelled)
+      const northSidewalkY = 192 - camY;
+      ctx.save();
+      ctx.translate(-camX, northSidewalkY);
+      ctx.fillStyle = sidewalkPatternRef.current || '#334155';
+      ctx.fillRect(0, 0, WORLD_WIDTH, 256);
+      ctx.restore();
 
-      // Aspal Jalan Raya Utama (Solid Dark Slate Asphalt)
+      // Aspal Jalan Raya Utama (Tekstur Aspal Pixel Art Berkerikil)
       const roadY = 480 - camY;
       const roadH = 672;
-      ctx.fillStyle = '#1e242d';
-      ctx.fillRect(-camX, roadY, WORLD_WIDTH, roadH);
+      ctx.save();
+      ctx.translate(-camX, roadY);
+      ctx.fillStyle = asphaltPatternRef.current || '#1e242d';
+      ctx.fillRect(0, 0, WORLD_WIDTH, roadH);
+      ctx.restore();
 
-      // Kerb Trotoar Utara (Pola Belang Hitam-Putih Tegas)
-      const northCurbY = 448 - camY;
-      for (let x = 0; x < WORLD_WIDTH; x += 48) {
-        ctx.fillStyle = Math.floor(x / 48) % 2 === 0 ? '#f8fafc' : '#0f172a';
-        ctx.fillRect(x - camX, northCurbY, 48, 32);
-      }
-      // Border Kerb Utara
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(-camX, northCurbY + 30, WORLD_WIDTH, 2);
+      // KERB BATU TEPI JALAN PIXEL ART (Proporsional & Bevelled)
+      // Lebar tiap blok kerb 24px, tinggi 16px
+      const drawPixelCurb = (cy: number, isUpperCurb: boolean) => {
+        const curbBlockW = 24;
+        const curbBlockH = 16;
+        for (let x = 0; x < WORLD_WIDTH; x += curbBlockW) {
+          const isWhite = Math.floor(x / curbBlockW) % 2 === 0;
+          const sx = x - camX;
+          const sy = cy - camY;
 
-      // Kerb Trotoar Selatan (Pola Belang Hitam-Putih Tegas)
-      const southCurbY = 1152 - camY;
-      for (let x = 0; x < WORLD_WIDTH; x += 48) {
-        ctx.fillStyle = Math.floor(x / 48) % 2 === 0 ? '#f8fafc' : '#0f172a';
-        ctx.fillRect(x - camX, southCurbY, 48, 32);
-      }
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(-camX, southCurbY, WORLD_WIDTH, 2);
+          if (isWhite) {
+            // White curb block with highlights
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(sx, sy, curbBlockW - 1, curbBlockH);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillRect(sx, sy + 3, curbBlockW - 1, curbBlockH - 3);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(sx, sy + curbBlockH - 3, curbBlockW - 1, 3);
+          } else {
+            // Dark curb block with bevel
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(sx, sy, curbBlockW - 1, 3);
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(sx, sy + 3, curbBlockW - 1, curbBlockH - 6);
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(sx, sy + curbBlockH - 3, curbBlockW - 1, 3);
+          }
 
-      // Paving Trotoar Utara (Pedestrian Abu-abu Solid)
-      const northSidewalkY = 192 - camY;
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(-camX, northSidewalkY, WORLD_WIDTH, 256);
+          // Gap vertical shadow antar balok kerb
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(sx + curbBlockW - 1, sy, 1, curbBlockH);
+        }
 
-      // Nat Paving Trotoar Utara
-      ctx.strokeStyle = '#293548';
-      ctx.lineWidth = 1;
-      for (let x = 0; x < WORLD_WIDTH; x += 32) {
-        ctx.beginPath();
-        ctx.moveTo(x - camX, northSidewalkY);
-        ctx.lineTo(x - camX, northSidewalkY + 256);
-        ctx.stroke();
-      }
-      for (let y = 192; y <= 448; y += 32) {
-        ctx.beginPath();
-        ctx.moveTo(-camX, y - camY);
-        ctx.lineTo(WORLD_WIDTH - camX, y - camY);
-        ctx.stroke();
-      }
+        // Garis batas kontak aspal
+        ctx.fillStyle = isUpperCurb ? '#141821' : '#0f172a';
+        ctx.fillRect(-camX, cy + (isUpperCurb ? 16 : 0) - camY, WORLD_WIDTH, 2);
+      };
 
-      // Area Pagar & Dinding Batas Atas
+      // Gambar Kerb Utara (Y: 464) dan Kerb Selatan (Y: 1152)
+      drawPixelCurb(464, true);
+      drawPixelCurb(1152, false);
+
+      // Area Pagar & Dinding Batas Atas (Pagar Sekolah SMKN 7)
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(-camX, -camY, WORLD_WIDTH, 192);
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(-camX, 170 - camY, WORLD_WIDTH, 22);
+      // Dinding bata beton pagar atas
+      for (let y = 0; y < 180; y += 20) {
+        ctx.fillStyle = y % 40 === 0 ? '#1e293b' : '#18202f';
+        ctx.fillRect(-camX, y - camY, WORLD_WIDTH, 18);
+        ctx.fillStyle = '#0b0f19';
+        ctx.fillRect(-camX, y + 18 - camY, WORLD_WIDTH, 2);
+      }
 
-      // AREA GERBANG UTAMA SMKN 7 (X: 1216 s/d 1472, Y: 0 s/d 192)
-      // Jalur Gerbang Terbuka
+      // AREA GERBANG UTAMA SMKN 7 (X: 1216 s/d 1472)
       ctx.fillStyle = '#262d3a';
       ctx.fillRect(1240 - camX, -camY, 208, 192);
-
-      // Paving Jalur Masuk Gerbang
       ctx.fillStyle = '#3b4252';
       ctx.fillRect(1240 - camX, 64 - camY, 208, 128);
 
-      // Pilar Gerbang Kiri & Kanan (Beton Kokoh)
+      // Pilar Gerbang Beton
       ctx.fillStyle = '#475569';
       ctx.fillRect(1200 - camX, 100 - camY, 40, 92);
       ctx.fillStyle = '#64748b';
       ctx.fillRect(1204 - camX, 104 - camY, 32, 84);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(1200 - camX, 96 - camY, 40, 4);
 
       ctx.fillStyle = '#475569';
       ctx.fillRect(1448 - camX, 100 - camY, 40, 92);
       ctx.fillStyle = '#64748b';
       ctx.fillRect(1452 - camX, 104 - camY, 32, 84);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(1448 - camX, 96 - camY, 40, 4);
 
-      // Plang Pintu Gerbang "SMK NEGERI 7 BALEENDAH"
+      // Plang Gerbang "SMK NEGERI 7 BALEENDAH"
       ctx.fillStyle = '#1e3a8a';
       ctx.fillRect(1220 - camX, 40 - camY, 248, 48);
       ctx.strokeStyle = '#fbbf24';
@@ -485,86 +610,111 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onRet
       ctx.font = 'bold 10px monospace';
       ctx.fillText('KEMBALI KE AREA SEKOLAH ➔', 1344 - camX, 78 - camY);
 
-      // --- MARKA JALAN RAYA (ROAD MARKINGS) ---
+      // --- MARKA JALAN BERTEKSTUR PIXEL ART ---
 
-      // 1. Garis Bahu Jalan Solid Putih (Shoulder Line)
+      // 1. Garis Bahu Jalan Solid Putih
       ctx.fillStyle = '#e2e8f0';
       ctx.fillRect(-camX, 492 - camY, WORLD_WIDTH, 4);
-      ctx.fillRect(-camX, 1140 - camY, WORLD_WIDTH, 4);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(-camX, 493 - camY, WORLD_WIDTH, 2);
 
-      // 2. Garis Putus-putus Pemisah Lajur (White Dashed Lane Dividers)
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(-camX, 1140 - camY, WORLD_WIDTH, 4);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(-camX, 1141 - camY, WORLD_WIDTH, 2);
+
+      // 2. Garis Putus-putus Pemisah Lajur
       const drawDashedLine = (lineY: number) => {
         const segLen = 70;
         const gapLen = 60;
         const total = segLen + gapLen;
         for (let x = 0; x < WORLD_WIDTH; x += total) {
-          // Jangan tumpuk di atas zebra cross (X: 1200 - 1488)
           if (x + segLen >= 1200 && x <= 1488) continue;
+          const sx = x - camX;
+          const sy = lineY - camY;
           ctx.fillStyle = '#f8fafc';
-          ctx.fillRect(x - camX, lineY - camY, segLen, 5);
+          ctx.fillRect(sx, sy, segLen, 5);
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillRect(sx, sy + 4, segLen, 1);
         }
       };
 
-      // Lajur Barat (Atas) & Lajur Timur (Bawah)
       drawDashedLine(648);
       drawDashedLine(984);
 
-      // 3. Garis Ganda Kuning Tengah Jalan (Double Yellow Centerline)
+      // 3. Garis Ganda Kuning Tengah Jalan
       const centerLineY = 816;
       for (let x = 0; x < WORLD_WIDTH; x += 16) {
-        // Jangan tumpuk di atas area zebra cross
         if (x >= 1200 && x <= 1488) continue;
-        ctx.fillStyle = '#f59e0b';
-        ctx.fillRect(x - camX, centerLineY - 6 - camY, 16, 5);
-        ctx.fillRect(x - camX, centerLineY + 2 - camY, 16, 5);
+        const sx = x - camX;
+        const sy = centerLineY - camY;
+
+        // Garis Atas
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(sx, sy - 6, 16, 5);
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(sx, sy - 2, 16, 1);
+
+        // Garis Bawah
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(sx, sy + 2, 16, 5);
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(sx, sy + 6, 16, 1);
       }
 
-      // 4. ZEBRA CROSS PENYEBERANGAN PEJALAN KAKI (X: 1220 s/d 1468, Y: 496 s/d 1136)
+      // 4. ZEBRA CROSS PENYEBERANGAN (Pixel Art Edges)
       const zebraXStart = 1220;
       const zebraXEnd = 1468;
-      const zebraStripeH = 26;
+      const zebraStripeH = 24;
       const zebraGap = 20;
       for (let y = 506; y < 1130; y += zebraStripeH + zebraGap) {
+        const sy = y - camY;
         ctx.fillStyle = '#f8fafc';
-        ctx.fillRect(zebraXStart - camX, y - camY, zebraXEnd - zebraXStart, zebraStripeH);
+        ctx.fillRect(zebraXStart - camX, sy, zebraXEnd - zebraXStart, zebraStripeH);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(zebraXStart - camX, sy + zebraStripeH - 3, zebraXEnd - zebraXStart, 3);
       }
 
-      // Garis Batas Stop Line Zebra Cross (Solid Putih Tebal)
+      // Garis Batas Stop Line Zebra Cross
       ctx.fillStyle = '#f8fafc';
-      ctx.fillRect(1200 - camX, 500 - camY, 10, 636);
-      ctx.fillRect(1478 - camX, 500 - camY, 10, 636);
+      ctx.fillRect(1200 - camX, 500 - camY, 8, 636);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(1206 - camX, 500 - camY, 2, 636);
 
-      // 5. Marka Panah Arah Jalan (Crisp Procedural Arrows)
-      const drawRoadArrow = (ax: number, ay: number, dirArrow: 'west' | 'east') => {
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(1480 - camX, 500 - camY, 8, 636);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(1486 - camX, 500 - camY, 2, 636);
+
+      // 5. Marka Panah Arah Jalan Pixel Art
+      const drawPixelRoadArrow = (ax: number, ay: number, dirArrow: 'west' | 'east') => {
         ctx.save();
         ctx.translate(ax - camX, ay - camY);
         ctx.fillStyle = '#f8fafc';
         if (dirArrow === 'west') {
-          // Panah Ke Kiri (Barat)
           ctx.fillRect(0, -4, 40, 8);
           ctx.beginPath();
           ctx.moveTo(-15, 0);
-          ctx.lineTo(5, -16);
-          ctx.lineTo(5, 16);
+          ctx.lineTo(5, -15);
+          ctx.lineTo(5, 15);
           ctx.closePath();
           ctx.fill();
         } else {
-          // Panah Ke Kanan (Timur)
           ctx.fillRect(-40, -4, 40, 8);
           ctx.beginPath();
           ctx.moveTo(15, 0);
-          ctx.lineTo(-5, -16);
-          ctx.lineTo(-5, 16);
+          ctx.lineTo(-5, -15);
+          ctx.lineTo(-5, 15);
           ctx.closePath();
           ctx.fill();
         }
         ctx.restore();
       };
 
-      drawRoadArrow(600, 648, 'west');
-      drawRoadArrow(1850, 648, 'west');
-      drawRoadArrow(750, 984, 'east');
-      drawRoadArrow(2000, 984, 'east');
+      drawPixelRoadArrow(600, 648, 'west');
+      drawPixelRoadArrow(1850, 648, 'west');
+      drawPixelRoadArrow(750, 984, 'east');
+      drawPixelRoadArrow(2000, 984, 'east');
 
       // 5. Y-SORTED ENTITIES (Props, Monsters, Player)
       interface RenderEntity {
@@ -574,7 +724,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onRet
 
       const entities: RenderEntity[] = [];
 
-      // Render Props
+      // Render Procedural Pixel Props & Images
       STREET_PROPS.forEach((prop) => {
         const scrX = prop.x - camX;
         const scrY = prop.y - camY;
@@ -585,20 +735,87 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onRet
           scrY + prop.h >= -100 &&
           scrY <= viewportSize.h + 100
         ) {
-          const img = imagesRef.current[prop.imgKey];
           const yFoot = prop.collision ? prop.y + prop.collision.oy + prop.collision.oh : prop.y + prop.h;
 
           entities.push({
             yOrder: yFoot,
             draw: () => {
-              if (img && img.complete && img.naturalWidth > 0) {
-                // Bayangan prop
-                ctx.fillStyle = 'rgba(0,0,0,0.35)';
+              // Custom Procedural Pixel Art Props
+              if (prop.type === 'pot_plant') {
+                // Bayangan Pot
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
                 ctx.beginPath();
-                ctx.ellipse(scrX + prop.w / 2, scrY + prop.h - 4, prop.w * 0.42, 6, 0, 0, Math.PI * 2);
+                ctx.ellipse(scrX + 24, scrY + 50, 20, 6, 0, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.drawImage(img, scrX, scrY, prop.w, prop.h);
+                // Pot Terracotta Pixel Art
+                ctx.fillStyle = '#9a3412';
+                ctx.fillRect(scrX + 10, scrY + 28, 28, 24);
+                ctx.fillStyle = '#c2410c';
+                ctx.fillRect(scrX + 8, scrY + 24, 32, 6);
+                ctx.fillStyle = '#7c2d12';
+                ctx.fillRect(scrX + 10, scrY + 48, 28, 4);
+
+                // Tanaman Rindang Pixel Art
+                ctx.fillStyle = '#15803d';
+                ctx.beginPath();
+                ctx.arc(scrX + 24, scrY + 16, 20, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#22c55e';
+                ctx.beginPath();
+                ctx.arc(scrX + 20, scrY + 12, 12, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#166534';
+                ctx.beginPath();
+                ctx.arc(scrX + 28, scrY + 20, 10, 0, Math.PI * 2);
+                ctx.fill();
+              } else if (prop.type === 'street_lamp') {
+                // Tiang Lampu Jalan Pedestrian
+                ctx.fillStyle = 'rgba(0,0,0,0.25)';
+                ctx.beginPath();
+                ctx.ellipse(scrX + 16, scrY + 85, 12, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Tiang Besi Hitam
+                ctx.fillStyle = '#334155';
+                ctx.fillRect(scrX + 14, scrY + 12, 4, 74);
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(scrX + 11, scrY + 80, 10, 6);
+
+                // Kepala Lampu
+                ctx.fillStyle = '#475569';
+                ctx.fillRect(scrX + 8, scrY + 4, 16, 8);
+                // Bola Lampu Menyala Hangat
+                ctx.fillStyle = '#fef08a';
+                ctx.fillRect(scrX + 10, scrY + 10, 12, 6);
+              } else if (prop.type === 'bench') {
+                // Bangku Taman Trotoar
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(scrX + 4, scrY + 38, 72, 8);
+
+                // Kaki Bangku Besi
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(scrX + 8, scrY + 24, 6, 18);
+                ctx.fillRect(scrX + 66, scrY + 24, 6, 18);
+
+                // Kayu Bangku
+                ctx.fillStyle = '#92400e';
+                ctx.fillRect(scrX + 2, scrY + 16, 76, 8);
+                ctx.fillStyle = '#b45309';
+                ctx.fillRect(scrX + 2, scrY + 8, 76, 6);
+              } else if (prop.imgKey) {
+                const img = imagesRef.current[prop.imgKey];
+                if (img && img.complete && img.naturalWidth > 0) {
+                  // Bayangan Motor / Tempat Sampah
+                  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+                  ctx.beginPath();
+                  ctx.ellipse(scrX + prop.w / 2, scrY + prop.h - 4, prop.w * 0.42, 6, 0, 0, Math.PI * 2);
+                  ctx.fill();
+
+                  ctx.drawImage(img, scrX, scrY, prop.w, prop.h);
+                }
               }
             },
           });
@@ -616,13 +833,11 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onRet
         entities.push({
           yOrder: m.y + 16,
           draw: () => {
-            // Aura merah deteksi
             ctx.fillStyle = 'rgba(239, 68, 68, 0.25)';
             ctx.beginPath();
             ctx.arc(scrX, scrY + 16, 26, 0, Math.PI * 2);
             ctx.fill();
 
-            // Monster Canvas Sprite
             ctx.drawImage(monsterCanvas, scrX - 24, scrY - 24, 48, 48);
           },
         });
@@ -651,7 +866,6 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onRet
       entities.push({
         yOrder: pY + 36,
         draw: () => {
-          // Bayangan Kaki Player
           ctx.fillStyle = 'rgba(0,0,0,0.45)';
           ctx.beginPath();
           ctx.ellipse(pScrX, pScrY + 36, 18, 6, 0, 0, Math.PI * 2);
@@ -672,7 +886,6 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onRet
             const targetW = targetH * aspect;
             ctx.drawImage(playerImg, -targetW / 2, -56 + stepBob, targetW, targetH);
           } else {
-            // Fallback jika belum load
             ctx.fillStyle = '#38bdf8';
             ctx.fillRect(-16, -48, 32, 48);
           }
@@ -680,7 +893,6 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onEncounter, onRet
         },
       });
 
-      // Sortir dan Render Semuanya
       entities.sort((a, b) => a.yOrder - b.yOrder);
       entities.forEach((e) => e.draw());
 

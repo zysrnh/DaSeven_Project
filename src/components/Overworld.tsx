@@ -11,53 +11,53 @@ interface OverworldProps {
 }
 
 const TILE_SIZE = 64;
-const MAP_COLS = 36;
-const MAP_ROWS = 26;
-const WORLD_WIDTH = MAP_COLS * TILE_SIZE;
-const WORLD_HEIGHT = MAP_ROWS * TILE_SIZE;
+const MAP_COLS = 40;
+const MAP_ROWS = 28;
+const WORLD_WIDTH = MAP_COLS * TILE_SIZE;   // 2560 px
+const WORLD_HEIGHT = MAP_ROWS * TILE_SIZE; // 1792 px
 
-// Floor Types: 0: Paved Outdoor, 1: Solid Wall, 2: Hallway White Ceramic, 3: Lab Blue Anti-static, 4: Green Grass Garden
+// 0: Courtyard Outdoor, 1: Wall Solid, 2: Ceramic White Hallway, 3: Lab Blue Floor, 4: Green Lawn Garden
 const MAP_TILES: number[][] = Array.from({ length: MAP_ROWS }, (_, r) => {
   return Array.from({ length: MAP_COLS }, (_, c) => {
-    // Outer Borders
+    // Outer boundaries
     if (r === 0 || r === MAP_ROWS - 1 || c === 0 || c === MAP_COLS - 1) return 1;
-    
-    // Zone 1: Outdoor Courtyard & Parking (Rows 1 to 7)
-    if (r < 8) {
-      if (r < 3 && c > 11 && c < 25) return 4; // Green garden lawn
-      return 0; // Paved courtyard
+
+    // Zone 1: Lapangan Upacara & Halaman Luar (Rows 1 to 7)
+    if (r <= 7) {
+      if ((c >= 1 && c <= 3) || (c >= 36 && c <= 38)) return 4; // Lawn garden
+      return 0; // Courtyard stone paving
     }
-    
-    // Building Exterior Wall & Entrance (Row 8)
+
+    // Boundary Wall between Yard and School Main Building (Row 8)
     if (r === 8) {
-      if (c === 17 || c === 18) return 2; // Main entrance doorway
-      return 1; // Wall
+      if ((c >= 16 && c <= 23)) return 2; // Gerbang koridor utama terbuka
+      return 1; // Solid school facade wall
     }
-    
-    // Zone 2: Main Hallway (Rows 9 to 13)
-    if (r >= 9 && r <= 13) {
-      return 2; // White ceramic hallway
-    }
-    
-    // Wall Divider between Hallway & Lab (Row 14)
+
+    // Zone 2: Koridor Kelas Atas (Rows 9 to 13)
+    if (r <= 13) return 2; // White ceramic floor
+
+    // Wall between Upper Hallway and Classroom/Lab Rooms (Row 14)
     if (r === 14) {
-      if (c === 8 || c === 9 || c === 17 || c === 18 || c === 26 || c === 27) return 2; // Door openings
-      return 1;
+      if (c === 8 || c === 9 || c === 18 || c === 19 || c === 28 || c === 29) return 2; // Pintu masuk kelas & lab
+      return 1; // Solid brick interior wall
     }
-    
-    // Zone 3: Computer Lab TKJ/RPL (Rows 15 to 24, Cols 1 to 24)
+
+    // Zone 3: Laboratorium TKJ (Rows 15 to 24, Cols 1 to 24)
     if (c <= 24) {
-      return 3; // Blue anti-static floor
+      if (c === 12 || c === 13) return 2; // Lorong antar lab
+      return 3; // Blue anti-static lab floor
     }
     
-    // Zone 4: Ruang UKS & Tata Usaha (Rows 15 to 24, Cols 25 to 34)
-    return 2; // White floor
+    // Zone 4: Ruang UKS & Tata Usaha (Rows 15 to 24, Cols 25 to 38)
+    return 2; // White ceramic floor
   });
 });
 
 interface PropObject {
   id: string;
-  imgKey: string;
+  imgKey?: string;
+  type?: 'pot_plant' | 'school_door' | 'banner_smk' | 'garuda_presiden' | 'lemari_kaca' | 'server_rack' | 'pc_desk_row';
   x: number;
   y: number;
   w: number;
@@ -65,7 +65,7 @@ interface PropObject {
   collision?: { ox: number; oy: number; ow: number; oh: number };
 }
 
-// Map Props Placed in SMKN 7 Baleendah
+// Props Penataan SMKN 7 Baleendah (Bersih & Selaras)
 const MAP_PROPS: PropObject[] = [
   // 1. OUTDOOR GERBANG & PARKIRAN (Y: 100 - 450)
   {
@@ -79,21 +79,21 @@ const MAP_PROPS: PropObject[] = [
   },
   {
     id: 'tanaman_pot_kiri',
-    imgKey: 'tile_tanaman_pot',
+    type: 'pot_plant',
     x: 960,
-    y: 220,
-    w: 60,
-    h: 100,
-    collision: { ox: 10, oy: 50, ow: 40, oh: 45 },
+    y: 230,
+    w: 48,
+    h: 56,
+    collision: { ox: 4, oy: 20, ow: 40, oh: 32 },
   },
   {
     id: 'tanaman_pot_kanan',
-    imgKey: 'tile_tanaman_pot',
+    type: 'pot_plant',
     x: 1300,
-    y: 220,
-    w: 60,
-    h: 100,
-    collision: { ox: 10, oy: 50, ow: 40, oh: 45 },
+    y: 230,
+    w: 48,
+    h: 56,
+    collision: { ox: 4, oy: 20, ow: 40, oh: 32 },
   },
   {
     id: 'parkiran_motor_1',
@@ -118,47 +118,47 @@ const MAP_PROPS: PropObject[] = [
     imgKey: 'prop_tempat_sampah_3',
     x: 1420,
     y: 220,
-    w: 140,
-    h: 78,
-    collision: { ox: 10, oy: 30, ow: 120, oh: 45 },
+    w: 120,
+    h: 70,
+    collision: { ox: 10, oy: 25, ow: 100, oh: 40 },
   },
 
   // 2. KORIDOR KELAS & DINDING ATAS (Y: 460 - 850)
   {
     id: 'door_lab_tkj',
-    imgKey: 'tile_door_lab',
+    type: 'school_door',
     x: 1080,
     y: 470,
     w: 95,
-    h: 145,
+    h: 140,
   },
   {
     id: 'door_kelas_rpl',
-    imgKey: 'tile_door_kelas',
+    type: 'school_door',
     x: 550,
     y: 470,
     w: 90,
-    h: 145,
+    h: 140,
   },
   {
     id: 'door_kelas_multimedia',
-    imgKey: 'tile_door_kelas',
+    type: 'school_door',
     x: 1550,
     y: 470,
     w: 90,
-    h: 145,
+    h: 140,
   },
   {
     id: 'banner_smk_bisa',
-    imgKey: 'tile_banner_smk_bisa',
+    type: 'banner_smk',
     x: 820,
     y: 490,
-    w: 105,
-    h: 75,
+    w: 110,
+    h: 70,
   },
   {
     id: 'foto_presiden',
-    imgKey: 'tile_presiden_garuda',
+    type: 'garuda_presiden',
     x: 1350,
     y: 490,
     w: 110,
@@ -166,43 +166,27 @@ const MAP_PROPS: PropObject[] = [
   },
   {
     id: 'lemari_piala_koridor',
-    imgKey: 'tile_lemari_piala',
+    type: 'lemari_kaca',
     x: 350,
     y: 495,
-    w: 130,
-    h: 120,
-    collision: { ox: 10, oy: 40, ow: 110, oh: 75 },
+    w: 120,
+    h: 115,
+    collision: { ox: 10, oy: 40, ow: 100, oh: 70 },
   },
   {
     id: 'kursi_tunggu_koridor',
     imgKey: 'prop_kursi_susun',
     x: 1750,
     y: 540,
-    w: 130,
-    h: 60,
-    collision: { ox: 10, oy: 20, ow: 110, oh: 35 },
+    w: 100,
+    h: 65,
+    collision: { ox: 8, oy: 20, ow: 84, oh: 40 },
   },
 
-  // 3. LAB KOMPUTER / RUANG KELAS (Y: 920 - 1500, X: 100 - 1500)
-  {
-    id: 'blackboard_lab',
-    imgKey: 'tile_blackboard',
-    x: 320,
-    y: 915,
-    w: 220,
-    h: 90,
-  },
-  {
-    id: 'whiteboard_lab',
-    imgKey: 'tile_whiteboard',
-    x: 1120,
-    y: 915,
-    w: 200,
-    h: 90,
-  },
+  // 3. LABORATORIUM TKJ (Y: 880 - 1500)
   {
     id: 'server_rack_1',
-    imgKey: 'tile_server_racks',
+    type: 'server_rack',
     x: 140,
     y: 920,
     w: 125,
@@ -211,7 +195,7 @@ const MAP_PROPS: PropObject[] = [
   },
   {
     id: 'pc_row_1',
-    imgKey: 'tile_pc_desk_row',
+    type: 'pc_desk_row',
     x: 240,
     y: 1120,
     w: 390,
@@ -220,7 +204,7 @@ const MAP_PROPS: PropObject[] = [
   },
   {
     id: 'pc_row_2',
-    imgKey: 'tile_pc_desk_row',
+    type: 'pc_desk_row',
     x: 720,
     y: 1120,
     w: 390,
@@ -229,7 +213,7 @@ const MAP_PROPS: PropObject[] = [
   },
   {
     id: 'pc_row_3',
-    imgKey: 'tile_pc_desk_row',
+    type: 'pc_desk_row',
     x: 1200,
     y: 1120,
     w: 310,
@@ -317,6 +301,161 @@ interface RoamingMonster {
   spriteKey: 'void_eyeball' | 'glitch_monolith' | 'cosmic_slime';
 }
 
+// Procedural Pixel Art Pattern Helpers untuk Map Sekolah SMKN 7
+const createCeramicPattern = (): HTMLCanvasElement => {
+  const c = document.createElement('canvas');
+  c.width = 32;
+  c.height = 32;
+  const ctx = c.getContext('2d');
+  if (!ctx) return c;
+
+  // Nat ubin
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillRect(0, 0, 32, 32);
+
+  // Ubin Keramik 30x30
+  ctx.fillStyle = '#f1f5f9';
+  ctx.fillRect(1, 1, 30, 30);
+
+  // Highlight Top & Left
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(1, 1, 30, 1);
+  ctx.fillRect(1, 1, 1, 30);
+
+  // Shadow Bottom & Right
+  ctx.fillStyle = '#cbd5e1';
+  ctx.fillRect(1, 30, 30, 1);
+  ctx.fillRect(30, 1, 1, 30);
+
+  // Kilau pixel halus
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(6, 6, 2, 2);
+  return c;
+};
+
+const createLabBluePattern = (): HTMLCanvasElement => {
+  const c = document.createElement('canvas');
+  c.width = 32;
+  c.height = 32;
+  const ctx = c.getContext('2d');
+  if (!ctx) return c;
+
+  // Nat lab
+  ctx.fillStyle = '#172554';
+  ctx.fillRect(0, 0, 32, 32);
+
+  // Ubin Lab Anti-statis Biru
+  ctx.fillStyle = '#1e3a8a';
+  ctx.fillRect(1, 1, 30, 30);
+
+  // Bevel
+  ctx.fillStyle = '#2563eb';
+  ctx.fillRect(1, 1, 30, 1);
+  ctx.fillRect(1, 1, 1, 30);
+
+  ctx.fillStyle = '#1e40af';
+  ctx.fillRect(1, 30, 30, 1);
+  ctx.fillRect(30, 1, 1, 30);
+
+  // Tech pixel speckle
+  ctx.fillStyle = '#3b82f6';
+  ctx.fillRect(10, 10, 2, 2);
+  ctx.fillRect(22, 20, 2, 2);
+  return c;
+};
+
+const createCourtyardPattern = (): HTMLCanvasElement => {
+  const c = document.createElement('canvas');
+  c.width = 32;
+  c.height = 32;
+  const ctx = c.getContext('2d');
+  if (!ctx) return c;
+
+  // Nat paving
+  ctx.fillStyle = '#1e242d';
+  ctx.fillRect(0, 0, 32, 32);
+
+  // 4 Stone blocks
+  const blocks = [
+    { x: 1, y: 1 },
+    { x: 17, y: 1 },
+    { x: 1, y: 17 },
+    { x: 17, y: 17 },
+  ];
+
+  blocks.forEach((b, idx) => {
+    ctx.fillStyle = idx % 2 === 0 ? '#334155' : '#2e3a4d';
+    ctx.fillRect(b.x, b.y, 14, 14);
+
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(b.x, b.y, 14, 1);
+    ctx.fillRect(b.x, b.y, 1, 14);
+
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(b.x, b.y + 13, 14, 1);
+    ctx.fillRect(b.x + 13, b.y, 1, 14);
+  });
+  return c;
+};
+
+const createLawnGrassPattern = (): HTMLCanvasElement => {
+  const c = document.createElement('canvas');
+  c.width = 32;
+  c.height = 32;
+  const ctx = c.getContext('2d');
+  if (!ctx) return c;
+
+  ctx.fillStyle = '#14532d';
+  ctx.fillRect(0, 0, 32, 32);
+
+  for (let y = 0; y < 32; y++) {
+    for (let x = 0; x < 32; x++) {
+      const hash = ((x * 374761393 + y * 668265263) ^ 0x5bf03635) >>> 0;
+      const mod = hash % 100;
+      if (mod < 20) {
+        ctx.fillStyle = '#0f3f22';
+        ctx.fillRect(x, y, 1, 1);
+      } else if (mod < 45) {
+        ctx.fillStyle = '#166534';
+        ctx.fillRect(x, y, 1, 1);
+      } else if (mod < 65) {
+        ctx.fillStyle = '#15803d';
+        ctx.fillRect(x, y, 1, 2);
+      }
+    }
+  }
+  return c;
+};
+
+const createBrickWallPattern = (): HTMLCanvasElement => {
+  const c = document.createElement('canvas');
+  c.width = 32;
+  c.height = 16;
+  const ctx = c.getContext('2d');
+  if (!ctx) return c;
+
+  // Mortar
+  ctx.fillStyle = '#64748b';
+  ctx.fillRect(0, 0, 32, 16);
+
+  // Row 1 Bata
+  ctx.fillStyle = '#991b1b';
+  ctx.fillRect(1, 1, 14, 6);
+  ctx.fillRect(17, 1, 14, 6);
+
+  // Row 2 Bata (Staggered)
+  ctx.fillRect(1, 9, 6, 6);
+  ctx.fillRect(9, 9, 14, 6);
+  ctx.fillRect(25, 9, 6, 6);
+
+  // Highlight bata
+  ctx.fillStyle = '#b91c1c';
+  ctx.fillRect(1, 1, 14, 1);
+  ctx.fillRect(17, 1, 14, 1);
+  ctx.fillRect(9, 9, 14, 1);
+  return c;
+};
+
 export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwitchToStreet }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -339,7 +478,13 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
 
   // Images Cache
   const imagesRef = useRef<Record<string, HTMLImageElement>>({});
-  const [imagesLoaded, setImagesLoaded] = useState(false);
+
+  // Patterns Cache
+  const ceramicPatternRef = useRef<CanvasPattern | null>(null);
+  const labPatternRef = useRef<CanvasPattern | null>(null);
+  const courtyardPatternRef = useRef<CanvasPattern | null>(null);
+  const grassPatternRef = useRef<CanvasPattern | null>(null);
+  const brickPatternRef = useRef<CanvasPattern | null>(null);
 
   // Handle Resize
   useEffect(() => {
@@ -357,10 +502,10 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Preload all assets
+  // Preload Props Bersih SMKN 7 & Karakter Maine
   useEffect(() => {
     const assetList: Record<string, string> = {
-      // Character Sprites (Maine)
+      // Maine Sprites
       idle_1: '/assets/characters/maine/idle_1.png',
       idle_2: '/assets/characters/maine/idle_2.png',
       idle_3: '/assets/characters/maine/idle_3.png',
@@ -375,7 +520,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
       walk_up_3: '/assets/characters/maine/walk_up_3.png',
       hero_avatar: '/assets/characters/maine/avatar.png',
 
-      // Sliced Props (SMKN 7)
+      // Clean Props
       prop_monumen_smkn7: '/assets/maps/smkn7/props/prop_monumen_smkn7.png',
       prop_plang_gantung: '/assets/maps/smkn7/props/prop_plang_gantung.png',
       prop_podium: '/assets/maps/smkn7/props/prop_podium.png',
@@ -387,42 +532,13 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
       prop_apar_1: '/assets/maps/smkn7/props/prop_apar_1.png',
       prop_kotak_uks: '/assets/maps/smkn7/props/prop_kotak_uks.png',
       prop_tempat_sampah_3: '/assets/maps/smkn7/props/prop_tempat_sampah_3.png',
-      prop_kursi_tas_1: '/assets/maps/smkn7/props/prop_kursi_tas_1.png',
       prop_parkiran_motor: '/assets/maps/smkn7/props/prop_parkiran_motor.png',
       prop_motor_matic_1: '/assets/maps/smkn7/props/prop_motor_matic_1.png',
-
-      // Sliced Tiles (SMKN 7)
-      tile_floor_white: '/assets/maps/smkn7/tiles/tile_floor_white.png',
-      tile_floor_blue: '/assets/maps/smkn7/tiles/tile_floor_blue.png',
-      tile_wall_brick: '/assets/maps/smkn7/tiles/tile_wall_brick.png',
-      tile_wall_hallway: '/assets/maps/smkn7/tiles/tile_wall_hallway.png',
-      tile_door_wood: '/assets/maps/smkn7/tiles/tile_door_wood.png',
-      tile_door_lab: '/assets/maps/smkn7/tiles/tile_door_lab.png',
-      tile_door_kelas: '/assets/maps/smkn7/tiles/tile_door_kelas.png',
-      tile_pc_desk_row: '/assets/maps/smkn7/tiles/tile_pc_desk_row.png',
-      tile_server_racks: '/assets/maps/smkn7/tiles/tile_server_racks.png',
-      tile_blackboard: '/assets/maps/smkn7/tiles/tile_blackboard.png',
-      tile_whiteboard: '/assets/maps/smkn7/tiles/tile_whiteboard.png',
-      tile_banner_smk_bisa: '/assets/maps/smkn7/tiles/tile_banner_smk_bisa.png',
-      tile_presiden_garuda: '/assets/maps/smkn7/tiles/tile_presiden_garuda.png',
-      tile_lemari_piala: '/assets/maps/smkn7/tiles/tile_lemari_piala.png',
-      tile_tanaman_pot: '/assets/maps/smkn7/tiles/tile_tanaman_pot.png',
     };
-
-    let count = 0;
-    const total = Object.keys(assetList).length;
 
     Object.entries(assetList).forEach(([key, src]) => {
       const img = new Image();
       img.src = src;
-      img.onload = () => {
-        count++;
-        if (count >= total) setImagesLoaded(true);
-      };
-      img.onerror = () => {
-        count++;
-        if (count >= total) setImagesLoaded(true);
-      };
       imagesRef.current[key] = img;
     });
   }, []);
@@ -449,7 +565,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
       return true;
     }
 
-    // Grid Wall Collision
+    // Grid Collision
     const minCol = Math.floor(feetLeft / TILE_SIZE);
     const maxCol = Math.floor(feetRight / TILE_SIZE);
     const minRow = Math.floor(feetTop / TILE_SIZE);
@@ -513,6 +629,28 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
     if (!ctx) return;
 
     ctx.imageSmoothingEnabled = false;
+
+    // Initialize patterns once
+    if (!ceramicPatternRef.current) {
+      const p = ctx.createPattern(createCeramicPattern(), 'repeat');
+      if (p) ceramicPatternRef.current = p;
+    }
+    if (!labPatternRef.current) {
+      const p = ctx.createPattern(createLabBluePattern(), 'repeat');
+      if (p) labPatternRef.current = p;
+    }
+    if (!courtyardPatternRef.current) {
+      const p = ctx.createPattern(createCourtyardPattern(), 'repeat');
+      if (p) courtyardPatternRef.current = p;
+    }
+    if (!grassPatternRef.current) {
+      const p = ctx.createPattern(createLawnGrassPattern(), 'repeat');
+      if (p) grassPatternRef.current = p;
+    }
+    if (!brickPatternRef.current) {
+      const p = ctx.createPattern(createBrickWallPattern(), 'repeat');
+      if (p) brickPatternRef.current = p;
+    }
 
     let lastTime = performance.now();
     let animId: number;
@@ -608,7 +746,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
         }
       }
 
-      // 4. DRAW BASE FLOORS (Clean Seamless Canvas)
+      // 4. DRAW BASE FLOORS & WALLS (Authentic Pixel Art Patterns)
       ctx.fillStyle = '#0e1117';
       ctx.fillRect(0, 0, viewportSize.w, viewportSize.h);
 
@@ -623,35 +761,33 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
           const scrX = c * TILE_SIZE - camX;
           const scrY = r * TILE_SIZE - camY;
 
+          ctx.save();
+          ctx.translate(scrX, scrY);
+
           if (tType === 0) {
             // Outdoor Paved Courtyard
-            ctx.fillStyle = (r + c) % 2 === 0 ? '#1f242d' : '#1a1e26';
-            ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
-            ctx.strokeStyle = '#15181f';
-            ctx.strokeRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = courtyardPatternRef.current || '#334155';
+            ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
           } else if (tType === 4) {
             // Green Lawn Garden
-            ctx.fillStyle = (r + c) % 2 === 0 ? '#1b4332' : '#143628';
-            ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = grassPatternRef.current || '#15803d';
+            ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
           } else if (tType === 1) {
-            // Solid Wall Boundary
+            // Solid Brick Wall Boundary
+            ctx.fillStyle = brickPatternRef.current || '#991b1b';
+            ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
             ctx.fillStyle = '#1e1115';
-            ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
-            ctx.fillStyle = '#4a151b';
-            ctx.fillRect(scrX + 2, scrY + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+            ctx.fillRect(0, TILE_SIZE - 4, TILE_SIZE, 4);
           } else if (tType === 2) {
             // Hallway Clean White Ceramic
-            ctx.fillStyle = (r + c) % 2 === 0 ? '#e2e8f0' : '#cbd5e1';
-            ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
-            ctx.strokeStyle = '#94a3b8';
-            ctx.strokeRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = ceramicPatternRef.current || '#f1f5f9';
+            ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
           } else if (tType === 3) {
             // Lab Anti-static Blue Floor
-            ctx.fillStyle = (r + c) % 2 === 0 ? '#1e3a8a' : '#1d4ed8';
-            ctx.fillRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
-            ctx.strokeStyle = '#1e40af';
-            ctx.strokeRect(scrX, scrY, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = labPatternRef.current || '#1e3a8a';
+            ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
           }
+          ctx.restore();
         }
       }
 
@@ -674,14 +810,128 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
           scrY + prop.h >= -50 &&
           scrY <= viewportSize.h + 50
         ) {
-          const img = imagesRef.current[prop.imgKey];
           const yFoot = prop.collision ? prop.y + prop.collision.oy + prop.collision.oh : prop.y + prop.h;
 
           entities.push({
             yOrder: yFoot,
             draw: () => {
-              if (img && img.complete && img.naturalWidth > 0) {
-                ctx.drawImage(img, scrX, scrY, prop.w, prop.h);
+              // Custom Procedural Pixel Props
+              if (prop.type === 'pot_plant') {
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.beginPath();
+                ctx.ellipse(scrX + 24, scrY + 50, 20, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#9a3412';
+                ctx.fillRect(scrX + 10, scrY + 28, 28, 24);
+                ctx.fillStyle = '#c2410c';
+                ctx.fillRect(scrX + 8, scrY + 24, 32, 6);
+
+                ctx.fillStyle = '#15803d';
+                ctx.beginPath();
+                ctx.arc(scrX + 24, scrY + 16, 20, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#22c55e';
+                ctx.beginPath();
+                ctx.arc(scrX + 20, scrY + 12, 12, 0, Math.PI * 2);
+                ctx.fill();
+              } else if (prop.type === 'school_door') {
+                // Pintu Kelas Kayu / Lab
+                ctx.fillStyle = '#78350f';
+                ctx.fillRect(scrX, scrY, prop.w, prop.h);
+                ctx.fillStyle = '#92400e';
+                ctx.fillRect(scrX + 6, scrY + 6, prop.w - 12, prop.h - 12);
+
+                // Kaca Jendela Pintu
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillRect(scrX + 16, scrY + 16, prop.w - 32, 44);
+                ctx.fillStyle = '#bae6fd';
+                ctx.fillRect(scrX + 20, scrY + 20, 6, 36);
+
+                // Gagang Pintu
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillRect(scrX + prop.w - 16, scrY + 75, 6, 14);
+              } else if (prop.type === 'banner_smk') {
+                ctx.fillStyle = '#1e3a8a';
+                ctx.fillRect(scrX, scrY, prop.w, prop.h);
+                ctx.strokeStyle = '#fbbf24';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(scrX, scrY, prop.w, prop.h);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 11px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('SMK BISA!', scrX + prop.w / 2, scrY + 28);
+                ctx.fillStyle = '#fef08a';
+                ctx.font = 'bold 9px monospace';
+                ctx.fillText('SMKN 7 JUARA', scrX + prop.w / 2, scrY + 46);
+              } else if (prop.type === 'garuda_presiden') {
+                ctx.fillStyle = '#78350f';
+                ctx.fillRect(scrX, scrY, prop.w, prop.h);
+                ctx.fillStyle = '#fef08a';
+                ctx.fillRect(scrX + 4, scrY + 4, prop.w - 8, prop.h - 8);
+                ctx.fillStyle = '#b45309';
+                ctx.font = 'bold 10px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('GARUDA PANCASILA', scrX + prop.w / 2, scrY + 34);
+              } else if (prop.type === 'lemari_kaca') {
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(scrX, scrY, prop.w, prop.h);
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillRect(scrX + 6, scrY + 6, prop.w - 12, prop.h - 20);
+                // Piala Emas
+                ctx.fillStyle = '#fbbf24';
+                ctx.fillRect(scrX + 20, scrY + 24, 16, 22);
+                ctx.fillRect(scrX + 50, scrY + 20, 20, 26);
+                ctx.fillRect(scrX + 85, scrY + 24, 16, 22);
+              } else if (prop.type === 'server_rack') {
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(scrX, scrY, prop.w, prop.h);
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(scrX + 6, scrY + 6, prop.w - 12, prop.h - 12);
+                // Lampu LED server berkedip
+                for (let sy = scrY + 16; sy < scrY + prop.h - 20; sy += 18) {
+                  ctx.fillStyle = '#334155';
+                  ctx.fillRect(scrX + 10, sy, prop.w - 20, 12);
+                  const isLedGreen = (tickRef.current + sy) % 30 < 15;
+                  ctx.fillStyle = isLedGreen ? '#22c55e' : '#ef4444';
+                  ctx.fillRect(scrX + 16, sy + 4, 4, 4);
+                  ctx.fillStyle = '#38bdf8';
+                  ctx.fillRect(scrX + 24, sy + 4, 4, 4);
+                }
+              } else if (prop.type === 'pc_desk_row') {
+                // Meja Komputer Panjang Lab TKJ
+                ctx.fillStyle = '#334155';
+                ctx.fillRect(scrX, scrY + 30, prop.w, 40);
+                ctx.fillStyle = '#475569';
+                ctx.fillRect(scrX, scrY + 26, prop.w, 6);
+
+                // PC Monitor & Keyboard berjejer
+                const numPc = Math.floor(prop.w / 80);
+                for (let i = 0; i < numPc; i++) {
+                  const pcX = scrX + 15 + i * 80;
+                  // Monitor
+                  ctx.fillStyle = '#0f172a';
+                  ctx.fillRect(pcX, scrY + 6, 44, 26);
+                  ctx.fillStyle = '#38bdf8';
+                  ctx.fillRect(pcX + 3, scrY + 9, 38, 20);
+                  // Stand
+                  ctx.fillStyle = '#64748b';
+                  ctx.fillRect(pcX + 18, scrY + 32, 8, 8);
+                  // Keyboard
+                  ctx.fillStyle = '#1e293b';
+                  ctx.fillRect(pcX + 6, scrY + 44, 32, 10);
+                }
+              } else if (prop.imgKey) {
+                const img = imagesRef.current[prop.imgKey];
+                if (img && img.complete && img.naturalWidth > 0) {
+                  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+                  ctx.beginPath();
+                  ctx.ellipse(scrX + prop.w / 2, scrY + prop.h - 4, prop.w * 0.45, 8, 0, 0, Math.PI * 2);
+                  ctx.fill();
+
+                  ctx.drawImage(img, scrX, scrY, prop.w, prop.h);
+                }
               }
             },
           });
@@ -708,7 +958,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
         });
       });
 
-      // Add Player
+      // Add Player (Maine)
       const dir = playerDirRef.current;
       const stepPhase = animFrameRef.current;
       const walkFrameIdx = stepPhase === 3 ? 2 : stepPhase + 1;
@@ -731,10 +981,9 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
       entities.push({
         yOrder: pY + 36,
         draw: () => {
-          // Shadow
           ctx.fillStyle = 'rgba(0,0,0,0.45)';
           ctx.beginPath();
-          ctx.ellipse(pScrX, pScrY + 36, 20, 7, 0, 0, Math.PI * 2);
+          ctx.ellipse(pScrX, pScrY + 36, 18, 6, 0, 0, Math.PI * 2);
           ctx.fill();
 
           ctx.save();
@@ -756,47 +1005,45 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
         },
       });
 
-      // Sort and Draw
       entities.sort((a, b) => a.yOrder - b.yOrder);
       entities.forEach((e) => e.draw());
-
-      // Subtle Scanlines
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
-      for (let y = 0; y < viewportSize.h; y += 4) {
-        ctx.fillRect(0, y, viewportSize.w, 1.5);
-      }
 
       animId = requestAnimationFrame(gameLoop);
     };
 
     animId = requestAnimationFrame(gameLoop);
-    return () => cancelAnimationFrame(animId);
-  }, [onEncounter, imagesLoaded, viewportSize]);
 
-  // Virtual keys
-  const startVirtualKey = (key: string) => keysDownRef.current.add(key);
-  const stopVirtualKey = (key: string) => keysDownRef.current.delete(key);
+    return () => {
+      cancelAnimationFrame(animId);
+    };
+  }, [onEncounter, viewportSize]);
 
-  // Dynamic Zone Name
-  const curX = playerPosRef.current.x;
-  const curY = playerPosRef.current.y;
-  let currentZoneName = 'GERBANG & MONUMEN UTAMA';
-  if (curY > 520 && curY <= 900) currentZoneName = 'KORIDOR KELAS & PRESTASI';
-  else if (curY > 900 && curX <= 1600) currentZoneName = 'LAB KOMPUTER & JARINGAN (TKJ/RPL)';
-  else if (curY > 900 && curX > 1600) currentZoneName = 'RUANG TATA USAHA & UKS';
+  // Zone Name
+  const py = playerPosRef.current.y;
+  let currentZoneName = 'LAPANGAN UTAMA & PARKIR';
+  if (py > 450 && py <= 850) currentZoneName = 'KORIDOR KELAS ATAS';
+  else if (py > 850 && playerPosRef.current.x <= 1500) currentZoneName = 'LAB KOMPUTER & JARINGAN (TKJ)';
+  else if (py > 850) currentZoneName = 'RUANG TATA USAHA & UKS';
+
+  const startVirtualKey = (code: string) => {
+    keysDownRef.current.add(code);
+  };
+  const stopVirtualKey = (code: string) => {
+    keysDownRef.current.delete(code);
+  };
 
   return (
-    <div
-      ref={containerRef}
-      className="relative w-full h-screen overflow-hidden bg-[#0a0a0f] text-white font-mono select-none flex flex-col justify-between"
-    >
-      {/* TOP HUD BAR */}
+    <div ref={containerRef} className="relative w-full h-full overflow-hidden select-none bg-[#0a0d14]">
+      {/* TOP STATUS BAR */}
       <div className="absolute top-3 left-3 right-3 z-30 flex items-center justify-between pointer-events-none">
-        <div className="flex items-center space-x-3 bg-[#12121c]/90 backdrop-blur border-2 border-[#383850] p-2.5 shadow-2xl">
+        <div className="flex items-center space-x-3 bg-[#12121c]/95 border-2 border-[#383850] px-4 py-2 shadow-2xl pointer-events-auto">
           <img
             src="/assets/characters/maine/avatar.png"
-            alt="Hero Avatar"
-            className="w-11 h-11 object-contain bg-[#09090e] border border-yellow-500/70 p-0.5 shadow"
+            alt={player.name}
+            className="w-10 h-10 border border-[#4a4a66] bg-[#1a1a28] object-cover"
+            onError={(e) => {
+              (e.target as HTMLElement).style.display = 'none';
+            }}
           />
           <div>
             <div className="flex items-center space-x-2">
@@ -824,7 +1071,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
             </button>
           )}
 
-          <div className="flex items-center space-x-3 bg-[#12121c]/90 backdrop-blur border-2 border-[#383850] px-4 py-2.5 shadow-2xl">
+          <div className="flex items-center space-x-3 bg-[#12121c]/95 border-2 border-[#383850] px-4 py-2.5 shadow-2xl">
             <div className="flex flex-col items-end">
               <span className="text-[10px] text-neutral-400 font-bold uppercase">STAMINA & HP SISWA</span>
               <div className="flex items-center space-x-2">
@@ -844,7 +1091,7 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
         </div>
       </div>
 
-      {/* FULLSCREEN RESPONSIVE CANVAS */}
+      {/* FULLSCREEN CANVAS */}
       <div className="w-full h-full">
         <canvas
           ref={canvasRef}
@@ -856,14 +1103,14 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
 
       {/* BOTTOM CONTROLS */}
       <div className="absolute bottom-3 left-3 right-3 z-30 flex items-end justify-between pointer-events-none">
-        <div className="bg-[#12121c]/90 backdrop-blur border-2 border-[#383850] p-3 text-xs max-w-md pointer-events-auto">
+        <div className="bg-[#12121c]/95 border-2 border-[#383850] p-3 text-xs max-w-md pointer-events-auto">
           <p className="font-bold text-yellow-400 mb-0.5">🎮 KONTROL JELAJAH SMKN 7 BALEENDAH:</p>
           <p className="text-neutral-300 text-[11px] leading-tight">
             Gunakan tombol <strong className="text-white">WASD</strong> atau <strong className="text-white">Panah</strong>. Jelajahi Monumen Utama, Parkiran Motor, Koridor Kelas, dan Lab Komputer!
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-1.5 w-32 pointer-events-auto bg-[#12121c]/90 p-2 border-2 border-[#383850]">
+        <div className="grid grid-cols-3 gap-1.5 w-32 pointer-events-auto bg-[#12121c]/95 p-2 border-2 border-[#383850]">
           <div />
           <button
             onMouseDown={() => startVirtualKey('KeyW')}
