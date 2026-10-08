@@ -26,90 +26,24 @@ type HeroPose =
   | 'victory'
   | 'defeat';
 
-// KUMPULAN DECK KARTU SISWA SMKN 7 BALEENDAH
-const DEFAULT_CARD_POOL: Card[] = [
+// KUMPULAN DECK KARTU SISWA DENGAN 2 TIPE SERANGAN (LIGHT & HEAVY) + DEFENSE & HEAL
+interface BattleCard extends Card {
+  attackVariant?: 'light' | 'heavy';
+}
+
+const DEFAULT_CARD_POOL: BattleCard[] = [
+  // 1. LIGHT ATTACK (Serangan Ringan & Cepat)
   {
     id: 'c_penggaris',
     name: 'Penggaris Besi 30cm',
     cost: 1,
     type: 'attack',
-    value: 16,
-    description: 'Sabetan penggaris baja. Timing pas melipatgandakan damage.',
+    attackVariant: 'light',
+    value: 15,
+    description: 'Sabetan cepat penggaris baja. Serangan ringan & lincah.',
     flavor: 'Senjata darurat andalan anak teknik.',
     iconName: 'ruler',
     color: '#e11d48',
-    timingDifficulty: 'normal',
-  },
-  {
-    id: 'c_kabel_lan',
-    name: 'Cambuk Kabel LAN Cat6',
-    cost: 1,
-    type: 'attack',
-    value: 22,
-    description: 'Pecutan kabel jaringan berkonektor RJ45 tajam.',
-    flavor: 'Transmisi data berkecepatan 1 Gbps langsung ke tubuh monster.',
-    iconName: 'cable',
-    color: '#ea580c',
-    timingDifficulty: 'normal',
-  },
-  {
-    id: 'c_kunci_pas',
-    name: 'Hantaman Kunci Pas 12',
-    cost: 2,
-    type: 'attack',
-    value: 32,
-    description: 'Pukulan logam berat berdaya rusak masif.',
-    flavor: 'Dipinjam dari bengkel motor dekat sekolah.',
-    iconName: 'wrench',
-    color: '#dc2626',
-    timingDifficulty: 'hard',
-  },
-  {
-    id: 'c_casing_cpu',
-    name: 'Perisai Casing CPU',
-    cost: 1,
-    type: 'defense',
-    value: 20,
-    description: 'Menahan serangan dengan plat baja casing tower.',
-    flavor: 'Kokoh dan tahan banting dari benturan anomali.',
-    iconName: 'shield',
-    color: '#0284c7',
-    timingDifficulty: 'easy',
-  },
-  {
-    id: 'c_solder',
-    name: 'Solder Panas 60W',
-    cost: 2,
-    type: 'special',
-    value: 26,
-    description: 'Tusukan mata solder membara. Menembus shield musuh!',
-    flavor: 'Timah panas yang melelehkan inti anomali.',
-    iconName: 'zap',
-    color: '#9333ea',
-    timingDifficulty: 'hard',
-  },
-  {
-    id: 'c_kopi_joss',
-    name: 'Kopi Joss Kuningan',
-    cost: 1,
-    type: 'heal',
-    value: 24,
-    description: 'Memulihkan 24 HP dan mengembalikan stamina.',
-    flavor: 'Kopi hitam panas khas Warmindo pinggir jalan.',
-    iconName: 'coffee',
-    color: '#16a34a',
-    timingDifficulty: 'easy',
-  },
-  {
-    id: 'c_overclock',
-    name: 'Overclock Motherboard',
-    cost: 1,
-    type: 'buff',
-    value: 12,
-    description: 'Memacu konsentrasi, memulihkan 12 HP & +1 SP.',
-    flavor: 'Memaksa sistem otak bekerja pada frekuensi maksimal.',
-    iconName: 'chip',
-    color: '#0891b2',
     timingDifficulty: 'easy',
   },
   {
@@ -117,12 +51,106 @@ const DEFAULT_CARD_POOL: Card[] = [
     name: 'Jepitan Tang Crimping',
     cost: 1,
     type: 'attack',
+    attackVariant: 'light',
     value: 18,
-    description: 'Menjepit anomali dengan daya tekan 8P8C.',
-    flavor: 'Peralatan praktikum lab jaringan komputer.',
+    description: 'Jepitan cepat pada kabel dan titik vital anomali.',
+    flavor: 'Alat praktikum lab jaringan komputer.',
     iconName: 'tool',
-    color: '#e11d48',
+    color: '#f43f5e',
     timingDifficulty: 'normal',
+  },
+  {
+    id: 'c_kabel_lan',
+    name: 'Cambuk Kabel LAN Cat6',
+    cost: 1,
+    type: 'attack',
+    attackVariant: 'light',
+    value: 20,
+    description: 'Pecutan kabel berkecepatan 1 Gbps dengan konektor RJ45.',
+    flavor: 'Transmisi pukulan cepat tanpa delay.',
+    iconName: 'cable',
+    color: '#ea580c',
+    timingDifficulty: 'normal',
+  },
+
+  // 2. HEAVY ATTACK (Serangan Berat & Berdaya Hancur Tinggi)
+  {
+    id: 'c_kunci_pas',
+    name: 'Hantaman Kunci Pas 12',
+    cost: 2,
+    type: 'attack',
+    attackVariant: 'heavy',
+    value: 32,
+    description: 'Pukulan logam berat berdaya rusak masif. Timing sempit!',
+    flavor: 'Pinjam dari bengkel motor dekat sekolah.',
+    iconName: 'wrench',
+    color: '#b91c1c',
+    timingDifficulty: 'hard',
+  },
+  {
+    id: 'c_solder_panas',
+    name: 'Tusukan Solder Panas 60W',
+    cost: 2,
+    type: 'special',
+    attackVariant: 'heavy',
+    value: 28,
+    description: 'Mata solder membara tembus perisai shield musuh!',
+    flavor: 'Timah panas yang melelehkan sirkuit anomali.',
+    iconName: 'zap',
+    color: '#9333ea',
+    timingDifficulty: 'hard',
+  },
+
+  // 3. DEFENSE (Perisai Pertahanan)
+  {
+    id: 'c_casing_cpu',
+    name: 'Perisai Casing CPU',
+    cost: 1,
+    type: 'defense',
+    value: 22,
+    description: 'Menahan serangan dengan plat baja casing tower (+22 Shield).',
+    flavor: 'Kokoh dan tahan banting dari benturan.',
+    iconName: 'shield',
+    color: '#0284c7',
+    timingDifficulty: 'easy',
+  },
+  {
+    id: 'c_modul_tebal',
+    name: 'Buku Modul Kejuruan',
+    cost: 1,
+    type: 'defense',
+    value: 18,
+    description: 'Menangkis pukulan dengan modul setebal 400 halaman (+18 Shield).',
+    flavor: 'Buku pelajaran paling berat di tas.',
+    iconName: 'book',
+    color: '#0891b2',
+    timingDifficulty: 'easy',
+  },
+
+  // 4. HEAL (Pemulihan HP Siswa)
+  {
+    id: 'c_es_teh',
+    name: 'Es Teh Plastik Kantin',
+    cost: 1,
+    type: 'heal',
+    value: 20,
+    description: 'Meneguk es teh manis kantin. Memulihkan 20 HP.',
+    flavor: 'Plastik diikat karet merah khas sekolah.',
+    iconName: 'glass',
+    color: '#16a34a',
+    timingDifficulty: 'easy',
+  },
+  {
+    id: 'c_kopi_joss',
+    name: 'Kopi Joss Kuningan',
+    cost: 1,
+    type: 'heal',
+    value: 28,
+    description: 'Kopi arang panas khas Warmindo. Memulihkan 28 HP.',
+    flavor: 'Mengembalikan fokus dan energi tempur.',
+    iconName: 'coffee',
+    color: '#15803d',
+    timingDifficulty: 'easy',
   },
 ];
 
@@ -139,12 +167,12 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   const playerHpRef = useRef<number>(initialPlayer.hp);
   const isGameOverRef = useRef<boolean>(false);
 
-  // SISTEM KARTU: 3 PILIHAN KARTU & 3 KALI SPIN / REROLL PER TURN
-  const [currentChoices, setCurrentChoices] = useState<Card[]>([]);
+  // SISTEM 3 KARTU MELAYANG DI TENGAH DENGAN 3X SPIN
+  const [floatingCards, setFloatingCards] = useState<BattleCard[]>([]);
   const [spinsLeft, setSpinsLeft] = useState<number>(3);
-  const [isSpinning, setIsSpinning] = useState<boolean>(false);
+  const [isFlipping, setIsFlipping] = useState<boolean>(false);
 
-  const [activeCard, setActiveCard] = useState<Card | null>(null);
+  const [activeCard, setActiveCard] = useState<BattleCard | null>(null);
   const [isEnemyAttacking, setIsEnemyAttacking] = useState<boolean>(false);
   const [heroPose, setHeroPose] = useState<HeroPose>('idle');
   const [idleFrame, setIdleFrame] = useState<number>(0);
@@ -169,7 +197,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     playerHpRef.current = player.hp;
   }, [player.hp]);
 
-  // Breathing animation idle
+  // Animasi breathing idle hero
   useEffect(() => {
     const timer = setInterval(() => {
       setIdleFrame((prev) => (prev + 1) % 3);
@@ -182,13 +210,13 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   };
 
   // Helper mengambil 3 kartu acak dari pool kartu
-  const drawThreeCards = (): Card[] => {
-    const pool = player.deck && player.deck.length >= 3 ? player.deck : DEFAULT_CARD_POOL;
+  const drawThreeCards = (): BattleCard[] => {
+    const pool = DEFAULT_CARD_POOL;
     const shuffled = [...pool].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, 3);
   };
 
-  // Memulai turn baru player (Reset spin jadi 3 dan draw 3 kartu pilihan baru)
+  // Memulai turn baru player (Reset spin jadi 3 dan munculkan 3 kartu melayang beranimasi flip)
   const startTurn = () => {
     if (isGameOverRef.current || playerHpRef.current <= 0) return;
 
@@ -197,40 +225,48 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       shield: 0,
     }));
     setSpinsLeft(3);
-    setCurrentChoices(drawThreeCards());
     setHeroPose('idle');
     setShowItemMenu(false);
+
+    // Animasi kartu melayang muncul dengan suara flip
+    setIsFlipping(true);
+    playSound.cardFlip();
+    setTimeout(() => {
+      setFloatingCards(drawThreeCards());
+      setIsFlipping(false);
+    }, 250);
   };
 
-  // Inisialisasi giliran pertama
+  // Inisialisasi awal
   useEffect(() => {
     startTurn();
   }, []);
 
-  // FUNGSI SPIN / REROLL GANTI 3 KARTU (MAKSIMAL 3X PER TURN)
+  // FUNGSI SPIN / GANTI 3 KARTU (3 KALI PER TURN DENGAN SUARA FLIP)
   const handleSpinCards = () => {
-    if (spinsLeft <= 0 || isEnemyAttacking || isSpinning || isGameOverRef.current) return;
+    if (spinsLeft <= 0 || isEnemyAttacking || isFlipping || isGameOverRef.current) return;
 
-    playSound.cardSelect();
-    setIsSpinning(true);
+    playSound.cardFlip();
+    setIsFlipping(true);
     setSpinsLeft((prev) => prev - 1);
 
     setTimeout(() => {
-      setCurrentChoices(drawThreeCards());
-      setIsSpinning(false);
-      addLog(`Spin berhasil! Sisa spin: ${spinsLeft - 1}`);
-    }, 250);
+      setFloatingCards(drawThreeCards());
+      setIsFlipping(false);
+      addLog(`Kartu di-spin! Sisa spin: ${spinsLeft - 1}`);
+    }, 280);
   };
 
-  // FUNGSI MEMILIH 1 DARI 3 KARTU UNTUK DIMAINKAN
-  const handlePlayChosenCard = (card: Card) => {
+  // FUNGSI MEMILIH 1 DARI 3 KARTU MELAYANG
+  const handlePlayChosenCard = (card: BattleCard) => {
     if (isEnemyAttacking || activeCard !== null || isGameOverRef.current) return;
 
     playSound.cardSelect();
 
     if (card.type === 'attack' || card.type === 'special') {
       setActiveCard(card);
-      if (card.cost >= 2 || card.timingDifficulty === 'hard') {
+      // Pembeda pose serangan ringan vs berat
+      if (card.attackVariant === 'heavy' || card.cost >= 2 || card.timingDifficulty === 'hard') {
         setHeroPose('windup_heavy');
       } else {
         setHeroPose('windup_light');
@@ -274,25 +310,25 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     }
   };
 
-  // TRANSISI GANTI TURN KE MONSTER SETELAH 1 KARTU SELESAI
+  // GANTI TURN KE MONSTER
   const triggerEnemyTurn = () => {
     if (isGameOverRef.current) return;
 
     setTimeout(() => {
       if (enemy.hp > 0 && playerHpRef.current > 0) {
-        addLog(`Giliran selesai. ${enemy.name} bersiap melancarkan serangan!`);
+        addLog(`Giliran selesai. ${enemy.name} bersiap menyerang!`);
         setIsEnemyAttacking(true);
       }
     }, 550);
   };
 
-  // RESOLUSI SERANGAN KARTU PLAYER VIA QTE TIMING BAR
+  // RESOLUSI SERANGAN KARTU VIA TIMING QTE
   const handleResolvePlayerQte = (grade: QteGrade, multiplier: number) => {
     if (!activeCard) return;
 
     const baseDmg = activeCard.value;
     const finalDamage = Math.round(baseDmg * multiplier);
-    const isHeavy = activeCard.cost >= 2 || activeCard.type === 'special';
+    const isHeavy = activeCard.attackVariant === 'heavy' || activeCard.cost >= 2;
 
     if (isHeavy) {
       setHeroPose('attack_heavy');
@@ -351,13 +387,12 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         }, 1300);
       } else {
         setHeroPose('idle');
-        // LANGSUNG GANTI TURN KE MONSTER
         triggerEnemyTurn();
       }
     }, 750);
   };
 
-  // RESOLUSI GILIRAN SERANGAN MONSTER (PARRY / DEFENSE)
+  // RESOLUSI SERANGAN MONSTER (PARRY / DEFENSE)
   const handleResolveEnemyDefense = (parried: boolean) => {
     setIsEnemyAttacking(false);
     setEnemyAttackAnim(true);
@@ -398,7 +433,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     });
 
     if (parried) {
-      addLog(`★ PARRY SUKSES! Menahan hantaman ${enemy.name}! Kena ${finalDmg} DMG!`);
+      addLog(`★ PARRY SUKSES! Menahan serangan ${enemy.name}! Kena ${finalDmg} DMG!`);
     } else {
       addLog(`✗ PARRY GAGAL! ${enemy.name} menghantam sebesar ${finalDmg} DMG!`);
     }
@@ -414,7 +449,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           onDefeat();
         }, 1500);
       } else {
-        // KEMBALI KE GILIRAN PLAYER DENGAN 3 KARTU & 3 SPIN BARU
+        // GANTI KE GILIRAN PLAYER DENGAN KARTU MELAYANG BARU
         startTurn();
       }
     }, 850);
@@ -521,15 +556,13 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         {/* ======================================================== */}
         {/* SISI KIRI: PLAYER (RIAN PRATAMA) MENGHADAP KANAN */}
         {/* ======================================================== */}
-        <div className="absolute bottom-16 left-28 z-10 flex flex-col items-center">
-          {/* INDIKATOR TURN POINTER SEGITIGA BIRU */}
+        <div className="absolute bottom-16 left-24 z-10 flex flex-col items-center">
           {!isEnemyAttacking && !isGameOverRef.current && (
             <div className="absolute -top-8 text-cyan-400 text-2xl animate-bounce drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
               ▼
             </div>
           )}
 
-          {/* Sprite Player Menghadap Kanan Alami */}
           <div className="relative flex items-center justify-center">
             <img
               src={heroSpriteSrc}
@@ -549,9 +582,120 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         </div>
 
         {/* ======================================================== */}
+        {/* AREA TENGAH: 3 KARTU MELAYANG DI TENGAH ARENA PERTEMPURAN */}
+        {/* ======================================================== */}
+        {!isEnemyAttacking && !isGameOverRef.current && (
+          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center gap-6 pointer-events-auto">
+            {floatingCards.map((card, idx) => {
+              const isCardDisabled = isEnemyAttacking || activeCard !== null || isGameOverRef.current;
+
+              // Warna badge & aksen sesuai jenis kartu
+              const isHeavy = card.attackVariant === 'heavy';
+              const isLight = card.attackVariant === 'light';
+
+              const badgeText = isHeavy
+                ? '💥 HEAVY ATTACK'
+                : isLight
+                ? '⚔ LIGHT ATTACK'
+                : card.type === 'defense'
+                ? '🛡 DEFENSE'
+                : card.type === 'heal'
+                ? '🧪 HEAL'
+                : '⚡ SPECIAL';
+
+              const cardBorderColor = isHeavy
+                ? 'border-[#ef4444] shadow-[0_8px_20px_rgba(239,68,68,0.35)]'
+                : isLight
+                ? 'border-[#f97316] shadow-[0_8px_20px_rgba(249,115,22,0.35)]'
+                : card.type === 'defense'
+                ? 'border-[#0ea5e9] shadow-[0_8px_20px_rgba(14,165,233,0.35)]'
+                : card.type === 'heal'
+                ? 'border-[#10b981] shadow-[0_8px_20px_rgba(16,185,129,0.35)]'
+                : 'border-[#a855f7] shadow-[0_8px_20px_rgba(168,85,247,0.35)]';
+
+              return (
+                <div
+                  key={`${card.id}_${idx}`}
+                  onClick={() => !isCardDisabled && handlePlayChosenCard(card)}
+                  style={{
+                    transform: isFlipping
+                      ? 'rotateY(90deg) scale(0.85)'
+                      : 'rotateY(0deg) scale(1)',
+                    transition: 'transform 0.28s ease, filter 0.2s ease',
+                  }}
+                  className={`w-56 h-72 bg-[#121824]/95 border-3 ${cardBorderColor} rounded-xl p-3.5 flex flex-col justify-between select-none relative backdrop-blur-md cursor-pointer group hover:-translate-y-5 hover:scale-105 hover:z-30 transition-all ${
+                    isCardDisabled ? 'opacity-40 cursor-not-allowed' : ''
+                  }`}
+                >
+                  {/* GLOW EFEK & PITA ATAS */}
+                  <div>
+                    {/* BADGE TIPE KARTU */}
+                    <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-[#293547]">
+                      <span className="text-[10px] font-black tracking-wider uppercase text-white bg-black/50 px-2 py-0.5 rounded-md border border-white/20">
+                        {badgeText}
+                      </span>
+                      <span className="text-[11px] font-bold text-yellow-300 bg-[#1e293b] px-1.5 py-0.5 rounded border border-[#334155]">
+                        1 Turn
+                      </span>
+                    </div>
+
+                    {/* NAMA KARTU */}
+                    <h3 className="font-extrabold text-sm text-white group-hover:text-cyan-300 transition-colors leading-snug mb-2">
+                      {card.name}
+                    </h3>
+
+                    {/* NILAI VALUE ANGKA (DMG / SHIELD / HEAL) */}
+                    <div className="my-2 p-2 bg-black/40 rounded-lg border border-white/10 flex items-center justify-center text-center">
+                      {isHeavy && (
+                        <span className="text-base font-black text-red-400 drop-shadow">
+                          💥 {card.value} DMG MASIF
+                        </span>
+                      )}
+                      {isLight && (
+                        <span className="text-base font-black text-orange-400 drop-shadow">
+                          ⚔ {card.value} DMG CEPAT
+                        </span>
+                      )}
+                      {card.type === 'defense' && (
+                        <span className="text-base font-black text-cyan-400 drop-shadow">
+                          🛡 +{card.value} SHIELD
+                        </span>
+                      )}
+                      {card.type === 'heal' && (
+                        <span className="text-base font-black text-emerald-400 drop-shadow">
+                          🧪 +{card.value} HP PULIH
+                        </span>
+                      )}
+                      {card.type === 'special' && (
+                        <span className="text-base font-black text-purple-400 drop-shadow">
+                          🔥 {card.value} DMG TEMBUS
+                        </span>
+                      )}
+                    </div>
+
+                    {/* DESKRIPSI KARTU */}
+                    <p className="text-[11px] text-neutral-300 leading-snug mt-1">
+                      {card.description}
+                    </p>
+                  </div>
+
+                  {/* FOOTER FLAVOR & INDIKATOR KLIK */}
+                  <div className="pt-2 border-t border-[#293547] flex items-center justify-between text-[10px] text-neutral-400 italic">
+                    <span className="truncate max-w-[130px]">"{card.flavor}"</span>
+                    <span className="text-cyan-400 font-black not-italic uppercase tracking-wider group-hover:animate-pulse">
+                      MAINKAN ➔
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ======================================================== */}
         {/* SISI KANAN: ENEMY (ANOMALI) MENGHADAP KIRI */}
         {/* ======================================================== */}
-        <div className="absolute bottom-20 right-32 z-10 flex flex-col items-center">
+        <div className="absolute bottom-20 right-28 z-10 flex flex-col items-center">
           {/* Status Bar Musuh */}
           <div className="bg-[#121824]/95 border-2 border-[#334155] px-4 py-2 rounded-lg mb-4 shadow-xl min-w-[200px]">
             <div className="flex justify-between items-center text-xs mb-1 font-bold">
@@ -596,24 +740,24 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       </div>
 
       {/* ======================================================== */}
-      {/* 2. PANEL BAWAH: 3 KARTU PILIHAN TURN + SPIN + PROFIL */}
+      {/* 2. PANEL BAWAH: BERSIH & FOKUS KE KONTROL DAN STATUS */}
       {/* ======================================================== */}
-      <div className="w-full bg-[#121824] border-t-4 border-[#253244] px-6 py-3.5 flex items-center justify-between gap-6 z-30 shadow-2xl min-h-[175px]">
+      <div className="w-full bg-[#121824] border-t-4 border-[#253244] px-8 py-3.5 flex items-center justify-between gap-6 z-30 shadow-2xl min-h-[90px]">
         
-        {/* SISI KIRI: MENU UTILITAS (SPIN/REROLL, RANSEL ITEM, RETREAT) */}
-        <div className="flex flex-col w-40 gap-2">
-          {/* TOMBOL SPIN / GANTI KARTU (3 KALI PER TURN) */}
+        {/* SISI KIRI: MENU KONTROL (SPIN KARTU 3X, RANSEL ITEM, RETREAT) */}
+        <div className="flex items-center gap-3">
+          {/* TOMBOL SPIN KARTU MELAYANG (3 KALI PER TURN) */}
           <button
             onClick={handleSpinCards}
-            disabled={spinsLeft <= 0 || isEnemyAttacking || isSpinning || isGameOverRef.current}
-            className={`py-2 px-3 text-left font-black text-xs uppercase tracking-wider border-2 rounded transition-all flex items-center justify-between ${
+            disabled={spinsLeft <= 0 || isEnemyAttacking || isFlipping || isGameOverRef.current}
+            className={`py-2 px-4 text-left font-black text-xs uppercase tracking-wider border-2 rounded-lg transition-all flex items-center gap-2.5 ${
               spinsLeft > 0 && !isEnemyAttacking
-                ? 'bg-[#854d0e] hover:bg-[#a16207] active:bg-[#713f12] border-[#facc15] text-yellow-100 shadow-[0_0_10px_rgba(250,204,21,0.4)] cursor-pointer'
+                ? 'bg-[#854d0e] hover:bg-[#a16207] active:bg-[#713f12] border-[#facc15] text-yellow-100 shadow-[0_0_12px_rgba(250,204,21,0.5)] cursor-pointer'
                 : 'bg-[#1e293b] border-[#334155] text-neutral-500 opacity-50 cursor-not-allowed'
             }`}
           >
-            <span>🎰 SPIN KARTU</span>
-            <span className="bg-black/40 px-1.5 py-0.5 rounded text-[10px] text-yellow-300">
+            <span>🎰 SPIN / GANTI KARTU</span>
+            <span className="bg-black/50 px-2 py-0.5 rounded text-[11px] text-yellow-300 font-bold">
               {spinsLeft}/3
             </span>
           </button>
@@ -622,7 +766,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           <button
             onClick={() => setShowItemMenu(!showItemMenu)}
             disabled={isEnemyAttacking || isGameOverRef.current}
-            className="py-1.5 px-3 text-left font-bold text-xs uppercase tracking-wider bg-[#18202d] hover:bg-[#202c3d] border-2 border-[#293547] hover:border-neutral-400 text-neutral-300 rounded cursor-pointer transition-colors"
+            className="py-2 px-3.5 font-bold text-xs uppercase tracking-wider bg-[#18202d] hover:bg-[#202c3d] border-2 border-[#293547] hover:border-emerald-400 text-neutral-200 rounded-lg cursor-pointer transition-colors"
           >
             🧪 Ransel Item
           </button>
@@ -631,108 +775,39 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           <button
             onClick={onRetreat || onDefeat}
             disabled={isEnemyAttacking || isGameOverRef.current}
-            className="py-1.5 px-3 text-left font-bold text-xs uppercase tracking-wider bg-[#18202d] hover:bg-[#2d1b22] border-2 border-[#293547] hover:border-red-400 text-neutral-400 hover:text-red-300 rounded cursor-pointer transition-colors"
+            className="py-2 px-3.5 font-bold text-xs uppercase tracking-wider bg-[#18202d] hover:bg-[#2d1b22] border-2 border-[#293547] hover:border-red-400 text-neutral-400 hover:text-red-300 rounded-lg cursor-pointer transition-colors"
           >
             🏃 Retreat
           </button>
         </div>
 
-        {/* SISI TENGAH: 3 KARTU PILIHAN UNTUK DIPILIH 1 TIAP TURN */}
-        <div className="flex-1 flex justify-center items-center gap-4 h-full">
-          {showItemMenu ? (
-            /* JENDELA POPUP ITEM RANSEL */
-            <div className="w-full max-w-xl bg-[#18202d] border-2 border-[#10b981] p-3 rounded-lg flex items-center justify-between gap-3 shadow-xl">
-              {inventory.map((it) => (
-                <button
-                  key={it.id}
-                  disabled={it.count <= 0 || isEnemyAttacking}
-                  onClick={() => handleUseInventoryItem(it.id)}
-                  className="flex-1 p-2 bg-[#121824] hover:bg-[#1b2b3a] border border-[#2d4256] rounded text-left disabled:opacity-40 cursor-pointer transition-all"
-                >
-                  <div className="flex justify-between text-xs font-bold text-emerald-300 mb-0.5">
-                    <span>{it.name}</span>
-                    <span className="text-[10px] text-white bg-[#1e293b] px-1 rounded">x{it.count}</span>
-                  </div>
-                  <div className="text-[10px] text-neutral-300">{it.desc}</div>
-                </button>
-              ))}
+        {/* POPUP OVERLAY RANSEL ITEM JIKA DIBUKA */}
+        {showItemMenu && (
+          <div className="absolute bottom-24 left-8 z-40 bg-[#18202d] border-2 border-[#10b981] p-3 rounded-lg flex items-center gap-3 shadow-2xl">
+            {inventory.map((it) => (
               <button
-                onClick={() => setShowItemMenu(false)}
-                className="px-3 py-2 bg-[#334155] text-xs font-bold text-white rounded hover:bg-[#475569]"
+                key={it.id}
+                disabled={it.count <= 0 || isEnemyAttacking}
+                onClick={() => handleUseInventoryItem(it.id)}
+                className="p-2 bg-[#121824] hover:bg-[#1b2b3a] border border-[#2d4256] rounded text-left disabled:opacity-40 cursor-pointer transition-all min-w-[130px]"
               >
-                Tutup
-              </button>
-            </div>
-          ) : (
-            /* 3 KARTU TURN PILIHAN */
-            currentChoices.map((card, idx) => {
-              const isCardDisabled = isEnemyAttacking || activeCard !== null || isGameOverRef.current;
-              
-              // Warna border & tag sesuai tipe kartu
-              const typeColor =
-                card.type === 'attack'
-                  ? '#e11d48'
-                  : card.type === 'defense'
-                  ? '#0284c7'
-                  : card.type === 'heal'
-                  ? '#16a34a'
-                  : card.type === 'buff'
-                  ? '#0891b2'
-                  : '#9333ea';
-
-              return (
-                <div
-                  key={`${card.id}_${idx}`}
-                  onClick={() => !isCardDisabled && handlePlayChosenCard(card)}
-                  className={`w-52 h-36 p-3 bg-[#18202d] border-2 rounded-lg flex flex-col justify-between transition-all select-none relative group ${
-                    isCardDisabled
-                      ? 'opacity-40 cursor-not-allowed border-[#283548]'
-                      : 'cursor-pointer hover:-translate-y-2.5 hover:shadow-[0_0_15px_rgba(56,189,248,0.3)] hover:border-[#38bdf8] border-[#334255]'
-                  } ${isSpinning ? 'scale-95 opacity-50' : 'scale-100'}`}
-                >
-                  {/* HEADER KARTU: NAMA & BADGE TIPE */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-xs text-white truncate max-w-[130px]">
-                        {card.name}
-                      </span>
-                      <span
-                        className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded text-white"
-                        style={{ backgroundColor: typeColor }}
-                      >
-                        {card.type}
-                      </span>
-                    </div>
-
-                    {/* NILAI VALUE DAMAGE / SHIELD / HEAL */}
-                    <div className="text-[11px] font-black mb-1" style={{ color: typeColor }}>
-                      {card.type === 'attack' && `⚔ Damage: ${card.value} DMG`}
-                      {card.type === 'defense' && `🛡 Shield: +${card.value}`}
-                      {card.type === 'heal' && `🧪 Pemulihan: +${card.value} HP`}
-                      {card.type === 'buff' && `⚡ Buff: +${card.value} HP & +1 SP`}
-                      {card.type === 'special' && `🔥 Tembus Shield: ${card.value} DMG`}
-                    </div>
-
-                    {/* DESKRIPSI SINGKAT KARTU */}
-                    <p className="text-[10px] text-neutral-300 leading-tight">
-                      {card.description}
-                    </p>
-                  </div>
-
-                  {/* FOOTER KARTU: FLAVOR TEXT & INDIKATOR KLIK */}
-                  <div className="pt-1 border-t border-[#253244] flex items-center justify-between text-[9px] text-neutral-400 italic">
-                    <span className="truncate max-w-[130px]">"{card.flavor}"</span>
-                    <span className="text-cyan-400 font-bold uppercase not-italic opacity-0 group-hover:opacity-100 transition-opacity">
-                      PILIH ➔
-                    </span>
-                  </div>
+                <div className="flex justify-between text-xs font-bold text-emerald-300 mb-0.5">
+                  <span>{it.name}</span>
+                  <span className="text-[10px] text-white bg-[#1e293b] px-1 rounded">x{it.count}</span>
                 </div>
-              );
-            })
-          )}
-        </div>
+                <div className="text-[10px] text-neutral-300">{it.desc}</div>
+              </button>
+            ))}
+            <button
+              onClick={() => setShowItemMenu(false)}
+              className="px-2.5 py-1.5 bg-[#334155] text-xs font-bold text-white rounded hover:bg-[#475569] cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
-        {/* SISI KANAN: STATUS BAR PROFIL RIAN PRATAMA (MAINE) */}
+        {/* SISI KANAN: STATUS BAR RIAN PRATAMA (MAINE) */}
         <div className="flex items-center justify-end">
           <div className="bg-[#18202d] border-2 border-[#38bdf8] p-2.5 rounded-lg flex items-center gap-3.5 w-64 shadow-xl">
             <div className="relative">
@@ -773,7 +848,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
       </div>
 
-      {/* MODAL ACTION TIMING BAR UNTUK KARTU SERANGAN */}
+      {/* MODAL ACTION TIMING BAR UNTUK KARTU SERANGAN (LIGHT & HEAVY) */}
       {activeCard && (
         <ActionTimingBar
           card={activeCard}
@@ -785,7 +860,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         />
       )}
 
-      {/* MODAL REAKSI TANGKIS / PARRY SERANGAN MONSTER */}
+      {/* MODAL REAKSI TANGKIS / PARRY MUSUH */}
       {isEnemyAttacking && (
         <EnemyDefenseQte
           enemy={enemy}

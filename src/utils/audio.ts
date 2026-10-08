@@ -1,4 +1,4 @@
-﻿// Web Audio API Retro Sound Synthesizer for Anomali SMK
+// Web Audio API Retro Sound Synthesizer for Anomali SMK
 // No external audio files needed - 100% lightweight procedural retro sounds
 
 let audioCtx: AudioContext | null = null;
@@ -72,6 +72,25 @@ export const playSound = {
     gain.connect(ctx.destination);
     osc.start();
     osc.stop(ctx.currentTime + 0.09);
+  },
+
+  // Suara flip kartu melayang / swoosh
+  cardFlip: () => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(280, now);
+    osc.frequency.exponentialRampToValueAtTime(740, now + 0.05);
+    osc.frequency.exponentialRampToValueAtTime(360, now + 0.12);
+    gain.gain.setValueAtTime(0.14, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(now + 0.12);
   },
 
   // Serangan penggaris besi / kunci pas
