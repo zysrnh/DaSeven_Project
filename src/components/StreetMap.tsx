@@ -593,36 +593,65 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
       ctx.fillRect(1840 - camX, -camY, 400, WORLD_HEIGHT);
       ctx.restore();
 
-      // --- RENDERING TROTOAR CONBLOCK (TN) ---
+      // --- RENDERING TN (TANAH / JALAN SETAPAK TROTOAR) ---
+      // TN = Tanah biasa berwarna coklat keabuan, bukan paving!
+
+      // Tanah Utara Kiri (Depan Pabrik)
+      ctx.fillStyle = '#4a3728';
+      ctx.fillRect(50 - camX, 380 - camY, 350, 140);
+      // Variasi grungy
+      ctx.fillStyle = '#3d2e1e';
+      for (let gx = 50; gx < 400; gx += 18) {
+        ctx.fillRect(gx - camX, 400 - camY, 8, 4);
+        ctx.fillRect(gx + 9 - camX, 430 - camY, 6, 3);
+        ctx.fillRect(gx + 4 - camX, 460 - camY, 10, 4);
+      }
+
+      // Tanah Utara Kanan (Depan SMKN7, Fotocopy, Warmindo) — PAVING CONBLOCK (bangunan sekolah punya sidewalk resmi)
       ctx.save();
       ctx.fillStyle = sidewalkPatternRef.current || '#303845';
-
-      // Trotoar Utara Sisi Kiri Jalan Cabang (Depan Pabrik)
-      ctx.fillRect(50 - camX, 380 - camY, 350, 140);
-
-      // Trotoar Sisi Kanan Jalan Cabang s/d Perempatan (Depan SMKN 7, Fotocopy, Warmindo)
       ctx.fillRect(560 - camX, 380 - camY, 1280, 140);
+      ctx.restore();
 
-      // Trotoar Sudut Kanan Atas Perempatan (Depan Minimarket TS)
+      // Tanah Kanan Atas Perempatan (Depan Minimarket) — PAVING CONBLOCK
+      ctx.save();
+      ctx.fillStyle = sidewalkPatternRef.current || '#303845';
       ctx.fillRect(2240 - camX, 380 - camY, 600, 140);
+      ctx.restore();
 
-      // Trotoar Sisi Kiri Jalan Cabang Barat Vertikal
+      // Tanah Sisi Jalan Cabang Barat Vertikal — Tanah coklat
+      ctx.fillStyle = '#4a3728';
       ctx.fillRect(360 - camX, -camY, 40, 420);
-      // Trotoar Sisi Kanan Jalan Cabang Barat Vertikal
       ctx.fillRect(560 - camX, -camY, 40, 420);
 
-      // Trotoar Selatan Sisi Kiri Perempatan (Depan Counter HP, Warung Madura, Bengkel, TN terbuka)
+      // Tanah Selatan — Tanah coklat (TN area terbuka depan counter hp, warung madura, toko bengkel)
+      ctx.fillStyle = '#4a3728';
       ctx.fillRect(50 - camX, 920 - camY, 1790, 140);
+      // Grungy detail tanah selatan
+      ctx.fillStyle = '#3d2e1e';
+      for (let gx = 50; gx < 1840; gx += 20) {
+        ctx.fillRect(gx - camX, 938 - camY, 9, 4);
+        ctx.fillRect(gx + 10 - camX, 964 - camY, 6, 3);
+        ctx.fillRect(gx + 3 - camX, 990 - camY, 11, 4);
+      }
+      ctx.fillStyle = '#5a432e';
+      for (let gx = 60; gx < 1840; gx += 26) {
+        ctx.fillRect(gx - camX, 950 - camY, 5, 3);
+        ctx.fillRect(gx + 13 - camX, 975 - camY, 7, 3);
+      }
 
-      // Trotoar Selatan Sisi Kanan Perempatan (Depan Toko Elektronik Selatan)
+      // Tanah Selatan Kanan (Depan Toko Elektronik) — Paving conblock
+      ctx.save();
+      ctx.fillStyle = sidewalkPatternRef.current || '#303845';
       ctx.fillRect(2240 - camX, 920 - camY, 600, 140);
+      ctx.restore();
 
-      // Trotoar Vertikal di Perempatan Timur
+      // Tanah Vertikal di Perempatan Timur
+      ctx.fillStyle = '#4a3728';
       ctx.fillRect(1800 - camX, -camY, 40, 420);
       ctx.fillRect(2240 - camX, -camY, 40, 420);
       ctx.fillRect(1800 - camX, 1020 - camY, 40, 480);
       ctx.fillRect(2240 - camX, 1020 - camY, 40, 480);
-      ctx.restore();
 
       // --- KERB BATU TEPI JALAN PIXEL ART (24x16) ---
       const drawHorizontalCurb = (startX: number, endX: number, cy: number, isUpper: boolean) => {
@@ -980,7 +1009,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
                 ctx.fillStyle = '#155e2d';
                 ctx.fillRect(scrX + 8, scrY + 20, 24, 30);
                 ctx.fillStyle = '#22c55e';
-                ctx.fillRect(scrX + 12, sy + 20, 4, 30);
+                ctx.fillRect(scrX + 12, scrY + 20, 4, 30);
                 ctx.fillStyle = '#475569';
                 ctx.fillRect(scrX + 6, scrY + 14, 28, 6);
 
@@ -988,7 +1017,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
                 ctx.fillStyle = '#b45309';
                 ctx.fillRect(scrX + 40, scrY + 20, 24, 30);
                 ctx.fillStyle = '#f59e0b';
-                ctx.fillRect(scrX + 44, sy + 20, 4, 30);
+                ctx.fillRect(scrX + 44, scrY + 20, 4, 30);
                 ctx.fillStyle = '#475569';
                 ctx.fillRect(scrX + 38, scrY + 14, 28, 6);
               }
