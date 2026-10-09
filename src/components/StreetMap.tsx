@@ -521,23 +521,23 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
       imagesRef.current[key] = img;
     });
 
-    // 1. Load Angkot Side View (4 Frame Strip)
+    // 1. Load Angkot Side View (4 Frame Strip - Seri v2)
     const angkotSideImg = new Image();
-    angkotSideImg.src = new URL('../assets/mobil/angkot/angkot.jpg', import.meta.url).href;
+    angkotSideImg.src = new URL('../assets/mobil/angkot/angkotv2.jpg', import.meta.url).href;
     angkotSideImg.onload = () => {
       angkotSideRef.current = processAutoTrimmedSprite(angkotSideImg, 4);
     };
 
-    // 2. Load Angkot Depan (Front View)
+    // 2. Load Angkot Depan (Front View - Seri v2)
     const angkotDepanImg = new Image();
-    angkotDepanImg.src = new URL('../assets/mobil/angkot/angkot_depan.jpg', import.meta.url).href;
+    angkotDepanImg.src = new URL('../assets/mobil/angkot/angkotv2depan.jpg', import.meta.url).href;
     angkotDepanImg.onload = () => {
       angkotFrontRef.current = processAutoTrimmedSprite(angkotDepanImg, 1);
     };
 
-    // 3. Load Angkot Belakang (Rear View)
+    // 3. Load Angkot Belakang (Rear View - Seri v2)
     const angkotBelakangImg = new Image();
-    angkotBelakangImg.src = new URL('../assets/mobil/angkot/angkot_belakang.jpg', import.meta.url).href;
+    angkotBelakangImg.src = new URL('../assets/mobil/angkot/angkotv2belakang.jpg', import.meta.url).href;
     angkotBelakangImg.onload = () => {
       angkotRearRef.current = processAutoTrimmedSprite(angkotBelakangImg, 1);
     };
