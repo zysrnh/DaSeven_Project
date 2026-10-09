@@ -203,5 +203,42 @@ export const playSound = {
       osc.start(now + i * 0.1);
       osc.stop(now + i * 0.1 + 0.22);
     });
-  }
+  },
+
+  // Klakson mobil / angkot "TIN-TIIINNN!"
+  carHorn: () => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    [0, 0.12].forEach((delay) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(440, now + delay);
+      gain.gain.setValueAtTime(0.16, now + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.09);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.09);
+    });
+  },
+
+  // Suara tabrakan mobil "BRUAAKK!"
+  carCrash: () => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(140, now);
+    osc.frequency.exponentialRampToValueAtTime(30, now + 0.35);
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(now + 0.35);
+  },
 };

@@ -184,51 +184,42 @@ interface StreetProp {
   collision?: { ox: number; oy: number; ow: number; oh: number };
 }
 
-// PROPS TROTOAR & AKSESORIS TOKO
 const STREET_PROPS: StreetProp[] = [
-  // Trotoar Depan Pabrik & Jalan Cabang
-  { id: 'lamp_p1', type: 'street_lamp', x: 200, y: 350, w: 48, h: 125, collision: { ox: 14, oy: 100, ow: 18, oh: 20 } },
-  { id: 'planter_p1', type: 'planter_box', x: 290, y: 395, w: 80, h: 80, collision: { ox: 4, oy: 42, ow: 72, oh: 36 } },
+  { id: 'lamp_1', type: 'street_lamp', x: 260, y: 400, w: 48, h: 120, collision: { ox: 16, oy: 100, ow: 16, oh: 18 } },
+  { id: 'lamp_2', type: 'street_lamp', x: 740, y: 400, w: 48, h: 120, collision: { ox: 16, oy: 100, ow: 16, oh: 18 } },
+  { id: 'lamp_3', type: 'street_lamp', x: 1000, y: 400, w: 48, h: 120, collision: { ox: 16, oy: 100, ow: 16, oh: 18 } },
+  { id: 'lamp_4', type: 'street_lamp', x: 1420, y: 400, w: 48, h: 120, collision: { ox: 16, oy: 100, ow: 16, oh: 18 } },
+  { id: 'lamp_5', type: 'street_lamp', x: 1740, y: 400, w: 48, h: 120, collision: { ox: 16, oy: 100, ow: 16, oh: 18 } },
+  { id: 'lamp_6', type: 'street_lamp', x: 2260, y: 400, w: 48, h: 120, collision: { ox: 16, oy: 100, ow: 16, oh: 18 } },
 
-  // Trotoar Depan SMKN 7
-  { id: 'lamp_s1', type: 'street_lamp', x: 620, y: 350, w: 48, h: 125, collision: { ox: 14, oy: 100, ow: 18, oh: 20 } },
-  { id: 'bench_s1', type: 'bench', x: 690, y: 405, w: 100, h: 56, collision: { ox: 6, oy: 20, ow: 88, oh: 32 } },
-  { id: 'sampah_s1', type: 'trash_station', x: 1020, y: 405, w: 76, h: 62, collision: { ox: 4, oy: 25, ow: 68, oh: 34 } },
-  { id: 'lamp_s2', type: 'street_lamp', x: 1120, y: 350, w: 48, h: 125, collision: { ox: 14, oy: 100, ow: 18, oh: 20 } },
+  { id: 'lamp_s1', type: 'street_lamp', x: 260, y: 920, w: 48, h: 120, collision: { ox: 16, oy: 100, ow: 16, oh: 18 } },
+  { id: 'lamp_s2', type: 'street_lamp', x: 740, y: 920, w: 48, h: 120, collision: { ox: 16, oy: 100, ow: 16, oh: 18 } },
+  { id: 'lamp_s3', type: 'street_lamp', x: 1000, y: 920, w: 48, h: 120, collision: { ox: 16, oy: 100, ow: 16, oh: 18 } },
+  { id: 'lamp_s4', type: 'street_lamp', x: 1420, y: 920, w: 48, h: 120, collision: { ox: 16, oy: 100, ow: 16, oh: 18 } },
+  { id: 'lamp_s5', type: 'street_lamp', x: 2260, y: 920, w: 48, h: 120, collision: { ox: 16, oy: 100, ow: 16, oh: 18 } },
 
-  // Trotoar Depan Toko Fotocopy & Warmindo
-  { id: 'planter_t1', type: 'planter_box', x: 1330, y: 395, w: 80, h: 80, collision: { ox: 4, oy: 42, ow: 72, oh: 36 } },
-  { id: 'bench_t1', type: 'bench', x: 1530, y: 405, w: 100, h: 56, collision: { ox: 6, oy: 20, ow: 88, oh: 32 } },
-  { id: 'lamp_t1', type: 'street_lamp', x: 1720, y: 350, w: 48, h: 125, collision: { ox: 14, oy: 100, ow: 18, oh: 20 } },
+  { id: 'bench_1', type: 'bench', x: 180, y: 450, w: 96, h: 50, collision: { ox: 4, oy: 12, ow: 88, oh: 36 } },
+  { id: 'bench_2', type: 'bench', x: 670, y: 450, w: 96, h: 50, collision: { ox: 4, oy: 12, ow: 88, oh: 36 } },
+  { id: 'bench_3', type: 'bench', x: 1060, y: 450, w: 96, h: 50, collision: { ox: 4, oy: 12, ow: 88, oh: 36 } },
+  { id: 'bench_4', type: 'bench', x: 1360, y: 450, w: 96, h: 50, collision: { ox: 4, oy: 12, ow: 88, oh: 36 } },
+  { id: 'bench_s1', type: 'bench', x: 440, y: 940, w: 96, h: 50, collision: { ox: 4, oy: 12, ow: 88, oh: 36 } },
+  { id: 'bench_s2', type: 'bench', x: 860, y: 940, w: 96, h: 50, collision: { ox: 4, oy: 12, ow: 88, oh: 36 } },
 
-  // Trotoar Sudut Perempatan TS (Minimarket)
-  { id: 'lamp_ts1', type: 'street_lamp', x: 2310, y: 350, w: 48, h: 125, collision: { ox: 14, oy: 100, ow: 18, oh: 20 } },
-  { id: 'bench_ts1', type: 'bench', x: 2420, y: 405, w: 100, h: 56, collision: { ox: 6, oy: 20, ow: 88, oh: 32 } },
-  { id: 'sampah_ts1', type: 'trash_station', x: 2570, y: 405, w: 76, h: 62, collision: { ox: 4, oy: 25, ow: 68, oh: 34 } },
+  { id: 'plant_1', type: 'planter_box', x: 120, y: 440, w: 80, h: 74, collision: { ox: 6, oy: 36, ow: 68, oh: 36 } },
+  { id: 'plant_2', type: 'planter_box', x: 500, y: 440, w: 80, h: 74, collision: { ox: 6, oy: 36, ow: 68, oh: 36 } },
+  { id: 'plant_3', type: 'planter_box', x: 1180, y: 440, w: 80, h: 74, collision: { ox: 6, oy: 36, ow: 68, oh: 36 } },
+  { id: 'plant_s1', type: 'planter_box', x: 120, y: 940, w: 80, h: 74, collision: { ox: 6, oy: 36, ow: 68, oh: 36 } },
+  { id: 'plant_s2', type: 'planter_box', x: 1300, y: 940, w: 80, h: 74, collision: { ox: 6, oy: 36, ow: 68, oh: 36 } },
 
-  // Trotoar Selatan (Counter HP, Warung Madura, Bengkel)
-  { id: 'lamp_bot1', type: 'street_lamp', x: 240, y: 920, w: 48, h: 125, collision: { ox: 14, oy: 100, ow: 18, oh: 20 } },
-  { id: 'bench_bot1', type: 'bench', x: 350, y: 975, w: 100, h: 56, collision: { ox: 6, oy: 20, ow: 88, oh: 32 } },
+  { id: 'trash_1', type: 'trash_station', x: 470, y: 460, w: 72, h: 58, collision: { ox: 6, oy: 16, ow: 60, oh: 40 } },
+  { id: 'trash_2', type: 'trash_station', x: 1450, y: 460, w: 72, h: 58, collision: { ox: 6, oy: 16, ow: 60, oh: 40 } },
+  { id: 'trash_s1', type: 'trash_station', x: 920, y: 950, w: 72, h: 58, collision: { ox: 6, oy: 16, ow: 60, oh: 40 } },
 
-  // Bensin Eceran Madura & Gas
-  { id: 'bensin_1', type: 'bensin_rack', x: 530, y: 980, w: 50, h: 55, collision: { ox: 2, oy: 20, ow: 46, oh: 32 } },
-  { id: 'lamp_bot2', type: 'street_lamp', x: 860, y: 920, w: 48, h: 125, collision: { ox: 14, oy: 100, ow: 18, oh: 20 } },
-
-  // Ban Bekas Bengkel
-  { id: 'ban_1', type: 'ban_stack', x: 960, y: 985, w: 60, h: 50, collision: { ox: 2, oy: 15, ow: 56, oh: 32 } },
-  { id: 'sampah_bot1', type: 'trash_station', x: 1290, y: 975, w: 76, h: 62, collision: { ox: 4, oy: 25, ow: 68, oh: 34 } },
-
-  // Area Lapangan Terbuka Selatan
-  { id: 'planter_bot1', type: 'planter_box', x: 1460, y: 965, w: 80, h: 80, collision: { ox: 4, oy: 42, ow: 72, oh: 36 } },
-  { id: 'bench_bot2', type: 'bench', x: 1590, y: 975, w: 100, h: 56, collision: { ox: 6, oy: 20, ow: 88, oh: 32 } },
-  { id: 'lamp_bot3', type: 'street_lamp', x: 1740, y: 920, w: 48, h: 125, collision: { ox: 14, oy: 100, ow: 18, oh: 20 } },
-
-  // Trotoar Sudut Toko Selatan Perempatan
-  { id: 'lamp_bot4', type: 'street_lamp', x: 2310, y: 920, w: 48, h: 125, collision: { ox: 14, oy: 100, ow: 18, oh: 20 } },
-  { id: 'bench_bot3', type: 'bench', x: 2450, y: 975, w: 100, h: 56, collision: { ox: 6, oy: 20, ow: 88, oh: 32 } },
+  { id: 'bensin_1', type: 'bensin_rack', x: 520, y: 1040, w: 48, h: 54, collision: { ox: 4, oy: 16, ow: 40, oh: 36 } },
+  { id: 'ban_1', type: 'ban_stack', x: 950, y: 1040, w: 60, h: 52, collision: { ox: 4, oy: 16, ow: 52, oh: 34 } },
 ];
 
-// Helper: Pola Aspal 32-bit Retro Bersih (Senada dengan lantai Maine)
+// Helper: Pola Aspal Jalan Raya Pixel Art
 const createCleanAsphaltPattern = (): HTMLCanvasElement => {
   const c = document.createElement('canvas');
   c.width = 32;
@@ -236,11 +227,9 @@ const createCleanAsphaltPattern = (): HTMLCanvasElement => {
   const ctx = c.getContext('2d');
   if (!ctx) return c;
 
-  // Warna dasar slate charcoal gelap
   ctx.fillStyle = '#161c24';
   ctx.fillRect(0, 0, 32, 32);
 
-  // Dithering cluster pixel 2x2 yang lembut dan cinematic
   ctx.fillStyle = '#12171f';
   ctx.fillRect(4, 4, 4, 4);
   ctx.fillRect(20, 8, 4, 4);
@@ -253,14 +242,13 @@ const createCleanAsphaltPattern = (): HTMLCanvasElement => {
   ctx.fillRect(0, 26, 4, 4);
   ctx.fillRect(16, 28, 4, 4);
 
-  // Lajur roda halus
   ctx.fillStyle = 'rgba(14, 18, 24, 0.45)';
   ctx.fillRect(0, 14, 32, 4);
 
   return c;
 };
 
-// Helper: Pola Trotoar Paving Blok 32x32 (Identik dengan lantai grid pada karakter Maine)
+// Helper: Pola Trotoar Paving Blok 32x32
 const createSidewalkTilePattern = (): HTMLCanvasElement => {
   const c = document.createElement('canvas');
   c.width = 32;
@@ -268,7 +256,6 @@ const createSidewalkTilePattern = (): HTMLCanvasElement => {
   const ctx = c.getContext('2d');
   if (!ctx) return c;
 
-  // Nat sambungan gelap
   ctx.fillStyle = '#111620';
   ctx.fillRect(0, 0, 32, 32);
 
@@ -285,7 +272,6 @@ const createSidewalkTilePattern = (): HTMLCanvasElement => {
     ctx.fillRect(tx + tw - 2, ty + 1, 1, th - 2);
   };
 
-  // Ubin Paving bernuansa slate grey matching lantai di screenshot Maine
   drawTile(0, 0, 16, 16, '#242b37', '#333e50', '#181e28');
   drawTile(16, 0, 16, 16, '#28313e', '#374356', '#1c222c');
   drawTile(0, 16, 16, 16, '#262e3b', '#354152', '#1a202a');
@@ -294,7 +280,7 @@ const createSidewalkTilePattern = (): HTMLCanvasElement => {
   return c;
 };
 
-// Helper: Pola Tanah Lapang Terbuka Pixel Art 32x32 (Muted earthy tones)
+// Helper: Pola Tanah Lapang Terbuka Pixel Art 32x32
 const createCleanDirtPattern = (): HTMLCanvasElement => {
   const c = document.createElement('canvas');
   c.width = 32;
@@ -323,6 +309,21 @@ const createCleanDirtPattern = (): HTMLCanvasElement => {
   return c;
 };
 
+// Tipe Kendaraan Angkot Lalu Lintas
+interface TrafficVehicle {
+  id: string;
+  x: number;
+  y: number;
+  speed: number;
+  baseSpeed: number;
+  dir: 'left' | 'right';
+  animFrame: number;
+  animTimer: number;
+  isSpeeding: boolean;
+  hornCooldown: number;
+  isStopped: boolean;
+}
+
 export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -343,14 +344,52 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
 
   const keysDownRef = useRef<Set<string>>(new Set());
   const [nearSchoolGate, setNearSchoolGate] = useState(false);
+  const [trafficToast, setTrafficToast] = useState<string | null>(null);
+
+  // Screen shake saat tertabrak mobil
+  const screenShakeRef = useRef(0);
 
   // Cache Gambar Karakter Maine
   const imagesRef = useRef<Record<string, HTMLImageElement>>({});
+
+  // Cache Canvas Sprite Angkot (Transparan)
+  const angkotSpriteCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const angkotFramesRef = useRef<{ sx: number; sy: number; sw: number; sh: number }[]>([]);
 
   // Patterns Cache
   const asphaltPatternRef = useRef<CanvasPattern | null>(null);
   const sidewalkPatternRef = useRef<CanvasPattern | null>(null);
   const dirtPatternRef = useRef<CanvasPattern | null>(null);
+
+  // State Lalu Lintas Kendaraan (Angkot di Lajur Atas & Lajur Bawah)
+  const vehiclesRef = useRef<TrafficVehicle[]>([
+    {
+      id: 'angkot_east_1',
+      x: 200,
+      y: 810, // Lajur bawah ke timur (arah kanan)
+      speed: 140,
+      baseSpeed: 140,
+      dir: 'right',
+      animFrame: 0,
+      animTimer: 0,
+      isSpeeding: false,
+      hornCooldown: 0,
+      isStopped: false,
+    },
+    {
+      id: 'angkot_west_1',
+      x: 2650,
+      y: 620, // Lajur atas ke barat (arah kiri)
+      speed: -140,
+      baseSpeed: -140,
+      dir: 'left',
+      animFrame: 0,
+      animTimer: 0,
+      isSpeeding: false,
+      hornCooldown: 0,
+      isStopped: false,
+    },
+  ]);
 
   // Resize Handler
   useEffect(() => {
@@ -368,7 +407,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Preload Aset Animasi Karakter Maine
+  // Preload Aset Animasi Karakter Maine & Angkot
   useEffect(() => {
     const assetList: Record<string, string> = {
       idle_1: '/assets/characters/maine/idle_1.png',
@@ -391,6 +430,49 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
       img.src = src;
       imagesRef.current[key] = img;
     });
+
+    // Load Sprite Angkot dari src/assets/mobil/angkot/angkot.jpg
+    const angkotImg = new Image();
+    angkotImg.src = new URL('../assets/mobil/angkot/angkot.jpg', import.meta.url).href;
+    angkotImg.onload = () => {
+      const oc = document.createElement('canvas');
+      oc.width = angkotImg.naturalWidth || angkotImg.width;
+      oc.height = angkotImg.naturalHeight || angkotImg.height;
+      const octx = oc.getContext('2d');
+      if (!octx) return;
+
+      octx.drawImage(angkotImg, 0, 0);
+
+      // Chroma-key: Hapus background hitam JPEG agar transparan bersih
+      try {
+        const imgData = octx.getImageData(0, 0, oc.width, oc.height);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          // Toleransi warna hitam pekat latar belakang
+          if (r < 24 && g < 24 && b < 24) {
+            data[i + 3] = 0;
+          }
+        }
+        octx.putImageData(imgData, 0, 0);
+      } catch (e) {
+        console.warn('Canvas pixel processing bypass:', e);
+      }
+
+      angkotSpriteCanvasRef.current = oc;
+
+      // 4 Kolom Frame Horizontal
+      const colW = oc.width / 4;
+      const colH = oc.height;
+      angkotFramesRef.current = [
+        { sx: 0, sy: 0, sw: colW, sh: colH },
+        { sx: colW, sy: 0, sw: colW, sh: colH },
+        { sx: colW * 2, sy: 0, sw: colW, sh: colH },
+        { sx: colW * 3, sy: 0, sw: colW, sh: colH },
+      ];
+    };
   }, []);
 
   // Hitbox Collision
@@ -581,7 +663,126 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
         return;
       }
 
-      // 2. SMOOTH CAMERA FOLLOW
+      // 2. LOGIKA SIKLUS LAMPU LALU LINTAS PEREMPATAN (18 Detik Total)
+      // 0..8s: HIJAU | 8..10s: KUNING | 10..18s: MERAH
+      const trafficTime = (currentTime / 1000) % 18;
+      let trafficLightColor: 'green' | 'yellow' | 'red' = 'green';
+      if (trafficTime < 8) {
+        trafficLightColor = 'green';
+      } else if (trafficTime < 10) {
+        trafficLightColor = 'yellow';
+      } else {
+        trafficLightColor = 'red';
+      }
+
+      // Deteksi Posisi Pemain: Apakah sedang di aspal jalan dan di luar zebra cross?
+      const isPlayerOnRoad = pY >= 525 && pY <= 915;
+      const isPlayerOnSchoolZebra = pX >= 780 && pX <= 960;
+      const isPlayerOnWestZebra = pX >= 1740 && pX <= 1860;
+      const isPlayerOnEastZebra = pX >= 2220 && pX <= 2340;
+      const isPlayerOnAnyZebra = isPlayerOnSchoolZebra || isPlayerOnWestZebra || isPlayerOnEastZebra;
+      const isCrossingIllegally = isPlayerOnRoad && !isPlayerOnAnyZebra;
+
+      // 3. LOGIKA GERAKAN KENDARAAN (ANGKOT LALU LINTAS)
+      vehiclesRef.current.forEach((car) => {
+        car.hornCooldown = Math.max(0, car.hornCooldown - dt);
+
+        // A. Cek Lampu Merah di Perempatan
+        // Lajur bawah (arah kanan ke timur): Garis henti di x: 1710
+        // Lajur atas (arah kiri ke barat): Garis henti di x: 2280
+        let shouldStopAtLight = false;
+        if (trafficLightColor === 'red' || trafficLightColor === 'yellow') {
+          if (car.dir === 'right' && car.x >= 1530 && car.x <= 1720) {
+            shouldStopAtLight = true;
+          } else if (car.dir === 'left' && car.x <= 2450 && car.x >= 2270) {
+            shouldStopAtLight = true;
+          }
+        }
+
+        car.isStopped = shouldStopAtLight;
+
+        // B. Cek Mode Ngebut Saat Pemain Menyeberang Sembarangan di Luar Zebra Cross
+        const isSameLane =
+          (car.dir === 'left' && pY <= 720) || // Lajur atas
+          (car.dir === 'right' && pY > 720); // Lajur bawah
+
+        const distToPlayer = car.dir === 'right' ? pX - car.x : car.x - pX;
+        const isApproachingPlayer = isCrossingIllegally && isSameLane && distToPlayer > -20 && distToPlayer < 450;
+
+        if (isApproachingPlayer && !shouldStopAtLight) {
+          car.isSpeeding = true;
+          if (car.hornCooldown <= 0) {
+            car.hornCooldown = 2.5;
+            playSound.carHorn();
+            setTrafficToast('⚠️ AWAS! ANGKOT NGEBUT! MENYEBERANGLAH DI ZEBRA CROSS!');
+            setTimeout(() => setTrafficToast(null), 3000);
+          }
+        } else {
+          car.isSpeeding = false;
+        }
+
+        // C. Update Kecepatan & Posisi
+        let currentTargetSpeed = 0;
+        if (shouldStopAtLight) {
+          currentTargetSpeed = 0;
+        } else if (car.isSpeeding) {
+          currentTargetSpeed = car.dir === 'right' ? 580 : -580; // MODE NGEBUT KENCANG
+        } else {
+          currentTargetSpeed = car.baseSpeed; // KECEPATAN BIASA
+        }
+
+        // Akselerasi / Deselerasi Halus
+        car.speed += (currentTargetSpeed - car.speed) * Math.min(1, dt * 6);
+        car.x += car.speed * dt;
+
+        // Loop Mobil Mengelilingi Jalan Raya
+        if (car.dir === 'right' && car.x > WORLD_WIDTH + 150) {
+          car.x = -150;
+        } else if (car.dir === 'left' && car.x < -150) {
+          car.x = WORLD_WIDTH + 150;
+        }
+
+        // Animasi Frame Roda Putar
+        if (Math.abs(car.speed) > 10) {
+          car.animTimer += dt;
+          const frameDelay = car.isSpeeding ? 0.05 : 0.12;
+          if (car.animTimer > frameDelay) {
+            car.animTimer = 0;
+            car.animFrame = (car.animFrame + 1) % 4;
+          }
+        }
+
+        // D. DETEKSI TABRAKAN DENGAN PEMAIN (COLLISION NABRAK)
+        const hitDistanceX = Math.abs(car.x - pX);
+        const hitDistanceY = Math.abs(car.y - (pY + 28));
+
+        if (hitDistanceX < 58 && hitDistanceY < 32) {
+          // TABRAKAN TERJADI!
+          playSound.carCrash();
+          screenShakeRef.current = 24; // Screen shake
+
+          // Terpental knockback ke tepi trotoar aman terdekat
+          if (pY <= 720) {
+            playerPosRef.current.y = 480; // Terlempar ke trotoar utara
+          } else {
+            playerPosRef.current.y = 960; // Terlempar ke trotoar selatan
+          }
+
+          setTrafficToast('💥 BRUAAKK! Kamu tertabrak angkot karena menyeberang sembarangan!');
+          setTimeout(() => setTrafficToast(null), 3500);
+        }
+      });
+
+      // Update Screen Shake
+      let shakeOffsetX = 0;
+      let shakeOffsetY = 0;
+      if (screenShakeRef.current > 0) {
+        shakeOffsetX = (Math.random() - 0.5) * screenShakeRef.current;
+        shakeOffsetY = (Math.random() - 0.5) * screenShakeRef.current;
+        screenShakeRef.current = Math.max(0, screenShakeRef.current - dt * 45);
+      }
+
+      // 4. SMOOTH CAMERA FOLLOW BERPERSPEKTIF
       const targetCamX = pX - viewportSize.w / 2;
       const targetCamY = pY - viewportSize.h / 2;
       const maxCamX = WORLD_WIDTH - viewportSize.w;
@@ -593,8 +794,8 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
       cameraRef.current.x += (clampedCamX - cameraRef.current.x) * 0.12;
       cameraRef.current.y += (clampedCamY - cameraRef.current.y) * 0.12;
 
-      const camX = Math.round(cameraRef.current.x);
-      const camY = Math.round(cameraRef.current.y);
+      const camX = Math.round(cameraRef.current.x + shakeOffsetX);
+      const camY = Math.round(cameraRef.current.y + shakeOffsetY);
 
       // KUNCI PATTERN KE KOORDINAT DUNIA
       if (asphaltPatternRef.current && typeof asphaltPatternRef.current.setTransform === 'function') {
@@ -607,7 +808,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
         dirtPatternRef.current.setTransform(new DOMMatrix().translate(-camX, -camY));
       }
 
-      // 3. BACKGROUND CLEAR (Slate Dark Ambience)
+      // 5. BACKGROUND CLEAR (Slate Dark Ambience)
       ctx.fillStyle = '#0f141d';
       ctx.fillRect(0, 0, viewportSize.w, viewportSize.h);
 
@@ -623,7 +824,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
       ctx.restore();
 
       // ========================================================
-      // B. TROTOAR URBAN PAVING BERSIH (PALET SENADA LANTAI MAINE)
+      // B. TROTOAR URBAN PAVING BERSIH
       // ========================================================
       ctx.save();
       ctx.fillStyle = sidewalkPatternRef.current || '#242b37';
@@ -648,7 +849,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
       ctx.restore();
 
       // ========================================================
-      // C. JALUR UBIN KUNING PEMANDU DISABILITAS (WARM AMBER OCHRE)
+      // C. JALUR UBIN KUNING PEMANDU DISABILITAS
       // ========================================================
       const drawTactileLine = (x1: number, x2: number, ty: number) => {
         for (let x = x1; x < x2; x += 16) {
@@ -728,7 +929,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
       drawHorizontalCurb(2240, WORLD_WIDTH - 50, 920, false);
 
       // ========================================================
-      // F. MARKA JALAN RAYA BALEENDAH (BROKEN WHITE & WARM AMBER)
+      // F. MARKA JALAN RAYA BALEENDAH
       // ========================================================
       ctx.fillStyle = '#dce1e8';
       ctx.fillRect(50 - camX, 526 - camY, 350, 4);
@@ -789,7 +990,70 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
       }
 
       // ========================================================
-      // G. Y-SORTED ENTITIES (FASAD TOKO, PROPS 2.5D, PLAYER MAINE)
+      // G. LAMPU LALU LINTAS 32-BIT DI PEREMPATAN
+      // ========================================================
+      const drawTrafficLightPost = (tx: number, ty: number) => {
+        const sx = tx - camX;
+        const sy = ty - camY;
+
+        // Tiang
+        ctx.fillStyle = '#11151c';
+        ctx.fillRect(sx + 8, sy + 24, 6, 70);
+        ctx.fillStyle = '#222934';
+        ctx.fillRect(sx + 10, sy + 24, 2, 70);
+
+        // Kotak Lampu
+        ctx.fillStyle = '#0f131a';
+        ctx.fillRect(sx, sy, 22, 56);
+        ctx.strokeStyle = '#2b3544';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(sx, sy, 22, 56);
+
+        // Lampu Merah
+        ctx.fillStyle = trafficLightColor === 'red' ? '#ef4444' : '#381316';
+        ctx.beginPath();
+        ctx.arc(sx + 11, sy + 11, 6, 0, Math.PI * 2);
+        ctx.fill();
+        if (trafficLightColor === 'red') {
+          ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
+          ctx.beginPath();
+          ctx.arc(sx + 11, sy + 11, 12, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Lampu Kuning
+        ctx.fillStyle = trafficLightColor === 'yellow' ? '#facc15' : '#3d3410';
+        ctx.beginPath();
+        ctx.arc(sx + 11, sy + 28, 6, 0, Math.PI * 2);
+        ctx.fill();
+        if (trafficLightColor === 'yellow') {
+          ctx.fillStyle = 'rgba(250, 204, 21, 0.4)';
+          ctx.beginPath();
+          ctx.arc(sx + 11, sy + 28, 12, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Lampu Hijau
+        ctx.fillStyle = trafficLightColor === 'green' ? '#22c55e' : '#102e1b';
+        ctx.beginPath();
+        ctx.arc(sx + 11, sy + 45, 6, 0, Math.PI * 2);
+        ctx.fill();
+        if (trafficLightColor === 'green') {
+          ctx.fillStyle = 'rgba(34, 197, 94, 0.4)';
+          ctx.beginPath();
+          ctx.arc(sx + 11, sy + 45, 12, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      };
+
+      // Gambar 4 Tiang Lampu Lalu Lintas di Sudut Perempatan
+      drawTrafficLightPost(1740, 430);
+      drawTrafficLightPost(2270, 430);
+      drawTrafficLightPost(1740, 925);
+      drawTrafficLightPost(2270, 925);
+
+      // ========================================================
+      // H. Y-SORTED ENTITIES (FASAD, PROPS, ANGKOT, DAN PLAYER)
       // ========================================================
       interface RenderEntity {
         yOrder: number;
@@ -797,6 +1061,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
       }
       const entities: RenderEntity[] = [];
 
+      // Render Toko & Bangunan
       BUILDINGS.forEach((b) => {
         const sx = b.x - camX;
         const sy = b.y - camY;
@@ -1011,7 +1276,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
 
               ctx.fillStyle = '#842f2b';
               ctx.fillRect(sx + b.w - 85, sy + 200, 50, 75);
-              ctx.fillStyle = '#dce1e8';
+              ctx.fillStyle = '#dce2ea';
               ctx.fillRect(sx + b.w - 78, sy + 210, 36, 20);
               ctx.fillStyle = '#2d6142';
               ctx.fillRect(sx + b.w - 74, sy + 214, 28, 12);
@@ -1245,7 +1510,104 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
         }
       });
 
-      // Render Player (Maine)
+      // Render Kendaraan (Angkot Lalu Lintas 32-Bit)
+      vehiclesRef.current.forEach((car) => {
+        const cScrX = car.x - camX;
+        const cScrY = car.y - camY;
+
+        if (cScrX >= -200 && cScrX <= viewportSize.w + 200) {
+          entities.push({
+            yOrder: car.y + 24,
+            draw: () => {
+              // Bayangan Bodi Mobil di Aspal
+              ctx.fillStyle = 'rgba(10, 14, 20, 0.55)';
+              ctx.beginPath();
+              ctx.ellipse(cScrX, cScrY + 26, 68, 14, 0, 0, Math.PI * 2);
+              ctx.fill();
+
+              // Sorot Lampu Depan (Headlight Beam)
+              ctx.save();
+              const beamDir = car.dir === 'right' ? 1 : -1;
+              const beamGrad = ctx.createRadialGradient(
+                cScrX + 60 * beamDir,
+                cScrY + 14,
+                10,
+                cScrX + (car.isSpeeding ? 240 : 160) * beamDir,
+                cScrY + 14,
+                car.isSpeeding ? 180 : 120
+              );
+              beamGrad.addColorStop(0, car.isSpeeding ? 'rgba(254, 240, 138, 0.55)' : 'rgba(254, 240, 138, 0.25)');
+              beamGrad.addColorStop(1, 'rgba(254, 240, 138, 0)');
+
+              ctx.fillStyle = beamGrad;
+              ctx.beginPath();
+              ctx.moveTo(cScrX + 55 * beamDir, cScrY + 8);
+              ctx.lineTo(cScrX + (car.isSpeeding ? 250 : 170) * beamDir, cScrY - 20);
+              ctx.lineTo(cScrX + (car.isSpeeding ? 250 : 170) * beamDir, cScrY + 45);
+              ctx.closePath();
+              ctx.fill();
+              ctx.restore();
+
+              // Efek Kepulan Asap Knalpot Tebal Saat Mode Ngebut
+              if (car.isSpeeding && Math.abs(car.speed) > 100) {
+                const exhaustDir = car.dir === 'right' ? -1 : 1;
+                for (let si = 0; si < 3; si++) {
+                  const puffX = cScrX + (60 + si * 18) * exhaustDir + (Math.random() - 0.5) * 6;
+                  const puffY = cScrY + 22 + (Math.random() - 0.5) * 6;
+                  ctx.fillStyle = si === 0 ? 'rgba(40, 45, 55, 0.7)' : 'rgba(70, 75, 85, 0.4)';
+                  ctx.beginPath();
+                  ctx.arc(puffX, puffY, 6 + si * 3, 0, Math.PI * 2);
+                  ctx.fill();
+                }
+              }
+
+              // Gambar Bodi Angkot
+              ctx.save();
+              ctx.translate(cScrX, cScrY);
+              if (car.dir === 'left') {
+                ctx.scale(-1, 1);
+              }
+
+              const spriteCanvas = angkotSpriteCanvasRef.current;
+              const frames = angkotFramesRef.current;
+
+              if (spriteCanvas && frames.length > 0) {
+                const f = frames[car.animFrame % frames.length];
+                const drawW = 130;
+                const drawH = 58;
+                ctx.drawImage(spriteCanvas, f.sx, f.sy, f.sw, f.sh, -drawW / 2, -drawH / 2, drawW, drawH);
+              } else {
+                // Fallback Procedural Pixel Art Angkot Hijau Toska Muted
+                ctx.fillStyle = '#1c5c4e';
+                ctx.fillRect(-60, -24, 120, 44);
+                ctx.fillStyle = '#287d6b';
+                ctx.fillRect(-58, -22, 116, 20);
+
+                // Kaca Gelap
+                ctx.fillStyle = '#141d27';
+                ctx.fillRect(-45, -18, 30, 16);
+                ctx.fillRect(-8, -18, 25, 16);
+                ctx.fillRect(24, -18, 28, 16);
+
+                // Roda
+                ctx.fillStyle = '#0f141a';
+                ctx.beginPath();
+                ctx.arc(-35, 20, 10, 0, Math.PI * 2);
+                ctx.arc(35, 20, 10, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#556275';
+                ctx.beginPath();
+                ctx.arc(-35, 20, 4, 0, Math.PI * 2);
+                ctx.arc(35, 20, 4, 0, Math.PI * 2);
+                ctx.fill();
+              }
+              ctx.restore();
+            },
+          });
+        }
+      });
+
+      // Render Player (Maine / Rian Pratama)
       const dir = playerDirRef.current;
       const stepPhase = animFrameRef.current;
       const walkFrameIdx = stepPhase === 3 ? 2 : stepPhase + 1;
@@ -1383,6 +1745,15 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
         </div>
       )}
 
+      {/* TOAST PERINGATAN LALU LINTAS & TABRAKAN */}
+      {trafficToast && (
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-40 pointer-events-none animate-pulse">
+          <div className="bg-[#7f1d1d]/95 border-2 border-[#ef4444] px-6 py-2.5 text-white font-black text-xs tracking-wider shadow-2xl rounded">
+            {trafficToast}
+          </div>
+        </div>
+      )}
+
       {/* CANVAS DISPLAY */}
       <div className="w-full h-full">
         <canvas
@@ -1399,7 +1770,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
           <p className="font-bold text-yellow-400 mb-0.5">🎮 KONTROL JELAJAH JALAN RAYA BALEENDAH:</p>
           <p className="text-neutral-300 text-[11px] leading-tight">
             Gunakan tombol <strong className="text-white">WASD</strong> atau <strong className="text-white">Panah</strong>.
-            Jelajahi Toko Fotocopy, Warmindo, Counter HP, Warung Madura, Bengkel, dan Simpang Perempatan! Dekati gerbang sekolah untuk masuk kembali.
+            Perhatikan <strong className="text-emerald-400">Lampu Merah di Perempatan</strong>! Jika menyeberang di luar Zebra Cross, angkot akan membunyikan klakson dan menabrak!
           </p>
         </div>
 
