@@ -853,20 +853,20 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
           }
         }
 
-        // D. DETEKSI TABRAKAN DENGAN PEMAIN (HITBOX LEBAR MENUTUP LAJUR, TIDAK BISA DILOLOSI)
+        // D. DETEKSI TABRAKAN DENGAN PEMAIN (HITBOX BESAR PENUH MENUTUP LAJUR, TIDAK BISA LOLOS)
         const hitDistanceX = Math.abs(car.x - pX);
         const hitDistanceY = Math.abs(car.y - (pY + 28));
 
         const hitThresholdX = car.viewType === 'side' 
-          ? (car.isSpeeding ? 100 : 85) 
-          : (car.isSpeeding ? 86 : 68);
+          ? (car.isSpeeding ? 150 : 130) 
+          : (car.isSpeeding ? 105 : 85);
         const hitThresholdY = car.viewType === 'side' 
-          ? (car.isSpeeding ? 82 : 60) 
-          : (car.isSpeeding ? 96 : 78);
+          ? (car.isSpeeding ? 105 : 80) 
+          : (car.isSpeeding ? 130 : 105);
 
         if (hitDistanceX < hitThresholdX && hitDistanceY < hitThresholdY) {
           playSound.carCrash();
-          screenShakeRef.current = 32;
+          screenShakeRef.current = 40;
 
           if (car.dir === 'left' || car.dir === 'right') {
             playerPosRef.current.y = pY <= 720 ? 480 : 960;
@@ -1317,46 +1317,46 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
 
         if (cScrX >= -240 && cScrX <= viewportSize.w + 240 && cScrY >= -240 && cScrY <= viewportSize.h + 240) {
           entities.push({
-            yOrder: car.y + 36,
+            yOrder: car.y + 48,
             draw: () => {
               if (car.viewType === 'side') {
-                // ================= SIDE VIEW ANGKOT (Gagah & Panjang ~180px x 84px) =================
+                // ================= SIDE VIEW ANGKOT (Gagah & Jumbo ~265px x 120px) =================
                 const spriteObj = angkotSideRef.current;
                 const frames = spriteObj?.frames || [];
                 const spriteCanvas = spriteObj?.canvas;
 
-                let drawW = 180;
-                let drawH = 84;
+                let drawW = 265;
+                let drawH = 120;
                 if (frames.length > 0 && frames[0].sh > 0) {
                   const ratio = frames[0].sw / frames[0].sh;
-                  drawH = 84; // Tinggi 84px, mantap dan proporsional di lajur 200px
-                  drawW = Math.max(140, Math.min(215, Math.round(drawH * ratio)));
+                  drawH = 120; // Tinggi 120px, gagah dan mendominasi lajur aspal
+                  drawW = Math.max(200, Math.min(310, Math.round(drawH * ratio)));
                 }
 
                 // Bayangan Aspal
                 ctx.fillStyle = 'rgba(10, 14, 20, 0.55)';
                 ctx.beginPath();
-                ctx.ellipse(cScrX, cScrY + drawH / 2 - 2, drawW * 0.45, 16, 0, 0, Math.PI * 2);
+                ctx.ellipse(cScrX, cScrY + drawH / 2 - 4, drawW * 0.46, 22, 0, 0, Math.PI * 2);
                 ctx.fill();
 
                 // Sorot Lampu Depan
                 ctx.save();
                 const beamDir = car.dir === 'right' ? 1 : -1;
                 const beamGrad = ctx.createRadialGradient(
-                  cScrX + (drawW / 2 - 6) * beamDir,
+                  cScrX + (drawW / 2 - 8) * beamDir,
                   cScrY + drawH / 4,
-                  10,
-                  cScrX + (car.isSpeeding ? 290 : 200) * beamDir,
+                  14,
+                  cScrX + (car.isSpeeding ? 360 : 260) * beamDir,
                   cScrY + drawH / 4,
-                  car.isSpeeding ? 220 : 150
+                  car.isSpeeding ? 270 : 190
                 );
                 beamGrad.addColorStop(0, car.isSpeeding ? 'rgba(254, 240, 138, 0.55)' : 'rgba(254, 240, 138, 0.25)');
                 beamGrad.addColorStop(1, 'rgba(254, 240, 138, 0)');
                 ctx.fillStyle = beamGrad;
                 ctx.beginPath();
-                ctx.moveTo(cScrX + (drawW / 2 - 10) * beamDir, cScrY);
-                ctx.lineTo(cScrX + (car.isSpeeding ? 300 : 210) * beamDir, cScrY - 32);
-                ctx.lineTo(cScrX + (car.isSpeeding ? 300 : 210) * beamDir, cScrY + drawH / 2 + 16);
+                ctx.moveTo(cScrX + (drawW / 2 - 12) * beamDir, cScrY);
+                ctx.lineTo(cScrX + (car.isSpeeding ? 380 : 270) * beamDir, cScrY - 45);
+                ctx.lineTo(cScrX + (car.isSpeeding ? 380 : 270) * beamDir, cScrY + drawH / 2 + 22);
                 ctx.closePath();
                 ctx.fill();
                 ctx.restore();
@@ -1365,11 +1365,11 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
                 if (car.isSpeeding && Math.abs(car.speed) > 100) {
                   const exhaustDir = car.dir === 'right' ? -1 : 1;
                   for (let si = 0; si < 3; si++) {
-                    const puffX = cScrX + (drawW / 2 + si * 24) * exhaustDir + (Math.random() - 0.5) * 6;
-                    const puffY = cScrY + drawH / 2 - 10 + (Math.random() - 0.5) * 6;
+                    const puffX = cScrX + (drawW / 2 + si * 30) * exhaustDir + (Math.random() - 0.5) * 8;
+                    const puffY = cScrY + drawH / 2 - 14 + (Math.random() - 0.5) * 8;
                     ctx.fillStyle = si === 0 ? 'rgba(40, 45, 55, 0.7)' : 'rgba(70, 75, 85, 0.4)';
                     ctx.beginPath();
-                    ctx.arc(puffX, puffY, 9 + si * 4, 0, Math.PI * 2);
+                    ctx.arc(puffX, puffY, 12 + si * 5, 0, Math.PI * 2);
                     ctx.fill();
                   }
                 }
@@ -1389,35 +1389,35 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
                 }
                 ctx.restore();
               } else if (car.viewType === 'front') {
-                // ================= FRONT VIEW ANGKOT (Gagah Lebar ~112px x 122px) =================
+                // ================= FRONT VIEW ANGKOT (Gagah Lebar ~150px x 160px) =================
                 const spriteObj = angkotFrontRef.current;
                 const frames = spriteObj?.frames || [];
                 const spriteCanvas = spriteObj?.canvas;
 
-                let drawW = 112;
-                let drawH = 122;
+                let drawW = 150;
+                let drawH = 160;
                 if (frames.length > 0 && frames[0].sh > 0) {
                   const ratio = frames[0].sw / frames[0].sh;
-                  drawH = 122; // Tinggi 122px, gagah dan lebar memenuhi lajur jalan
-                  drawW = Math.max(90, Math.min(135, Math.round(drawH * ratio)));
+                  drawH = 160; // Tinggi 160px, gagah dan lebar menutup hampir 80% lajur jalan
+                  drawW = Math.max(120, Math.min(180, Math.round(drawH * ratio)));
                 }
 
                 // Bayangan Bawah
                 ctx.fillStyle = 'rgba(10, 14, 20, 0.55)';
                 ctx.beginPath();
-                ctx.ellipse(cScrX, cScrY + drawH / 2 - 4, drawW * 0.45, 18, 0, 0, Math.PI * 2);
+                ctx.ellipse(cScrX, cScrY + drawH / 2 - 6, drawW * 0.46, 24, 0, 0, Math.PI * 2);
                 ctx.fill();
 
                 // Sorot Lampu Depan ke Bawah (Southbound)
                 ctx.save();
-                const beamGrad = ctx.createRadialGradient(cScrX, cScrY + drawH / 2, 14, cScrX, cScrY + drawH / 2 + 140, 150);
+                const beamGrad = ctx.createRadialGradient(cScrX, cScrY + drawH / 2, 18, cScrX, cScrY + drawH / 2 + 180, 190);
                 beamGrad.addColorStop(0, car.isSpeeding ? 'rgba(254, 240, 138, 0.55)' : 'rgba(254, 240, 138, 0.25)');
                 beamGrad.addColorStop(1, 'rgba(254, 240, 138, 0)');
                 ctx.fillStyle = beamGrad;
                 ctx.beginPath();
                 ctx.moveTo(cScrX - drawW / 3, cScrY + drawH / 3);
-                ctx.lineTo(cScrX - drawW * 1.15, cScrY + drawH / 2 + 160);
-                ctx.lineTo(cScrX + drawW * 1.15, cScrY + drawH / 2 + 160);
+                ctx.lineTo(cScrX - drawW * 1.25, cScrY + drawH / 2 + 200);
+                ctx.lineTo(cScrX + drawW * 1.25, cScrY + drawH / 2 + 200);
                 ctx.lineTo(cScrX + drawW / 3, cScrY + drawH / 3);
                 ctx.closePath();
                 ctx.fill();
@@ -1435,33 +1435,33 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
                 }
                 ctx.restore();
               } else if (car.viewType === 'rear') {
-                // ================= REAR VIEW ANGKOT (Gagah Lebar ~112px x 122px) =================
+                // ================= REAR VIEW ANGKOT (Gagah Lebar ~150px x 160px) =================
                 const spriteObj = angkotRearRef.current;
                 const frames = spriteObj?.frames || [];
                 const spriteCanvas = spriteObj?.canvas;
 
-                let drawW = 112;
-                let drawH = 122;
+                let drawW = 150;
+                let drawH = 160;
                 if (frames.length > 0 && frames[0].sh > 0) {
                   const ratio = frames[0].sw / frames[0].sh;
-                  drawH = 122; // Tinggi 122px, gagah dan lebar memenuhi lajur jalan
-                  drawW = Math.max(90, Math.min(135, Math.round(drawH * ratio)));
+                  drawH = 160; // Tinggi 160px, gagah dan lebar menutup lajur jalan
+                  drawW = Math.max(120, Math.min(180, Math.round(drawH * ratio)));
                 }
 
                 // Bayangan Bawah
                 ctx.fillStyle = 'rgba(10, 14, 20, 0.55)';
                 ctx.beginPath();
-                ctx.ellipse(cScrX, cScrY + drawH / 2 - 4, drawW * 0.45, 18, 0, 0, Math.PI * 2);
+                ctx.ellipse(cScrX, cScrY + drawH / 2 - 6, drawW * 0.46, 24, 0, 0, Math.PI * 2);
                 ctx.fill();
 
                 // Asap Knalpot Belakang
                 if (car.isSpeeding && Math.abs(car.speed) > 100) {
                   for (let si = 0; si < 3; si++) {
-                    const puffX = cScrX + (drawW / 3) + (Math.random() - 0.5) * 6;
-                    const puffY = cScrY + drawH / 2 + 12 + si * 14;
+                    const puffX = cScrX + (drawW / 3) + (Math.random() - 0.5) * 8;
+                    const puffY = cScrY + drawH / 2 + 16 + si * 18;
                     ctx.fillStyle = 'rgba(50, 55, 65, 0.65)';
                     ctx.beginPath();
-                    ctx.arc(puffX, puffY, 7 + si * 4, 0, Math.PI * 2);
+                    ctx.arc(puffX, puffY, 9 + si * 5, 0, Math.PI * 2);
                     ctx.fill();
                   }
                 }
