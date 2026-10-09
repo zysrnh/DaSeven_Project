@@ -311,7 +311,8 @@ interface TrafficVehicle {
 // Helper auto-chromakey + bounding box trimmer untuk gambar JPEG
 const processAutoTrimmedSprite = (
   img: HTMLImageElement,
-  cols: number = 1
+  cols: number = 1,
+  options?: { startCol?: number; colCount?: number }
 ): {
   canvas: HTMLCanvasElement;
   frames: { sx: number; sy: number; sw: number; sh: number }[];
@@ -366,8 +367,11 @@ const processAutoTrimmedSprite = (
   const actualBoxH = Math.max(20, maxY - minY);
   const colW = actualBoxW / cols;
 
+  const startCol = options?.startCol || 0;
+  const colCount = options?.colCount || (cols - startCol);
+
   const frames = [];
-  for (let c = 0; c < cols; c++) {
+  for (let c = startCol; c < startCol + colCount; c++) {
     frames.push({
       sx: minX + c * colW,
       sy: minY,
@@ -521,25 +525,25 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
       imagesRef.current[key] = img;
     });
 
-    // 1. Load Angkot Side View (4 Frame Strip - Seri v2)
+    // 1. Load Angkot Side View (4 Frame Strip - buang mobil ke-0 berstiker, ambil 3 mobil berpintu lipat di kanan)
     const angkotSideImg = new Image();
     angkotSideImg.src = new URL('../assets/mobil/angkot/angkotv2.jpg', import.meta.url).href;
     angkotSideImg.onload = () => {
-      angkotSideRef.current = processAutoTrimmedSprite(angkotSideImg, 4);
+      angkotSideRef.current = processAutoTrimmedSprite(angkotSideImg, 4, { startCol: 1, colCount: 3 });
     };
 
-    // 2. Load Angkot Depan (Front View - Seri v2)
+    // 2. Load Angkot Depan (Front View - 3 Kolom: normal, lampu nyala, kabin)
     const angkotDepanImg = new Image();
     angkotDepanImg.src = new URL('../assets/mobil/angkot/angkotv2depan.jpg', import.meta.url).href;
     angkotDepanImg.onload = () => {
-      angkotFrontRef.current = processAutoTrimmedSprite(angkotDepanImg, 1);
+      angkotFrontRef.current = processAutoTrimmedSprite(angkotDepanImg, 3);
     };
 
-    // 3. Load Angkot Belakang (Rear View - Seri v2)
+    // 3. Load Angkot Belakang (Rear View - 3 Kolom: normal, lampu rem merah, hazard)
     const angkotBelakangImg = new Image();
     angkotBelakangImg.src = new URL('../assets/mobil/angkot/angkotv2belakang.jpg', import.meta.url).href;
     angkotBelakangImg.onload = () => {
-      angkotRearRef.current = processAutoTrimmedSprite(angkotBelakangImg, 1);
+      angkotRearRef.current = processAutoTrimmedSprite(angkotBelakangImg, 3);
     };
   }, []);
 
@@ -859,10 +863,10 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
 
         const hitThresholdX = car.viewType === 'side' 
           ? (car.isSpeeding ? 150 : 130) 
-          : (car.isSpeeding ? 105 : 85);
+          : (car.isSpeeding ? 70 : 55);
         const hitThresholdY = car.viewType === 'side' 
           ? (car.isSpeeding ? 105 : 80) 
-          : (car.isSpeeding ? 130 : 105);
+          : (car.isSpeeding ? 100 : 80);
 
         if (hitDistanceX < hitThresholdX && hitDistanceY < hitThresholdY) {
           playSound.carCrash();
@@ -1389,45 +1393,46 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
                 }
                 ctx.restore();
               } else if (car.viewType === 'front') {
-                // ================= FRONT VIEW ANGKOT (Gagah Lebar ~150px x 160px) =================
+                // ================= FRONT VIEW ANGKOT (1 Mobil Tunggal Gagah) =================
                 const spriteObj = angkotFrontRef.current;
                 const frames = spriteObj?.frames || [];
                 const spriteCanvas = spriteObj?.canvas;
 
-                let drawW = 150;
-                let drawH = 160;
+                let drawW = 85;
+                let drawH = 145;
                 if (frames.length > 0 && frames[0].sh > 0) {
                   const ratio = frames[0].sw / frames[0].sh;
-                  drawH = 160; // Tinggi 160px, gagah dan lebar menutup hampir 80% lajur jalan
-                  drawW = Math.max(120, Math.min(180, Math.round(drawH * ratio)));
+                  drawH = 145; // Tinggi 145px, pas dengan panjang bodi 1 mobil
+                  drawW = Math.max(65, Math.min(105, Math.round(drawH * ratio)));
                 }
 
                 // Bayangan Bawah
                 ctx.fillStyle = 'rgba(10, 14, 20, 0.55)';
                 ctx.beginPath();
-                ctx.ellipse(cScrX, cScrY + drawH / 2 - 6, drawW * 0.46, 24, 0, 0, Math.PI * 2);
+                ctx.ellipse(cScrX, cScrY + drawH / 2 - 6, drawW * 0.46, 16, 0, 0, Math.PI * 2);
                 ctx.fill();
 
                 // Sorot Lampu Depan ke Bawah (Southbound)
                 ctx.save();
-                const beamGrad = ctx.createRadialGradient(cScrX, cScrY + drawH / 2, 18, cScrX, cScrY + drawH / 2 + 180, 190);
+                const beamGrad = ctx.createRadialGradient(cScrX, cScrY + drawH / 2, 14, cScrX, cScrY + drawH / 2 + 150, 160);
                 beamGrad.addColorStop(0, car.isSpeeding ? 'rgba(254, 240, 138, 0.55)' : 'rgba(254, 240, 138, 0.25)');
                 beamGrad.addColorStop(1, 'rgba(254, 240, 138, 0)');
                 ctx.fillStyle = beamGrad;
                 ctx.beginPath();
                 ctx.moveTo(cScrX - drawW / 3, cScrY + drawH / 3);
-                ctx.lineTo(cScrX - drawW * 1.25, cScrY + drawH / 2 + 200);
-                ctx.lineTo(cScrX + drawW * 1.25, cScrY + drawH / 2 + 200);
+                ctx.lineTo(cScrX - drawW * 1.15, cScrY + drawH / 2 + 175);
+                ctx.lineTo(cScrX + drawW * 1.15, cScrY + drawH / 2 + 175);
                 ctx.lineTo(cScrX + drawW / 3, cScrY + drawH / 3);
                 ctx.closePath();
                 ctx.fill();
                 ctx.restore();
 
-                // Gambar Sprite
+                // Gambar Sprite (Frame 1: Lampu depan menyala)
                 ctx.save();
                 ctx.translate(cScrX, cScrY);
                 if (spriteCanvas && frames.length > 0) {
-                  const f = frames[0];
+                  const frameIdx = frames.length >= 2 ? 1 : 0;
+                  const f = frames[frameIdx];
                   ctx.drawImage(spriteCanvas, f.sx, f.sy, f.sw, f.sh, -drawW / 2, -drawH / 2, drawW, drawH);
                 } else {
                   ctx.fillStyle = '#1c5c4e';
@@ -1435,42 +1440,46 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
                 }
                 ctx.restore();
               } else if (car.viewType === 'rear') {
-                // ================= REAR VIEW ANGKOT (Gagah Lebar ~150px x 160px) =================
+                // ================= REAR VIEW ANGKOT (1 Mobil Tunggal Gagah) =================
                 const spriteObj = angkotRearRef.current;
                 const frames = spriteObj?.frames || [];
                 const spriteCanvas = spriteObj?.canvas;
 
-                let drawW = 150;
-                let drawH = 160;
+                let drawW = 85;
+                let drawH = 145;
                 if (frames.length > 0 && frames[0].sh > 0) {
                   const ratio = frames[0].sw / frames[0].sh;
-                  drawH = 160; // Tinggi 160px, gagah dan lebar menutup lajur jalan
-                  drawW = Math.max(120, Math.min(180, Math.round(drawH * ratio)));
+                  drawH = 145; // Tinggi 145px, pas dengan panjang bodi 1 mobil
+                  drawW = Math.max(65, Math.min(105, Math.round(drawH * ratio)));
                 }
 
                 // Bayangan Bawah
                 ctx.fillStyle = 'rgba(10, 14, 20, 0.55)';
                 ctx.beginPath();
-                ctx.ellipse(cScrX, cScrY + drawH / 2 - 6, drawW * 0.46, 24, 0, 0, Math.PI * 2);
+                ctx.ellipse(cScrX, cScrY + drawH / 2 - 6, drawW * 0.46, 16, 0, 0, Math.PI * 2);
                 ctx.fill();
 
                 // Asap Knalpot Belakang
                 if (car.isSpeeding && Math.abs(car.speed) > 100) {
                   for (let si = 0; si < 3; si++) {
-                    const puffX = cScrX + (drawW / 3) + (Math.random() - 0.5) * 8;
-                    const puffY = cScrY + drawH / 2 + 16 + si * 18;
+                    const puffX = cScrX + (drawW / 4) + (Math.random() - 0.5) * 6;
+                    const puffY = cScrY + drawH / 2 + 10 + si * 12;
                     ctx.fillStyle = 'rgba(50, 55, 65, 0.65)';
                     ctx.beginPath();
-                    ctx.arc(puffX, puffY, 9 + si * 5, 0, Math.PI * 2);
+                    ctx.arc(puffX, puffY, 7 + si * 4, 0, Math.PI * 2);
                     ctx.fill();
                   }
                 }
 
-                // Gambar Sprite
+                // Gambar Sprite (Saat berhenti/lampu merah pakai frame 1 lampu rem menyala)
                 ctx.save();
                 ctx.translate(cScrX, cScrY);
                 if (spriteCanvas && frames.length > 0) {
-                  const f = frames[0];
+                  let frameIdx = 0;
+                  if ((car.isStopped || Math.abs(car.speed) < 30) && frames.length >= 2) {
+                    frameIdx = 1; // Lampu rem merah aktif!
+                  }
+                  const f = frames[frameIdx];
                   ctx.drawImage(spriteCanvas, f.sx, f.sy, f.sw, f.sh, -drawW / 2, -drawH / 2, drawW, drawH);
                 } else {
                   ctx.fillStyle = '#1c5c4e';
