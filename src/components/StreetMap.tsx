@@ -27,9 +27,8 @@ interface BuildingShop {
   roofColor: string;
 }
 
-// DAFTAR BANGUNAN & TOKO BERVARIASI (PALET WARNA TERPADU 32-BIT MUTED CINEMATIC)
+// DAFTAR BANGUNAN & TOKO BERVARIASI
 const BUILDINGS: BuildingShop[] = [
-  // 1. P = PABRIK (Kiri Atas)
   {
     id: 'b_pabrik',
     name: 'PT. TEXTILE BALEENDAH',
@@ -44,8 +43,6 @@ const BUILDINGS: BuildingShop[] = [
     wallColor: '#1a202a',
     roofColor: '#12161e',
   },
-
-  // 2. S & G = GEDUNG & GERBANG SMKN 7 (Utara Tengah)
   {
     id: 'b_smkn7',
     name: 'SMK NEGERI 7 BALEENDAH',
@@ -60,8 +57,6 @@ const BUILDINGS: BuildingShop[] = [
     wallColor: '#1f2734',
     roofColor: '#141a24',
   },
-
-  // 3. T1 = FOTOCOPY & ALAT TULIS (Samping Kanan Gerbang)
   {
     id: 'b_fotocopy',
     name: 'FOTOCOPY & ATK "KURNIA"',
@@ -76,8 +71,6 @@ const BUILDINGS: BuildingShop[] = [
     wallColor: '#212935',
     roofColor: '#151b24',
   },
-
-  // 4. T2 = WARMINDO KUNINGAN (Sebelah Fotocopy)
   {
     id: 'b_warmindo',
     name: 'WARMINDO "PUTRA KUNINGAN"',
@@ -92,8 +85,6 @@ const BUILDINGS: BuildingShop[] = [
     wallColor: '#282220',
     roofColor: '#181413',
   },
-
-  // 5. TS = TOKO SERBA ADA / MINIMARKET (Sudut Kanan Atas Perempatan)
   {
     id: 'b_minimarket',
     name: 'BALEENDAH MART 24 JAM',
@@ -108,8 +99,6 @@ const BUILDINGS: BuildingShop[] = [
     wallColor: '#1d2721',
     roofColor: '#121a15',
   },
-
-  // 6. T3 = COUNTER PULSA & SERVIS HP (Selatan Kiri)
   {
     id: 'b_counter_hp',
     name: 'SEVEN CELL & ACC',
@@ -124,8 +113,6 @@ const BUILDINGS: BuildingShop[] = [
     wallColor: '#231d2c',
     roofColor: '#15111b',
   },
-
-  // 7. T4 = WARUNG KELONTONG MADURA 24 JAM (Selatan Tengah)
   {
     id: 'b_warung_madura',
     name: 'WARUNG MADURA 24 JAM',
@@ -140,8 +127,6 @@ const BUILDINGS: BuildingShop[] = [
     wallColor: '#27201a',
     roofColor: '#17120e',
   },
-
-  // 8. T5 = BENGKEL MOTOR & TAMBAL BAN (Selatan Kanan Sebelum TN Lapang)
   {
     id: 'b_bengkel',
     name: 'BENGKEL MOTOR "SETIA"',
@@ -156,8 +141,6 @@ const BUILDINGS: BuildingShop[] = [
     wallColor: '#26201b',
     roofColor: '#16120e',
   },
-
-  // 9. T6 = TOKO VARIASI DI TENGGARA PEREMPATAN
   {
     id: 'b_toko_selatan',
     name: 'TOKO ELEKTRONIK & TEKNIK',
@@ -309,20 +292,92 @@ const createCleanDirtPattern = (): HTMLCanvasElement => {
   return c;
 };
 
-// Tipe Kendaraan Angkot Lalu Lintas
+// Tipe Kendaraan Angkot Lalu Lintas (Mendukung Arah Horizontal & Vertikal)
 interface TrafficVehicle {
   id: string;
   x: number;
   y: number;
   speed: number;
   baseSpeed: number;
-  dir: 'left' | 'right';
+  dir: 'left' | 'right' | 'up' | 'down';
   animFrame: number;
   animTimer: number;
   isSpeeding: boolean;
   hornCooldown: number;
   isStopped: boolean;
+  viewType: 'side' | 'front' | 'rear';
 }
+
+// Helper auto-chromakey + bounding box trimmer untuk gambar JPEG
+const processAutoTrimmedSprite = (
+  img: HTMLImageElement,
+  cols: number = 1
+): {
+  canvas: HTMLCanvasElement;
+  frames: { sx: number; sy: number; sw: number; sh: number }[];
+} | null => {
+  const oc = document.createElement('canvas');
+  oc.width = img.naturalWidth || img.width;
+  oc.height = img.naturalHeight || img.height;
+  const octx = oc.getContext('2d');
+  if (!octx) return null;
+
+  octx.drawImage(img, 0, 0);
+
+  let minY = oc.height;
+  let maxY = 0;
+  let minX = oc.width;
+  let maxX = 0;
+
+  try {
+    const imgData = octx.getImageData(0, 0, oc.width, oc.height);
+    const data = imgData.data;
+    for (let y = 0; y < oc.height; y++) {
+      for (let x = 0; x < oc.width; x++) {
+        const i = (y * oc.width + x) * 4;
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        if (r < 25 && g < 25 && b < 25) {
+          data[i + 3] = 0;
+        } else {
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+        }
+      }
+    }
+    octx.putImageData(imgData, 0, 0);
+  } catch (e) {
+    console.warn('Canvas pixel processing bypass:', e);
+  }
+
+  if (minY >= maxY) {
+    minY = Math.floor(oc.height * 0.2);
+    maxY = Math.floor(oc.height * 0.8);
+  }
+  if (minX >= maxX) {
+    minX = 0;
+    maxX = oc.width;
+  }
+
+  const actualBoxW = Math.max(20, maxX - minX);
+  const actualBoxH = Math.max(20, maxY - minY);
+  const colW = actualBoxW / cols;
+
+  const frames = [];
+  for (let c = 0; c < cols; c++) {
+    frames.push({
+      sx: minX + c * colW,
+      sy: minY,
+      sw: colW,
+      sh: actualBoxH,
+    });
+  }
+
+  return { canvas: oc, frames };
+};
 
 export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -352,21 +407,23 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
   // Cache Gambar Karakter Maine
   const imagesRef = useRef<Record<string, HTMLImageElement>>({});
 
-  // Cache Canvas Sprite Angkot (Transparan)
-  const angkotSpriteCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const angkotFramesRef = useRef<{ sx: number; sy: number; sw: number; sh: number }[]>([]);
+  // Cache Canvas Sprite Angkot (Side, Front, Rear)
+  const angkotSideRef = useRef<{ canvas: HTMLCanvasElement; frames: { sx: number; sy: number; sw: number; sh: number }[] } | null>(null);
+  const angkotFrontRef = useRef<{ canvas: HTMLCanvasElement; frames: { sx: number; sy: number; sw: number; sh: number }[] } | null>(null);
+  const angkotRearRef = useRef<{ canvas: HTMLCanvasElement; frames: { sx: number; sy: number; sw: number; sh: number }[] } | null>(null);
 
   // Patterns Cache
   const asphaltPatternRef = useRef<CanvasPattern | null>(null);
   const sidewalkPatternRef = useRef<CanvasPattern | null>(null);
   const dirtPatternRef = useRef<CanvasPattern | null>(null);
 
-  // State Lalu Lintas Kendaraan (Angkot di Lajur Atas & Lajur Bawah)
+  // State Lalu Lintas Kendaraan (Jalur Horizontal & Jalur Vertikal Perempatan)
   const vehiclesRef = useRef<TrafficVehicle[]>([
+    // Jalur Horizontal Bawah (ke timur / kanan)
     {
-      id: 'angkot_east_1',
+      id: 'angkot_east',
       x: 200,
-      y: 810, // Lajur bawah ke timur (arah kanan)
+      y: 810,
       speed: 140,
       baseSpeed: 140,
       dir: 'right',
@@ -375,11 +432,13 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
       isSpeeding: false,
       hornCooldown: 0,
       isStopped: false,
+      viewType: 'side',
     },
+    // Jalur Horizontal Atas (ke barat / kiri)
     {
-      id: 'angkot_west_1',
+      id: 'angkot_west',
       x: 2650,
-      y: 620, // Lajur atas ke barat (arah kiri)
+      y: 620,
       speed: -140,
       baseSpeed: -140,
       dir: 'left',
@@ -388,6 +447,37 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
       isSpeeding: false,
       hornCooldown: 0,
       isStopped: false,
+      viewType: 'side',
+    },
+    // Jalur Vertikal Perempatan Barat (ke selatan / bawah - Tampak Depan)
+    {
+      id: 'angkot_south',
+      x: 1940,
+      y: 120,
+      speed: 130,
+      baseSpeed: 130,
+      dir: 'down',
+      animFrame: 0,
+      animTimer: 0,
+      isSpeeding: false,
+      hornCooldown: 0,
+      isStopped: false,
+      viewType: 'front',
+    },
+    // Jalur Vertikal Perempatan Timur (ke utara / atas - Tampak Belakang)
+    {
+      id: 'angkot_north',
+      x: 2140,
+      y: 1420,
+      speed: -130,
+      baseSpeed: -130,
+      dir: 'up',
+      animFrame: 0,
+      animTimer: 0,
+      isSpeeding: false,
+      hornCooldown: 0,
+      isStopped: false,
+      viewType: 'rear',
     },
   ]);
 
@@ -407,7 +497,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Preload Aset Animasi Karakter Maine & Angkot
+  // Preload Aset Karakter Maine & 3 Aset Angkot (Side, Depan, Belakang)
   useEffect(() => {
     const assetList: Record<string, string> = {
       idle_1: '/assets/characters/maine/idle_1.png',
@@ -431,47 +521,25 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
       imagesRef.current[key] = img;
     });
 
-    // Load Sprite Angkot dari src/assets/mobil/angkot/angkot.jpg
-    const angkotImg = new Image();
-    angkotImg.src = new URL('../assets/mobil/angkot/angkot.jpg', import.meta.url).href;
-    angkotImg.onload = () => {
-      const oc = document.createElement('canvas');
-      oc.width = angkotImg.naturalWidth || angkotImg.width;
-      oc.height = angkotImg.naturalHeight || angkotImg.height;
-      const octx = oc.getContext('2d');
-      if (!octx) return;
+    // 1. Load Angkot Side View (4 Frame Strip)
+    const angkotSideImg = new Image();
+    angkotSideImg.src = new URL('../assets/mobil/angkot/angkot.jpg', import.meta.url).href;
+    angkotSideImg.onload = () => {
+      angkotSideRef.current = processAutoTrimmedSprite(angkotSideImg, 4);
+    };
 
-      octx.drawImage(angkotImg, 0, 0);
+    // 2. Load Angkot Depan (Front View)
+    const angkotDepanImg = new Image();
+    angkotDepanImg.src = new URL('../assets/mobil/angkot/angkot_depan.jpg', import.meta.url).href;
+    angkotDepanImg.onload = () => {
+      angkotFrontRef.current = processAutoTrimmedSprite(angkotDepanImg, 1);
+    };
 
-      // Chroma-key: Hapus background hitam JPEG agar transparan bersih
-      try {
-        const imgData = octx.getImageData(0, 0, oc.width, oc.height);
-        const data = imgData.data;
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i];
-          const g = data[i + 1];
-          const b = data[i + 2];
-          // Toleransi warna hitam pekat latar belakang
-          if (r < 24 && g < 24 && b < 24) {
-            data[i + 3] = 0;
-          }
-        }
-        octx.putImageData(imgData, 0, 0);
-      } catch (e) {
-        console.warn('Canvas pixel processing bypass:', e);
-      }
-
-      angkotSpriteCanvasRef.current = oc;
-
-      // 4 Kolom Frame Horizontal
-      const colW = oc.width / 4;
-      const colH = oc.height;
-      angkotFramesRef.current = [
-        { sx: 0, sy: 0, sw: colW, sh: colH },
-        { sx: colW, sy: 0, sw: colW, sh: colH },
-        { sx: colW * 2, sy: 0, sw: colW, sh: colH },
-        { sx: colW * 3, sy: 0, sw: colW, sh: colH },
-      ];
+    // 3. Load Angkot Belakang (Rear View)
+    const angkotBelakangImg = new Image();
+    angkotBelakangImg.src = new URL('../assets/mobil/angkot/angkot_belakang.jpg', import.meta.url).href;
+    angkotBelakangImg.onload = () => {
+      angkotRearRef.current = processAutoTrimmedSprite(angkotBelakangImg, 1);
     };
   }, []);
 
@@ -664,37 +732,59 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
       }
 
       // 2. LOGIKA SIKLUS LAMPU LALU LINTAS PEREMPATAN (18 Detik Total)
-      // 0..8s: HIJAU | 8..10s: KUNING | 10..18s: MERAH
+      // Jalur Horizontal: 0..8s: HIJAU | 8..10s: KUNING | 10..18s: MERAH
+      // Jalur Vertikal: 0..10s: MERAH | 10..18s: HIJAU
       const trafficTime = (currentTime / 1000) % 18;
-      let trafficLightColor: 'green' | 'yellow' | 'red' = 'green';
+      let horizontalLightColor: 'green' | 'yellow' | 'red' = 'green';
+      let verticalLightColor: 'green' | 'yellow' | 'red' = 'red';
+
       if (trafficTime < 8) {
-        trafficLightColor = 'green';
+        horizontalLightColor = 'green';
+        verticalLightColor = 'red';
       } else if (trafficTime < 10) {
-        trafficLightColor = 'yellow';
+        horizontalLightColor = 'yellow';
+        verticalLightColor = 'red';
       } else {
-        trafficLightColor = 'red';
+        horizontalLightColor = 'red';
+        verticalLightColor = 'green';
       }
 
       // Deteksi Posisi Pemain: Apakah sedang di aspal jalan dan di luar zebra cross?
-      const isPlayerOnRoad = pY >= 525 && pY <= 915;
-      const isPlayerOnSchoolZebra = pX >= 780 && pX <= 960;
-      const isPlayerOnWestZebra = pX >= 1740 && pX <= 1860;
-      const isPlayerOnEastZebra = pX >= 2220 && pX <= 2340;
-      const isPlayerOnAnyZebra = isPlayerOnSchoolZebra || isPlayerOnWestZebra || isPlayerOnEastZebra;
-      const isCrossingIllegally = isPlayerOnRoad && !isPlayerOnAnyZebra;
+      const isPlayerOnHorizontalRoad = pY >= 525 && pY <= 915;
+      const isPlayerOnVerticalRoad = pX >= 1840 && pX <= 2240 && (pY < 525 || pY > 915);
+
+      const isPlayerOnSchoolZebra = pX >= 780 && pX <= 960 && pY >= 520 && pY <= 920;
+      const isPlayerOnWestZebra = pX >= 1740 && pX <= 1860 && pY >= 520 && pY <= 920;
+      const isPlayerOnEastZebra = pX >= 2220 && pX <= 2340 && pY >= 520 && pY <= 920;
+      const isPlayerOnNorthZebra = pX >= 1840 && pX <= 2240 && pY >= 460 && pY <= 535;
+      const isPlayerOnSouthZebra = pX >= 1840 && pX <= 2240 && pY >= 905 && pY <= 970;
+
+      const isPlayerOnAnyZebra =
+        isPlayerOnSchoolZebra || isPlayerOnWestZebra || isPlayerOnEastZebra || isPlayerOnNorthZebra || isPlayerOnSouthZebra;
+
+      const isCrossingIllegally = (isPlayerOnHorizontalRoad || isPlayerOnVerticalRoad) && !isPlayerOnAnyZebra;
 
       // 3. LOGIKA GERAKAN KENDARAAN (ANGKOT LALU LINTAS)
       vehiclesRef.current.forEach((car) => {
         car.hornCooldown = Math.max(0, car.hornCooldown - dt);
 
         // A. Cek Lampu Merah di Perempatan
-        // Lajur bawah (arah kanan ke timur): Garis henti di x: 1710
-        // Lajur atas (arah kiri ke barat): Garis henti di x: 2280
         let shouldStopAtLight = false;
-        if (trafficLightColor === 'red' || trafficLightColor === 'yellow') {
-          if (car.dir === 'right' && car.x >= 1530 && car.x <= 1720) {
+
+        if (car.dir === 'right') {
+          if ((horizontalLightColor === 'red' || horizontalLightColor === 'yellow') && car.x >= 1530 && car.x <= 1720) {
             shouldStopAtLight = true;
-          } else if (car.dir === 'left' && car.x <= 2450 && car.x >= 2270) {
+          }
+        } else if (car.dir === 'left') {
+          if ((horizontalLightColor === 'red' || horizontalLightColor === 'yellow') && car.x <= 2450 && car.x >= 2270) {
+            shouldStopAtLight = true;
+          }
+        } else if (car.dir === 'down') {
+          if (verticalLightColor === 'red' && car.y >= 300 && car.y <= 460) {
+            shouldStopAtLight = true;
+          }
+        } else if (car.dir === 'up') {
+          if (verticalLightColor === 'red' && car.y <= 1100 && car.y >= 960) {
             shouldStopAtLight = true;
           }
         }
@@ -702,12 +792,21 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
         car.isStopped = shouldStopAtLight;
 
         // B. Cek Mode Ngebut Saat Pemain Menyeberang Sembarangan di Luar Zebra Cross
-        const isSameLane =
-          (car.dir === 'left' && pY <= 720) || // Lajur atas
-          (car.dir === 'right' && pY > 720); // Lajur bawah
+        let isApproachingPlayer = false;
 
-        const distToPlayer = car.dir === 'right' ? pX - car.x : car.x - pX;
-        const isApproachingPlayer = isCrossingIllegally && isSameLane && distToPlayer > -20 && distToPlayer < 450;
+        if (car.dir === 'left' && pY <= 720 && isCrossingIllegally) {
+          const dist = car.x - pX;
+          if (dist > -20 && dist < 420) isApproachingPlayer = true;
+        } else if (car.dir === 'right' && pY > 720 && isCrossingIllegally) {
+          const dist = pX - car.x;
+          if (dist > -20 && dist < 420) isApproachingPlayer = true;
+        } else if (car.dir === 'down' && pX >= 1840 && pX <= 2040 && isCrossingIllegally) {
+          const dist = pY - car.y;
+          if (dist > -20 && dist < 380) isApproachingPlayer = true;
+        } else if (car.dir === 'up' && pX >= 2040 && pX <= 2240 && isCrossingIllegally) {
+          const dist = car.y - pY;
+          if (dist > -20 && dist < 380) isApproachingPlayer = true;
+        }
 
         if (isApproachingPlayer && !shouldStopAtLight) {
           car.isSpeeding = true;
@@ -726,24 +825,26 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
         if (shouldStopAtLight) {
           currentTargetSpeed = 0;
         } else if (car.isSpeeding) {
-          currentTargetSpeed = car.dir === 'right' ? 580 : -580; // MODE NGEBUT KENCANG
+          const boostSign = car.baseSpeed > 0 ? 1 : -1;
+          currentTargetSpeed = 580 * boostSign;
         } else {
-          currentTargetSpeed = car.baseSpeed; // KECEPATAN BIASA
+          currentTargetSpeed = car.baseSpeed;
         }
 
-        // Akselerasi / Deselerasi Halus
         car.speed += (currentTargetSpeed - car.speed) * Math.min(1, dt * 6);
-        car.x += car.speed * dt;
 
-        // Loop Mobil Mengelilingi Jalan Raya
-        if (car.dir === 'right' && car.x > WORLD_WIDTH + 150) {
-          car.x = -150;
-        } else if (car.dir === 'left' && car.x < -150) {
-          car.x = WORLD_WIDTH + 150;
+        if (car.dir === 'left' || car.dir === 'right') {
+          car.x += car.speed * dt;
+          if (car.dir === 'right' && car.x > WORLD_WIDTH + 150) car.x = -150;
+          else if (car.dir === 'left' && car.x < -150) car.x = WORLD_WIDTH + 150;
+        } else {
+          car.y += car.speed * dt;
+          if (car.dir === 'down' && car.y > WORLD_HEIGHT + 150) car.y = -150;
+          else if (car.dir === 'up' && car.y < -150) car.y = WORLD_HEIGHT + 150;
         }
 
-        // Animasi Frame Roda Putar
-        if (Math.abs(car.speed) > 10) {
+        // Animasi Frame (Untuk Side View)
+        if (Math.abs(car.speed) > 10 && car.viewType === 'side') {
           car.animTimer += dt;
           const frameDelay = car.isSpeeding ? 0.05 : 0.12;
           if (car.animTimer > frameDelay) {
@@ -752,20 +853,21 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
           }
         }
 
-        // D. DETEKSI TABRAKAN DENGAN PEMAIN (COLLISION NABRAK)
+        // D. DETEKSI TABRAKAN DENGAN PEMAIN
         const hitDistanceX = Math.abs(car.x - pX);
         const hitDistanceY = Math.abs(car.y - (pY + 28));
 
-        if (hitDistanceX < 58 && hitDistanceY < 32) {
-          // TABRAKAN TERJADI!
-          playSound.carCrash();
-          screenShakeRef.current = 24; // Screen shake
+        const hitThresholdX = car.viewType === 'side' ? 58 : 38;
+        const hitThresholdY = car.viewType === 'side' ? 32 : 52;
 
-          // Terpental knockback ke tepi trotoar aman terdekat
-          if (pY <= 720) {
-            playerPosRef.current.y = 480; // Terlempar ke trotoar utara
+        if (hitDistanceX < hitThresholdX && hitDistanceY < hitThresholdY) {
+          playSound.carCrash();
+          screenShakeRef.current = 24;
+
+          if (car.dir === 'left' || car.dir === 'right') {
+            playerPosRef.current.y = pY <= 720 ? 480 : 960;
           } else {
-            playerPosRef.current.y = 960; // Terlempar ke trotoar selatan
+            playerPosRef.current.x = pX < 2040 ? 1780 : 2280;
           }
 
           setTrafficToast('💥 BRUAAKK! Kamu tertabrak angkot karena menyeberang sembarangan!');
@@ -808,7 +910,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
         dirtPatternRef.current.setTransform(new DOMMatrix().translate(-camX, -camY));
       }
 
-      // 5. BACKGROUND CLEAR (Slate Dark Ambience)
+      // 5. BACKGROUND CLEAR
       ctx.fillStyle = '#0f141d';
       ctx.fillRect(0, 0, viewportSize.w, viewportSize.h);
 
@@ -891,7 +993,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
       ctx.fillRect(800 - camX, 914 - camY, 140, 3);
 
       // ========================================================
-      // E. KERB BATU TEPI JALAN PIXEL ART (MUTED STONE GREY)
+      // E. KERB BATU TEPI JALAN PIXEL ART
       // ========================================================
       const drawHorizontalCurb = (startX: number, endX: number, cy: number, isUpper: boolean) => {
         const curbBlockW = 24;
@@ -992,9 +1094,11 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
       // ========================================================
       // G. LAMPU LALU LINTAS 32-BIT DI PEREMPATAN
       // ========================================================
-      const drawTrafficLightPost = (tx: number, ty: number) => {
+      const drawTrafficLightPost = (tx: number, ty: number, isVerticalFace: boolean = false) => {
         const sx = tx - camX;
         const sy = ty - camY;
+
+        const lightColor = isVerticalFace ? verticalLightColor : horizontalLightColor;
 
         // Tiang
         ctx.fillStyle = '#11151c';
@@ -1010,47 +1114,47 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
         ctx.strokeRect(sx, sy, 22, 56);
 
         // Lampu Merah
-        ctx.fillStyle = trafficLightColor === 'red' ? '#ef4444' : '#381316';
+        ctx.fillStyle = lightColor === 'red' ? '#ef4444' : '#381316';
         ctx.beginPath();
         ctx.arc(sx + 11, sy + 11, 6, 0, Math.PI * 2);
         ctx.fill();
-        if (trafficLightColor === 'red') {
-          ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
+        if (lightColor === 'red') {
+          ctx.fillStyle = 'rgba(239, 68, 68, 0.45)';
           ctx.beginPath();
           ctx.arc(sx + 11, sy + 11, 12, 0, Math.PI * 2);
           ctx.fill();
         }
 
         // Lampu Kuning
-        ctx.fillStyle = trafficLightColor === 'yellow' ? '#facc15' : '#3d3410';
+        ctx.fillStyle = lightColor === 'yellow' ? '#facc15' : '#3d3410';
         ctx.beginPath();
         ctx.arc(sx + 11, sy + 28, 6, 0, Math.PI * 2);
         ctx.fill();
-        if (trafficLightColor === 'yellow') {
-          ctx.fillStyle = 'rgba(250, 204, 21, 0.4)';
+        if (lightColor === 'yellow') {
+          ctx.fillStyle = 'rgba(250, 204, 21, 0.45)';
           ctx.beginPath();
           ctx.arc(sx + 11, sy + 28, 12, 0, Math.PI * 2);
           ctx.fill();
         }
 
         // Lampu Hijau
-        ctx.fillStyle = trafficLightColor === 'green' ? '#22c55e' : '#102e1b';
+        ctx.fillStyle = lightColor === 'green' ? '#22c55e' : '#102e1b';
         ctx.beginPath();
         ctx.arc(sx + 11, sy + 45, 6, 0, Math.PI * 2);
         ctx.fill();
-        if (trafficLightColor === 'green') {
-          ctx.fillStyle = 'rgba(34, 197, 94, 0.4)';
+        if (lightColor === 'green') {
+          ctx.fillStyle = 'rgba(34, 197, 94, 0.45)';
           ctx.beginPath();
           ctx.arc(sx + 11, sy + 45, 12, 0, Math.PI * 2);
           ctx.fill();
         }
       };
 
-      // Gambar 4 Tiang Lampu Lalu Lintas di Sudut Perempatan
-      drawTrafficLightPost(1740, 430);
-      drawTrafficLightPost(2270, 430);
-      drawTrafficLightPost(1740, 925);
-      drawTrafficLightPost(2270, 925);
+      // 4 Tiang Lampu Lalu Lintas di Sudut Perempatan
+      drawTrafficLightPost(1740, 430, false);
+      drawTrafficLightPost(2270, 430, true);
+      drawTrafficLightPost(1740, 925, true);
+      drawTrafficLightPost(2270, 925, false);
 
       // ========================================================
       // H. Y-SORTED ENTITIES (FASAD, PROPS, ANGKOT, DAN PLAYER)
@@ -1079,13 +1183,11 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
             ctx.lineWidth = 3;
             ctx.strokeRect(sx, sy, b.w, b.h);
 
-            // Atap Bangunan
             ctx.fillStyle = b.roofColor;
             ctx.fillRect(sx - 4, sy - 8, b.w + 8, 36);
             ctx.fillStyle = '#2b3442';
             ctx.fillRect(sx - 4, sy + 24, b.w + 8, 4);
 
-            // Plang Nama Toko Vintage Muted
             ctx.fillStyle = '#111722';
             ctx.fillRect(sx + 10, sy + 38, b.w - 20, 58);
             ctx.fillStyle = b.bannerColor;
@@ -1107,7 +1209,6 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
             ctx.font = 'bold 10px monospace';
             ctx.fillText(b.tagline, sx + b.w / 2, sy + 84);
 
-            // DETAIL FASAD TOKO MUTED & HARMONIS
             if (b.category === 'sekolah') {
               ctx.fillStyle = '#111722';
               ctx.fillRect(sx + 240, sy + 140, 100, 200);
@@ -1137,243 +1238,6 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
               ctx.fillStyle = '#d49e35';
               ctx.font = 'bold 8px monospace';
               ctx.fillText('POS SATPAM', sx + 135, sy + 195);
-            } else if (b.category === 'fotocopy') {
-              for (let ax = 0; ax < b.w - 30; ax += 20) {
-                ctx.fillStyle = (ax / 20) % 2 === 0 ? '#254a6b' : '#d5dbe2';
-                ctx.fillRect(sx + 15 + ax, sy + 106, 20, 22);
-              }
-              ctx.fillStyle = '#111722';
-              ctx.fillRect(sx + 15, sy + 135, b.w - 30, 140);
-              ctx.fillStyle = '#1c364e';
-              ctx.fillRect(sx + 20, sy + 140, b.w - 40, 130);
-
-              ctx.fillStyle = '#abb4c0';
-              ctx.fillRect(sx + 30, sy + 170, 70, 65);
-              ctx.fillStyle = '#374151';
-              ctx.fillRect(sx + 35, sy + 160, 40, 10);
-              ctx.fillStyle = '#254a6b';
-              ctx.fillRect(sx + 80, sy + 175, 12, 10);
-
-              ctx.fillStyle = '#d8dee6';
-              ctx.fillRect(sx + 120, sy + 165, 30, 20);
-              ctx.fillStyle = '#ba8b3a';
-              ctx.fillRect(sx + 155, sy + 165, 30, 20);
-              ctx.fillStyle = '#873a36';
-              ctx.fillRect(sx + 190, sy + 165, 30, 20);
-              ctx.fillStyle = '#2d5173';
-              ctx.fillRect(sx + 120, sy + 195, 100, 18);
-
-              ctx.fillStyle = 'rgba(216, 225, 235, 0.15)';
-              ctx.fillRect(sx + b.w - 60, sy + 140, 35, 130);
-              ctx.fillStyle = '#e8edf3';
-              ctx.fillRect(sx + b.w - 55, sy + 195, 4, 20);
-            } else if (b.category === 'warmindo') {
-              for (let ax = 0; ax < b.w - 30; ax += 20) {
-                ctx.fillStyle = (ax / 20) % 2 === 0 ? '#842f2b' : '#c99335';
-                ctx.fillRect(sx + 15 + ax, sy + 106, 20, 22);
-              }
-              ctx.fillStyle = '#181413';
-              ctx.fillRect(sx + 15, sy + 135, b.w - 30, 140);
-
-              ctx.fillStyle = '#a8782a';
-              ctx.fillRect(sx + 24, sy + 145, 80, 75);
-              ctx.fillStyle = '#7a3e1b';
-              ctx.fillRect(sx + 28, sy + 185, 20, 14);
-              ctx.fillRect(sx + 52, sy + 185, 20, 14);
-              ctx.fillRect(sx + 76, sy + 185, 20, 14);
-              ctx.fillStyle = 'rgba(238, 210, 140, 0.2)';
-              ctx.fillRect(sx + 28, sy + 150, 72, 10);
-
-              const mieColors = ['#9e3535', '#b88a38', '#2e6b47', '#365375'];
-              for (let i = 0; i < 4; i++) {
-                ctx.fillStyle = mieColors[i];
-                ctx.fillRect(sx + 115 + i * 22, sy + 145, 16, 50);
-                ctx.fillStyle = '#ede5d8';
-                ctx.fillRect(sx + 117 + i * 22, sy + 155, 12, 6);
-              }
-
-              ctx.fillStyle = '#59321c';
-              ctx.fillRect(sx + 20, sy + 225, b.w - 40, 20);
-              ctx.fillStyle = '#254a6b';
-              ctx.fillRect(sx + 130, sy + 205, 22, 22);
-              ctx.fillStyle = '#dce2e8';
-              ctx.fillRect(sx + 134, sy + 209, 14, 14);
-            } else if (b.category === 'counter_hp') {
-              for (let ax = 0; ax < b.w - 30; ax += 20) {
-                ctx.fillStyle = (ax / 20) % 2 === 0 ? '#4f3c66' : '#2b476e';
-                ctx.fillRect(sx + 15 + ax, sy + 106, 20, 20);
-              }
-              ctx.fillStyle = '#121017';
-              ctx.fillRect(sx + 15, sy + 130, b.w - 30, 180);
-
-              ctx.fillStyle = '#234460';
-              ctx.fillRect(sx + 24, sy + 150, b.w - 48, 80);
-              ctx.fillStyle = 'rgba(216, 225, 235, 0.15)';
-              ctx.fillRect(sx + 30, sy + 155, b.w - 60, 16);
-
-              for (let hx = sx + 35; hx < sx + b.w - 60; hx += 34) {
-                ctx.fillStyle = '#1a202c';
-                ctx.fillRect(hx, sy + 175, 16, 28);
-                ctx.fillStyle = '#315473';
-                ctx.fillRect(hx + 2, sy + 177, 12, 22);
-              }
-
-              ctx.fillStyle = '#943333';
-              ctx.fillRect(sx + 35, sy + 240, 45, 22);
-              ctx.fillStyle = '#b88a38';
-              ctx.fillRect(sx + 90, sy + 240, 45, 22);
-              ctx.fillStyle = '#2b4d73';
-              ctx.fillRect(sx + 145, sy + 240, 45, 22);
-              ctx.fillStyle = '#6b4782';
-              ctx.fillRect(sx + 200, sy + 240, 45, 22);
-              ctx.fillStyle = '#ede8f6';
-              ctx.font = 'bold 8px monospace';
-              ctx.fillText('TS', sx + 57, sy + 254);
-              ctx.fillText('ISAT', sx + 112, sy + 254);
-              ctx.fillText('XL', sx + 167, sy + 254);
-              ctx.fillText('SF', sx + 222, sy + 254);
-            } else if (b.category === 'warung_madura') {
-              for (let ax = 0; ax < b.w - 30; ax += 20) {
-                ctx.fillStyle = (ax / 20) % 2 === 0 ? '#8a3131' : '#ddd4c7';
-                ctx.fillRect(sx + 15 + ax, sy + 106, 20, 20);
-              }
-              ctx.fillStyle = '#17120e';
-              ctx.fillRect(sx + 15, sy + 130, b.w - 30, 180);
-
-              ctx.fillStyle = '#59321c';
-              ctx.fillRect(sx + 25, sy + 140, b.w - 50, 80);
-              ctx.fillStyle = '#181413';
-              ctx.fillRect(sx + 30, sy + 145, b.w - 60, 32);
-              ctx.fillRect(sx + 30, sy + 182, b.w - 60, 32);
-
-              for (let rx = sx + 34; rx < sx + b.w - 40; rx += 14) {
-                ctx.fillStyle = '#8f3434';
-                ctx.fillRect(rx, sy + 148, 10, 14);
-                ctx.fillStyle = '#b58434';
-                ctx.fillRect(rx, sy + 163, 10, 12);
-                ctx.fillStyle = '#2f4f70';
-                ctx.fillRect(rx, sy + 185, 10, 14);
-              }
-
-              ctx.fillStyle = '#214663';
-              ctx.fillRect(sx + 35, sy + 235, 24, 34);
-              ctx.fillRect(sx + 64, sy + 235, 24, 34);
-              ctx.fillRect(sx + 49, sy + 205, 24, 34);
-              ctx.fillStyle = '#396b94';
-              ctx.fillRect(sx + 41, sy + 239, 4, 26);
-              ctx.fillRect(sx + 70, sy + 239, 4, 26);
-
-              ctx.fillStyle = '#26593a';
-              ctx.beginPath();
-              ctx.ellipse(sx + 115, sy + 255, 12, 16, 0, 0, Math.PI * 2);
-              ctx.fill();
-              ctx.beginPath();
-              ctx.ellipse(sx + 142, sy + 255, 12, 16, 0, 0, Math.PI * 2);
-              ctx.fill();
-              ctx.fillStyle = '#1d422b';
-              ctx.fillRect(sx + 109, sy + 238, 12, 4);
-              ctx.fillRect(sx + 136, sy + 238, 12, 4);
-
-              ctx.fillStyle = '#842f2b';
-              ctx.fillRect(sx + b.w - 85, sy + 200, 50, 75);
-              ctx.fillStyle = '#dce2ea';
-              ctx.fillRect(sx + b.w - 78, sy + 210, 36, 20);
-              ctx.fillStyle = '#2d6142';
-              ctx.fillRect(sx + b.w - 74, sy + 214, 28, 12);
-            } else if (b.category === 'bengkel') {
-              ctx.fillStyle = '#333b47';
-              ctx.fillRect(sx + 15, sy + 106, b.w - 30, 20);
-              for (let ax = 0; ax < b.w - 30; ax += 12) {
-                ctx.fillStyle = '#242a33';
-                ctx.fillRect(sx + 15 + ax, sy + 106, 2, 20);
-              }
-              ctx.fillStyle = '#171c24';
-              ctx.fillRect(sx + 20, sy + 130, b.w - 40, 180);
-
-              for (let ry = sy + 130; ry < sy + 210; ry += 12) {
-                ctx.fillStyle = '#2c3440';
-                ctx.fillRect(sx + 20, ry, b.w - 40, 9);
-                ctx.fillStyle = '#171c24';
-                ctx.fillRect(sx + 20, ry + 9, b.w - 40, 3);
-              }
-
-              ctx.fillStyle = '#10141a';
-              ctx.fillRect(sx + 30, sy + 210, b.w - 60, 100);
-
-              ctx.fillStyle = '#543420';
-              ctx.fillRect(sx + 40, sy + 230, 120, 10);
-              const oliColors = ['#8f3434', '#26593a', '#2b4d73', '#b58434'];
-              for (let i = 0; i < 4; i++) {
-                ctx.fillStyle = oliColors[i];
-                ctx.fillRect(sx + 46 + i * 26, sy + 216, 18, 14);
-              }
-
-              ctx.fillStyle = '#a84c24';
-              ctx.fillRect(sx + 180, sy + 240, 36, 26);
-              ctx.fillStyle = '#171c24';
-              ctx.fillRect(sx + 184, sy + 264, 10, 8);
-              ctx.fillRect(sx + 202, sy + 264, 10, 8);
-              ctx.fillStyle = '#595f6b';
-              ctx.fillRect(sx + 194, sy + 232, 8, 8);
-
-              for (let ti = 0; ti < 3; ti++) {
-                ctx.fillStyle = '#12161e';
-                ctx.beginPath();
-                ctx.ellipse(sx + b.w - 80, sy + 230 + ti * 16, 22, 12, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#262f3b';
-                ctx.beginPath();
-                ctx.ellipse(sx + b.w - 80, sy + 230 + ti * 16, 10, 5, 0, 0, Math.PI * 2);
-                ctx.fill();
-              }
-            } else if (b.category === 'minimarket') {
-              ctx.fillStyle = '#8f3434';
-              ctx.fillRect(sx + 15, sy + 106, b.w - 30, 6);
-              ctx.fillStyle = '#b88a38';
-              ctx.fillRect(sx + 15, sy + 112, b.w - 30, 6);
-              ctx.fillStyle = '#2b4d73';
-              ctx.fillRect(sx + 15, sy + 118, b.w - 30, 6);
-
-              ctx.fillStyle = '#203a4f';
-              ctx.fillRect(sx + 20, sy + 135, b.w - 40, 150);
-              ctx.fillStyle = 'rgba(216, 225, 235, 0.15)';
-              ctx.fillRect(sx + 26, sy + 140, b.w - 52, 24);
-
-              ctx.fillStyle = '#101720';
-              ctx.fillRect(sx + b.w / 2 - 50, sy + 150, 100, 135);
-              ctx.fillStyle = 'rgba(40, 74, 102, 0.4)';
-              ctx.fillRect(sx + b.w / 2 - 45, sy + 155, 42, 125);
-              ctx.fillRect(sx + b.w / 2 + 3, sy + 155, 42, 125);
-              ctx.fillStyle = '#dce2ea';
-              ctx.fillRect(sx + b.w / 2 - 7, sy + 205, 3, 25);
-              ctx.fillRect(sx + b.w / 2 + 4, sy + 205, 3, 25);
-
-              for (let gy = sy + 175; gy < sy + 250; gy += 25) {
-                ctx.fillStyle = '#b58434';
-                ctx.fillRect(sx + 35, gy, 65, 12);
-                ctx.fillStyle = '#26593a';
-                ctx.fillRect(sx + b.w - 100, gy, 65, 12);
-              }
-            } else if (b.category === 'pabrik') {
-              for (let px = sx + 20; px < sx + b.w - 20; px += 20) {
-                ctx.fillStyle = '#27313f';
-                ctx.fillRect(px, sy + 115, 18, 175);
-                ctx.fillStyle = '#171e27';
-                ctx.fillRect(px + 16, sy + 115, 2, 175);
-              }
-
-              ctx.fillStyle = '#10151c';
-              ctx.fillRect(sx + 60, sy + 170, b.w - 120, 120);
-              for (let hz = sx + 60; hz < sx + b.w - 60; hz += 24) {
-                ctx.fillStyle = '#9e7e2c';
-                ctx.fillRect(hz, sy + 170, 12, 16);
-                ctx.fillStyle = '#10151c';
-                ctx.fillRect(hz + 12, sy + 170, 12, 16);
-              }
-
-              ctx.fillStyle = '#4c5768';
-              ctx.fillRect(sx + 80, sy + 130, 45, 25);
-              ctx.fillRect(sx + b.w - 125, sy + 130, 45, 25);
             }
           },
         });
@@ -1395,30 +1259,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
           entities.push({
             yOrder: yFoot,
             draw: () => {
-              if (prop.type === 'planter_box') {
-                ctx.fillStyle = 'rgba(10, 14, 20, 0.45)';
-                ctx.fillRect(scrX + 6, scrY + 70, 70, 10);
-                ctx.fillStyle = '#171d26';
-                ctx.fillRect(scrX + 4, scrY + 40, 72, 32);
-                ctx.fillStyle = '#242b36';
-                ctx.fillRect(scrX + 6, scrY + 42, 68, 28);
-                ctx.fillStyle = '#333d4c';
-                ctx.fillRect(scrX + 3, scrY + 36, 74, 6);
-
-                const drawLeafCluster = (cx: number, cy: number, w: number, h: number) => {
-                  ctx.fillStyle = '#0f2618';
-                  ctx.fillRect(cx - w / 2, cy - h / 2, w, h);
-                  ctx.fillStyle = '#19422b';
-                  ctx.fillRect(cx - w / 2 + 2, cy - h / 2 + 1, w - 4, h - 2);
-                  ctx.fillStyle = '#296141';
-                  ctx.fillRect(cx - w / 2 + 4, cy - h / 2 + 3, w - 7, h - 5);
-                  ctx.fillStyle = '#45855e';
-                  ctx.fillRect(cx - 2, cy - h / 2 + 2, 3, 2);
-                };
-                drawLeafCluster(scrX + 22, scrY + 30, 26, 20);
-                drawLeafCluster(scrX + 58, scrY + 30, 26, 20);
-                drawLeafCluster(scrX + 40, scrY + 22, 30, 22);
-              } else if (prop.type === 'street_lamp') {
+              if (prop.type === 'street_lamp') {
                 ctx.fillStyle = 'rgba(238, 210, 140, 0.1)';
                 ctx.beginPath();
                 ctx.ellipse(scrX + 24, scrY + 112, 52, 16, 0, 0, Math.PI * 2);
@@ -1457,151 +1298,180 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
                   ctx.fillStyle = '#6b3c22';
                   ctx.fillRect(scrX + 6, wy, 88, 1);
                 }
-              } else if (prop.type === 'trash_station') {
-                ctx.fillStyle = 'rgba(10, 14, 20, 0.45)';
-                ctx.fillRect(scrX + 10, scrY + 50, 56, 10);
-
-                ctx.fillStyle = '#1d422b';
-                ctx.fillRect(scrX + 8, scrY + 20, 24, 30);
-                ctx.fillStyle = '#2f6342';
-                ctx.fillRect(scrX + 12, scrY + 20, 4, 30);
-                ctx.fillStyle = '#3a4454';
-                ctx.fillRect(scrX + 6, scrY + 14, 28, 6);
-
-                ctx.fillStyle = '#7a4e1d';
-                ctx.fillRect(scrX + 40, scrY + 20, 24, 30);
-                ctx.fillStyle = '#aa712f';
-                ctx.fillRect(scrX + 44, scrY + 20, 4, 30);
-                ctx.fillStyle = '#3a4454';
-                ctx.fillRect(scrX + 38, scrY + 14, 28, 6);
-              } else if (prop.type === 'bensin_rack') {
-                ctx.fillStyle = 'rgba(10, 14, 20, 0.45)';
-                ctx.fillRect(scrX + 2, scrY + 48, 46, 8);
-                ctx.fillStyle = '#11151c';
-                ctx.fillRect(scrX + 4, scrY + 20, 42, 30);
-                ctx.fillStyle = '#525d6e';
-                ctx.fillRect(scrX + 6, scrY + 32, 38, 2);
-
-                for (let bx = scrX + 8; bx < scrX + 40; bx += 10) {
-                  ctx.fillStyle = '#2f6b45';
-                  ctx.fillRect(bx, scrY + 22, 7, 10);
-                  ctx.fillRect(bx, scrY + 35, 7, 12);
-                  ctx.fillStyle = '#dce2ea';
-                  ctx.fillRect(bx + 1, scrY + 20, 5, 2);
-                  ctx.fillRect(bx + 1, scrY + 33, 5, 2);
-                }
-              } else if (prop.type === 'ban_stack') {
-                ctx.fillStyle = 'rgba(10, 14, 20, 0.45)';
-                ctx.fillRect(scrX + 2, scrY + 44, 56, 8);
-                const drawTire = (tx: number, ty: number) => {
-                  ctx.fillStyle = '#171d26';
-                  ctx.fillRect(tx, ty, 24, 20);
-                  ctx.fillStyle = '#0f131a';
-                  ctx.fillRect(tx + 4, ty + 4, 16, 12);
-                  ctx.fillStyle = '#333d4c';
-                  ctx.fillRect(tx + 2, ty + 1, 20, 2);
-                };
-                drawTire(scrX + 4, scrY + 26);
-                drawTire(scrX + 30, scrY + 26);
-                drawTire(scrX + 17, scrY + 10);
               }
             },
           });
         }
       });
 
-      // Render Kendaraan (Angkot Lalu Lintas 32-Bit)
+      // Render Kendaraan (Side View, Front View, Rear View)
       vehiclesRef.current.forEach((car) => {
         const cScrX = car.x - camX;
         const cScrY = car.y - camY;
 
-        if (cScrX >= -200 && cScrX <= viewportSize.w + 200) {
+        if (cScrX >= -220 && cScrX <= viewportSize.w + 220 && cScrY >= -220 && cScrY <= viewportSize.h + 220) {
           entities.push({
-            yOrder: car.y + 24,
+            yOrder: car.y + 28,
             draw: () => {
-              // Bayangan Bodi Mobil di Aspal
-              ctx.fillStyle = 'rgba(10, 14, 20, 0.55)';
-              ctx.beginPath();
-              ctx.ellipse(cScrX, cScrY + 26, 68, 14, 0, 0, Math.PI * 2);
-              ctx.fill();
+              if (car.viewType === 'side') {
+                // ================= SIDE VIEW ANGKOT =================
+                const spriteObj = angkotSideRef.current;
+                const frames = spriteObj?.frames || [];
+                const spriteCanvas = spriteObj?.canvas;
 
-              // Sorot Lampu Depan (Headlight Beam)
-              ctx.save();
-              const beamDir = car.dir === 'right' ? 1 : -1;
-              const beamGrad = ctx.createRadialGradient(
-                cScrX + 60 * beamDir,
-                cScrY + 14,
-                10,
-                cScrX + (car.isSpeeding ? 240 : 160) * beamDir,
-                cScrY + 14,
-                car.isSpeeding ? 180 : 120
-              );
-              beamGrad.addColorStop(0, car.isSpeeding ? 'rgba(254, 240, 138, 0.55)' : 'rgba(254, 240, 138, 0.25)');
-              beamGrad.addColorStop(1, 'rgba(254, 240, 138, 0)');
-
-              ctx.fillStyle = beamGrad;
-              ctx.beginPath();
-              ctx.moveTo(cScrX + 55 * beamDir, cScrY + 8);
-              ctx.lineTo(cScrX + (car.isSpeeding ? 250 : 170) * beamDir, cScrY - 20);
-              ctx.lineTo(cScrX + (car.isSpeeding ? 250 : 170) * beamDir, cScrY + 45);
-              ctx.closePath();
-              ctx.fill();
-              ctx.restore();
-
-              // Efek Kepulan Asap Knalpot Tebal Saat Mode Ngebut
-              if (car.isSpeeding && Math.abs(car.speed) > 100) {
-                const exhaustDir = car.dir === 'right' ? -1 : 1;
-                for (let si = 0; si < 3; si++) {
-                  const puffX = cScrX + (60 + si * 18) * exhaustDir + (Math.random() - 0.5) * 6;
-                  const puffY = cScrY + 22 + (Math.random() - 0.5) * 6;
-                  ctx.fillStyle = si === 0 ? 'rgba(40, 45, 55, 0.7)' : 'rgba(70, 75, 85, 0.4)';
-                  ctx.beginPath();
-                  ctx.arc(puffX, puffY, 6 + si * 3, 0, Math.PI * 2);
-                  ctx.fill();
+                let drawW = 126;
+                let drawH = 58;
+                if (frames.length > 0 && frames[0].sh > 0) {
+                  const ratio = frames[0].sw / frames[0].sh;
+                  drawH = 58;
+                  drawW = Math.max(90, Math.min(150, Math.round(drawH * ratio)));
                 }
-              }
 
-              // Gambar Bodi Angkot
-              ctx.save();
-              ctx.translate(cScrX, cScrY);
-              if (car.dir === 'left') {
-                ctx.scale(-1, 1);
-              }
-
-              const spriteCanvas = angkotSpriteCanvasRef.current;
-              const frames = angkotFramesRef.current;
-
-              if (spriteCanvas && frames.length > 0) {
-                const f = frames[car.animFrame % frames.length];
-                const drawW = 130;
-                const drawH = 58;
-                ctx.drawImage(spriteCanvas, f.sx, f.sy, f.sw, f.sh, -drawW / 2, -drawH / 2, drawW, drawH);
-              } else {
-                // Fallback Procedural Pixel Art Angkot Hijau Toska Muted
-                ctx.fillStyle = '#1c5c4e';
-                ctx.fillRect(-60, -24, 120, 44);
-                ctx.fillStyle = '#287d6b';
-                ctx.fillRect(-58, -22, 116, 20);
-
-                // Kaca Gelap
-                ctx.fillStyle = '#141d27';
-                ctx.fillRect(-45, -18, 30, 16);
-                ctx.fillRect(-8, -18, 25, 16);
-                ctx.fillRect(24, -18, 28, 16);
-
-                // Roda
-                ctx.fillStyle = '#0f141a';
+                // Bayangan Aspal
+                ctx.fillStyle = 'rgba(10, 14, 20, 0.55)';
                 ctx.beginPath();
-                ctx.arc(-35, 20, 10, 0, Math.PI * 2);
-                ctx.arc(35, 20, 10, 0, Math.PI * 2);
+                ctx.ellipse(cScrX, cScrY + drawH / 2 - 2, drawW * 0.45, 12, 0, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.fillStyle = '#556275';
+
+                // Sorot Lampu Depan
+                ctx.save();
+                const beamDir = car.dir === 'right' ? 1 : -1;
+                const beamGrad = ctx.createRadialGradient(
+                  cScrX + (drawW / 2 - 6) * beamDir,
+                  cScrY + drawH / 4,
+                  10,
+                  cScrX + (car.isSpeeding ? 250 : 170) * beamDir,
+                  cScrY + drawH / 4,
+                  car.isSpeeding ? 180 : 120
+                );
+                beamGrad.addColorStop(0, car.isSpeeding ? 'rgba(254, 240, 138, 0.55)' : 'rgba(254, 240, 138, 0.25)');
+                beamGrad.addColorStop(1, 'rgba(254, 240, 138, 0)');
+                ctx.fillStyle = beamGrad;
                 ctx.beginPath();
-                ctx.arc(-35, 20, 4, 0, Math.PI * 2);
-                ctx.arc(35, 20, 4, 0, Math.PI * 2);
+                ctx.moveTo(cScrX + (drawW / 2 - 10) * beamDir, cScrY);
+                ctx.lineTo(cScrX + (car.isSpeeding ? 260 : 180) * beamDir, cScrY - 25);
+                ctx.lineTo(cScrX + (car.isSpeeding ? 260 : 180) * beamDir, cScrY + drawH / 2 + 10);
+                ctx.closePath();
                 ctx.fill();
+                ctx.restore();
+
+                // Asap Knalpot Saat Ngebut
+                if (car.isSpeeding && Math.abs(car.speed) > 100) {
+                  const exhaustDir = car.dir === 'right' ? -1 : 1;
+                  for (let si = 0; si < 3; si++) {
+                    const puffX = cScrX + (drawW / 2 + si * 18) * exhaustDir + (Math.random() - 0.5) * 6;
+                    const puffY = cScrY + drawH / 2 - 10 + (Math.random() - 0.5) * 6;
+                    ctx.fillStyle = si === 0 ? 'rgba(40, 45, 55, 0.7)' : 'rgba(70, 75, 85, 0.4)';
+                    ctx.beginPath();
+                    ctx.arc(puffX, puffY, 6 + si * 3, 0, Math.PI * 2);
+                    ctx.fill();
+                  }
+                }
+
+                // Render Bodi
+                ctx.save();
+                ctx.translate(cScrX, cScrY);
+                if (car.dir === 'left') {
+                  ctx.scale(-1, 1);
+                }
+                if (spriteCanvas && frames.length > 0) {
+                  const f = frames[car.animFrame % frames.length];
+                  ctx.drawImage(spriteCanvas, f.sx, f.sy, f.sw, f.sh, -drawW / 2, -drawH / 2, drawW, drawH);
+                } else {
+                  ctx.fillStyle = '#1c5c4e';
+                  ctx.fillRect(-drawW / 2, -drawH / 2, drawW, drawH);
+                }
+                ctx.restore();
+              } else if (car.viewType === 'front') {
+                // ================= FRONT VIEW ANGKOT (TAMPAK DEPAN) =================
+                const spriteObj = angkotFrontRef.current;
+                const frames = spriteObj?.frames || [];
+                const spriteCanvas = spriteObj?.canvas;
+
+                let drawW = 68;
+                let drawH = 74;
+                if (frames.length > 0 && frames[0].sh > 0) {
+                  const ratio = frames[0].sw / frames[0].sh;
+                  drawH = 74;
+                  drawW = Math.max(50, Math.min(84, Math.round(drawH * ratio)));
+                }
+
+                // Bayangan Bawah
+                ctx.fillStyle = 'rgba(10, 14, 20, 0.55)';
+                ctx.beginPath();
+                ctx.ellipse(cScrX, cScrY + drawH / 2 - 4, drawW * 0.45, 12, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Sorot Lampu Depan ke Bawah (Southbound)
+                ctx.save();
+                const beamGrad = ctx.createRadialGradient(cScrX, cScrY + drawH / 2, 10, cScrX, cScrY + drawH / 2 + 100, 110);
+                beamGrad.addColorStop(0, car.isSpeeding ? 'rgba(254, 240, 138, 0.5)' : 'rgba(254, 240, 138, 0.2)');
+                beamGrad.addColorStop(1, 'rgba(254, 240, 138, 0)');
+                ctx.fillStyle = beamGrad;
+                ctx.beginPath();
+                ctx.moveTo(cScrX - drawW / 3, cScrY + drawH / 3);
+                ctx.lineTo(cScrX - drawW, cScrY + drawH / 2 + 120);
+                ctx.lineTo(cScrX + drawW, cScrY + drawH / 2 + 120);
+                ctx.lineTo(cScrX + drawW / 3, cScrY + drawH / 3);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+
+                // Gambar Sprite
+                ctx.save();
+                ctx.translate(cScrX, cScrY);
+                if (spriteCanvas && frames.length > 0) {
+                  const f = frames[0];
+                  ctx.drawImage(spriteCanvas, f.sx, f.sy, f.sw, f.sh, -drawW / 2, -drawH / 2, drawW, drawH);
+                } else {
+                  ctx.fillStyle = '#1c5c4e';
+                  ctx.fillRect(-drawW / 2, -drawH / 2, drawW, drawH);
+                }
+                ctx.restore();
+              } else if (car.viewType === 'rear') {
+                // ================= REAR VIEW ANGKOT (TAMPAK BELAKANG) =================
+                const spriteObj = angkotRearRef.current;
+                const frames = spriteObj?.frames || [];
+                const spriteCanvas = spriteObj?.canvas;
+
+                let drawW = 68;
+                let drawH = 74;
+                if (frames.length > 0 && frames[0].sh > 0) {
+                  const ratio = frames[0].sw / frames[0].sh;
+                  drawH = 74;
+                  drawW = Math.max(50, Math.min(84, Math.round(drawH * ratio)));
+                }
+
+                // Bayangan Bawah
+                ctx.fillStyle = 'rgba(10, 14, 20, 0.55)';
+                ctx.beginPath();
+                ctx.ellipse(cScrX, cScrY + drawH / 2 - 4, drawW * 0.45, 12, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Asap Knalpot Belakang
+                if (car.isSpeeding && Math.abs(car.speed) > 100) {
+                  for (let si = 0; si < 2; si++) {
+                    const puffX = cScrX + (drawW / 3) + (Math.random() - 0.5) * 4;
+                    const puffY = cScrY + drawH / 2 + 10 + si * 12;
+                    ctx.fillStyle = 'rgba(50, 55, 65, 0.6)';
+                    ctx.beginPath();
+                    ctx.arc(puffX, puffY, 5 + si * 3, 0, Math.PI * 2);
+                    ctx.fill();
+                  }
+                }
+
+                // Gambar Sprite
+                ctx.save();
+                ctx.translate(cScrX, cScrY);
+                if (spriteCanvas && frames.length > 0) {
+                  const f = frames[0];
+                  ctx.drawImage(spriteCanvas, f.sx, f.sy, f.sw, f.sh, -drawW / 2, -drawH / 2, drawW, drawH);
+                } else {
+                  ctx.fillStyle = '#1c5c4e';
+                  ctx.fillRect(-drawW / 2, -drawH / 2, drawW, drawH);
+                }
+                ctx.restore();
               }
-              ctx.restore();
             },
           });
         }
