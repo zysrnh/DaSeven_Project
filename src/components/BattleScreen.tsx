@@ -167,10 +167,11 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   const playerHpRef = useRef<number>(initialPlayer.hp);
   const isGameOverRef = useRef<boolean>(false);
 
-  // SISTEM 3 KARTU MELAYANG DI TENGAH DENGAN 3X SPIN
+  // SISTEM 3 KARTU MELAYANG DI TENGAH DENGAN REROLL PER-KARTU (3X KUOTA PER TURN)
   const [floatingCards, setFloatingCards] = useState<BattleCard[]>([]);
   const [spinsLeft, setSpinsLeft] = useState<number>(3);
   const [isFlipping, setIsFlipping] = useState<boolean>(false);
+  const [flippingIndex, setFlippingIndex] = useState<number | null>(null);
 
   const [activeCard, setActiveCard] = useState<BattleCard | null>(null);
   const [isEnemyAttacking, setIsEnemyAttacking] = useState<boolean>(false);
@@ -216,7 +217,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     return shuffled.slice(0, 3);
   };
 
-  // Memulai turn baru player (Reset spin jadi 3 dan munculkan 3 kartu melayang beranimasi flip)
+  // Memulai turn baru player (Reset kuota spin/reroll jadi 3 dan munculkan 3 kartu melayang beranimasi flip)
   const startTurn = () => {
     if (isGameOverRef.current || playerHpRef.current <= 0) return;
 
@@ -227,6 +228,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     setSpinsLeft(3);
     setHeroPose('idle');
     setShowItemMenu(false);
+    setFlippingIndex(null);
 
     // Animasi kartu melayang muncul dengan suara flip
     setIsFlipping(true);
@@ -242,19 +244,39 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     startTurn();
   }, []);
 
-  // FUNGSI SPIN / GANTI 3 KARTU (3 KALI PER TURN DENGAN SUARA FLIP)
-  const handleSpinCards = () => {
-    if (spinsLeft <= 0 || isEnemyAttacking || isFlipping || isGameOverRef.current) return;
+  // FUNGSI REROLL / GANTI 1 KARTU SPESIFIK (KUOTA 3 KALI PER TURN)
+  const handleRerollSingleCard = (cardIdx: number) => {
+    if (
+      spinsLeft <= 0 ||
+      isEnemyAttacking ||
+      flippingIndex !== null ||
+      isFlipping ||
+      isGameOverRef.current
+    )
+      return;
 
+    const oldCard = floatingCards[cardIdx];
     playSound.cardFlip();
-    setIsFlipping(true);
+    setFlippingIndex(cardIdx);
     setSpinsLeft((prev) => prev - 1);
 
     setTimeout(() => {
-      setFloatingCards(drawThreeCards());
-      setIsFlipping(false);
-      addLog(`Kartu di-spin! Sisa spin: ${spinsLeft - 1}`);
-    }, 280);
+      // Ambil kartu baru yang berbeda dari kartu yang ada saat ini
+      const currentIds = floatingCards.map((c) => c.id);
+      const pool = DEFAULT_CARD_POOL.filter((c) => !currentIds.includes(c.id));
+      const poolFallback = DEFAULT_CARD_POOL.filter((c) => c.id !== oldCard?.id);
+      const chosenPool = pool.length > 0 ? pool : poolFallback;
+      const newCard = chosenPool[Math.floor(Math.random() * chosenPool.length)];
+
+      setFloatingCards((prev) => {
+        const next = [...prev];
+        next[cardIdx] = newCard;
+        return next;
+      });
+
+      setFlippingIndex(null);
+      addLog(`Kartu [${oldCard?.name}] ditukar dengan [${newCard.name}]! (Sisa reroll: ${spinsLeft - 1})`);
+    }, 260);
   };
 
   // FUNGSI MEMILIH 1 DARI 3 KARTU MELAYANG
@@ -583,11 +605,13 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
         {/* ======================================================== */}
         {/* AREA TENGAH: 3 KARTU MELAYANG DI TENGAH ARENA PERTEMPURAN */}
+        {/* POSISI DIATASKAN (bottom-28) & UKURAN LEBIH BESAR (w-64 min-h-[355px]) */}
         {/* ======================================================== */}
         {!isEnemyAttacking && !isGameOverRef.current && (
-          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center gap-6 pointer-events-auto">
+          <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center gap-7 pointer-events-auto">
             {floatingCards.map((card, idx) => {
               const isCardDisabled = isEnemyAttacking || activeCard !== null || isGameOverRef.current;
+              const isThisCardFlipping = isFlipping || flippingIndex === idx;
 
               // Warna badge & aksen sesuai jenis kartu
               const isHeavy = card.attackVariant === 'heavy';
@@ -604,87 +628,115 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
                 : '⚡ SPECIAL';
 
               const cardBorderColor = isHeavy
-                ? 'border-[#ef4444] shadow-[0_8px_20px_rgba(239,68,68,0.35)]'
+                ? 'border-[#ef4444] shadow-[0_10px_25px_rgba(239,68,68,0.4)]'
                 : isLight
-                ? 'border-[#f97316] shadow-[0_8px_20px_rgba(249,115,22,0.35)]'
+                ? 'border-[#f97316] shadow-[0_10px_25px_rgba(249,115,22,0.4)]'
                 : card.type === 'defense'
-                ? 'border-[#0ea5e9] shadow-[0_8px_20px_rgba(14,165,233,0.35)]'
+                ? 'border-[#0ea5e9] shadow-[0_10px_25px_rgba(14,165,233,0.4)]'
                 : card.type === 'heal'
-                ? 'border-[#10b981] shadow-[0_8px_20px_rgba(16,185,129,0.35)]'
-                : 'border-[#a855f7] shadow-[0_8px_20px_rgba(168,85,247,0.35)]';
+                ? 'border-[#10b981] shadow-[0_10px_25px_rgba(16,185,129,0.4)]'
+                : 'border-[#a855f7] shadow-[0_10px_25px_rgba(168,85,247,0.4)]';
 
               return (
                 <div
                   key={`${card.id}_${idx}`}
-                  onClick={() => !isCardDisabled && handlePlayChosenCard(card)}
+                  onClick={() => !isCardDisabled && !isThisCardFlipping && handlePlayChosenCard(card)}
                   style={{
-                    transform: isFlipping
-                      ? 'rotateY(90deg) scale(0.85)'
+                    transform: isThisCardFlipping
+                      ? 'rotateY(90deg) scale(0.9)'
                       : 'rotateY(0deg) scale(1)',
-                    transition: 'transform 0.28s ease, filter 0.2s ease',
+                    transition: 'transform 0.26s ease, filter 0.2s ease',
                   }}
-                  className={`w-56 h-72 bg-[#121824]/95 border-3 ${cardBorderColor} rounded-xl p-3.5 flex flex-col justify-between select-none relative backdrop-blur-md cursor-pointer group hover:-translate-y-5 hover:scale-105 hover:z-30 transition-all ${
+                  className={`w-64 min-h-[355px] bg-[#121824]/95 border-3 ${cardBorderColor} rounded-xl p-4 flex flex-col justify-between select-none relative backdrop-blur-md cursor-pointer group hover:-translate-y-4 hover:scale-[1.03] hover:z-30 transition-all ${
                     isCardDisabled ? 'opacity-40 cursor-not-allowed' : ''
                   }`}
                 >
-                  {/* GLOW EFEK & PITA ATAS */}
+                  {/* BAGIAN ATAS: BADGE, NAMA, VALUE & DESKRIPSI */}
                   <div>
                     {/* BADGE TIPE KARTU */}
-                    <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-[#293547]">
-                      <span className="text-[10px] font-black tracking-wider uppercase text-white bg-black/50 px-2 py-0.5 rounded-md border border-white/20">
+                    <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-[#293547]">
+                      <span className="text-[11px] font-black tracking-wider uppercase text-white bg-black/60 px-2 py-0.5 rounded border border-white/20">
                         {badgeText}
                       </span>
-                      <span className="text-[11px] font-bold text-yellow-300 bg-[#1e293b] px-1.5 py-0.5 rounded border border-[#334155]">
+                      <span className="text-xs font-bold text-yellow-300 bg-[#1e293b] px-2 py-0.5 rounded border border-[#334155]">
                         1 Turn
                       </span>
                     </div>
 
                     {/* NAMA KARTU */}
-                    <h3 className="font-extrabold text-sm text-white group-hover:text-cyan-300 transition-colors leading-snug mb-2">
+                    <h3 className="font-extrabold text-[15px] text-white group-hover:text-cyan-300 transition-colors leading-snug mb-2.5">
                       {card.name}
                     </h3>
 
                     {/* NILAI VALUE ANGKA (DMG / SHIELD / HEAL) */}
-                    <div className="my-2 p-2 bg-black/40 rounded-lg border border-white/10 flex items-center justify-center text-center">
+                    <div className="my-2.5 p-2.5 bg-black/50 rounded-lg border border-white/10 flex items-center justify-center text-center">
                       {isHeavy && (
-                        <span className="text-base font-black text-red-400 drop-shadow">
+                        <span className="text-lg font-black text-red-400 drop-shadow">
                           💥 {card.value} DMG MASIF
                         </span>
                       )}
                       {isLight && (
-                        <span className="text-base font-black text-orange-400 drop-shadow">
+                        <span className="text-lg font-black text-orange-400 drop-shadow">
                           ⚔ {card.value} DMG CEPAT
                         </span>
                       )}
                       {card.type === 'defense' && (
-                        <span className="text-base font-black text-cyan-400 drop-shadow">
+                        <span className="text-lg font-black text-cyan-400 drop-shadow">
                           🛡 +{card.value} SHIELD
                         </span>
                       )}
                       {card.type === 'heal' && (
-                        <span className="text-base font-black text-emerald-400 drop-shadow">
+                        <span className="text-lg font-black text-emerald-400 drop-shadow">
                           🧪 +{card.value} HP PULIH
                         </span>
                       )}
                       {card.type === 'special' && (
-                        <span className="text-base font-black text-purple-400 drop-shadow">
+                        <span className="text-lg font-black text-purple-400 drop-shadow">
                           🔥 {card.value} DMG TEMBUS
                         </span>
                       )}
                     </div>
 
                     {/* DESKRIPSI KARTU */}
-                    <p className="text-[11px] text-neutral-300 leading-snug mt-1">
+                    <p className="text-xs text-neutral-300 leading-relaxed mt-1">
                       {card.description}
                     </p>
                   </div>
 
-                  {/* FOOTER FLAVOR & INDIKATOR KLIK */}
-                  <div className="pt-2 border-t border-[#293547] flex items-center justify-between text-[10px] text-neutral-400 italic">
-                    <span className="truncate max-w-[130px]">"{card.flavor}"</span>
-                    <span className="text-cyan-400 font-black not-italic uppercase tracking-wider group-hover:animate-pulse">
-                      MAINKAN ➔
-                    </span>
+                  {/* BAGIAN BAWAH: TOMBOL REROLL INDIVIDUAL KARTU INI & FLAVOR */}
+                  <div className="mt-3 pt-2.5 border-t border-[#293547] flex flex-col gap-2">
+                    
+                    {/* TOMBOL REROLL MANDIRI UNTUK KARTU INI */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Mencegah ter-trigger klik mainkan kartu
+                        handleRerollSingleCard(idx);
+                      }}
+                      disabled={spinsLeft <= 0 || isCardDisabled || isThisCardFlipping}
+                      className={`w-full py-1.5 px-2.5 rounded font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-between border ${
+                        spinsLeft > 0 && !isCardDisabled
+                          ? 'bg-[#854d0e]/90 hover:bg-[#a16207] active:bg-[#713f12] border-yellow-400 text-yellow-100 shadow-[0_0_8px_rgba(250,204,21,0.4)] cursor-pointer'
+                          : 'bg-[#1e293b]/60 border-[#334155] text-neutral-500 cursor-not-allowed opacity-50'
+                      }`}
+                      title="Ganti hanya kartu ini dengan kartu acak lain"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <span>🎲</span>
+                        <span>Reroll Kartu</span>
+                      </span>
+                      <span className="bg-black/60 px-1.5 py-0.5 rounded text-[10px] text-yellow-300 font-black">
+                        {spinsLeft}/3
+                      </span>
+                    </button>
+
+                    {/* FLAVOR & INDIKATOR KLIK MAINKAN */}
+                    <div className="flex items-center justify-between text-[11px] text-neutral-400 italic">
+                      <span className="truncate max-w-[140px]">"{card.flavor}"</span>
+                      <span className="text-cyan-400 font-black not-italic uppercase tracking-wider group-hover:animate-pulse">
+                        MAINKAN ➔
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
@@ -740,50 +792,44 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       </div>
 
       {/* ======================================================== */}
-      {/* 2. PANEL BAWAH: BERSIH & FOKUS KE KONTROL DAN STATUS */}
+      {/* 2. PANEL BAWAH: LEBIH TINGGI (min-h-[125px]) DENGAN LIST TOMBOL VERTIKAL */}
       {/* ======================================================== */}
-      <div className="w-full bg-[#121824] border-t-4 border-[#253244] px-8 py-3.5 flex items-center justify-between gap-6 z-30 shadow-2xl min-h-[90px]">
+      <div className="w-full bg-[#121824] border-t-4 border-[#253244] px-8 py-4 flex items-center justify-between gap-6 z-30 shadow-2xl min-h-[125px]">
         
-        {/* SISI KIRI: MENU KONTROL (SPIN KARTU 3X, RANSEL ITEM, RETREAT) */}
-        <div className="flex items-center gap-3">
-          {/* TOMBOL SPIN KARTU MELAYANG (3 KALI PER TURN) */}
-          <button
-            onClick={handleSpinCards}
-            disabled={spinsLeft <= 0 || isEnemyAttacking || isFlipping || isGameOverRef.current}
-            className={`py-2 px-4 text-left font-black text-xs uppercase tracking-wider border-2 rounded-lg transition-all flex items-center gap-2.5 ${
-              spinsLeft > 0 && !isEnemyAttacking
-                ? 'bg-[#854d0e] hover:bg-[#a16207] active:bg-[#713f12] border-[#facc15] text-yellow-100 shadow-[0_0_12px_rgba(250,204,21,0.5)] cursor-pointer'
-                : 'bg-[#1e293b] border-[#334155] text-neutral-500 opacity-50 cursor-not-allowed'
-            }`}
-          >
-            <span>🎰 SPIN / GANTI KARTU</span>
-            <span className="bg-black/50 px-2 py-0.5 rounded text-[11px] text-yellow-300 font-bold">
-              {spinsLeft}/3
-            </span>
-          </button>
-
+        {/* SISI KIRI: MENU KONTROL BERBENTUK LIST VERTIKAL (RANSEL ITEM & RETREAT) */}
+        <div className="flex flex-col w-48 gap-2">
           {/* TOMBOL RANSEL ITEM */}
           <button
             onClick={() => setShowItemMenu(!showItemMenu)}
             disabled={isEnemyAttacking || isGameOverRef.current}
-            className="py-2 px-3.5 font-bold text-xs uppercase tracking-wider bg-[#18202d] hover:bg-[#202c3d] border-2 border-[#293547] hover:border-emerald-400 text-neutral-200 rounded-lg cursor-pointer transition-colors"
+            className="w-full py-2 px-3.5 font-bold text-xs uppercase tracking-wider bg-[#18202d] hover:bg-[#202c3d] border-2 border-[#293547] hover:border-emerald-400 text-neutral-200 rounded-lg cursor-pointer transition-colors flex items-center justify-between shadow"
           >
-            🧪 Ransel Item
+            <span className="flex items-center gap-2">
+              <span>🧪</span>
+              <span>Ransel Item</span>
+            </span>
+            <span className="text-[10px] font-black bg-black/50 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/30">
+              {inventory.reduce((sum, it) => sum + it.count, 0)}
+            </span>
           </button>
 
           {/* TOMBOL RETREAT */}
           <button
             onClick={onRetreat || onDefeat}
             disabled={isEnemyAttacking || isGameOverRef.current}
-            className="py-2 px-3.5 font-bold text-xs uppercase tracking-wider bg-[#18202d] hover:bg-[#2d1b22] border-2 border-[#293547] hover:border-red-400 text-neutral-400 hover:text-red-300 rounded-lg cursor-pointer transition-colors"
+            className="w-full py-1.5 px-3.5 font-bold text-xs uppercase tracking-wider bg-[#18202d] hover:bg-[#2d1b22] border-2 border-[#293547] hover:border-red-400 text-neutral-400 hover:text-red-300 rounded-lg cursor-pointer transition-colors flex items-center justify-between shadow"
           >
-            🏃 Retreat
+            <span className="flex items-center gap-2">
+              <span>🏃</span>
+              <span>Retreat</span>
+            </span>
+            <span className="text-[10px] text-neutral-500">KABUR</span>
           </button>
         </div>
 
         {/* POPUP OVERLAY RANSEL ITEM JIKA DIBUKA */}
         {showItemMenu && (
-          <div className="absolute bottom-24 left-8 z-40 bg-[#18202d] border-2 border-[#10b981] p-3 rounded-lg flex items-center gap-3 shadow-2xl">
+          <div className="absolute bottom-36 left-8 z-40 bg-[#18202d] border-2 border-[#10b981] p-3 rounded-lg flex items-center gap-3 shadow-2xl">
             {inventory.map((it) => (
               <button
                 key={it.id}
@@ -809,36 +855,36 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
         {/* SISI KANAN: STATUS BAR RIAN PRATAMA (MAINE) */}
         <div className="flex items-center justify-end">
-          <div className="bg-[#18202d] border-2 border-[#38bdf8] p-2.5 rounded-lg flex items-center gap-3.5 w-64 shadow-xl">
+          <div className="bg-[#18202d] border-2 border-[#38bdf8] p-3 rounded-lg flex items-center gap-3.5 w-72 shadow-xl">
             <div className="relative">
               <img
                 src="/assets/characters/maine/avatar.png"
                 alt={player.name}
-                className="w-12 h-12 object-cover bg-[#1e293b] border-2 border-[#38bdf8] rounded"
+                className="w-14 h-14 object-cover bg-[#1e293b] border-2 border-[#38bdf8] rounded"
               />
               <span className="absolute -bottom-1 -right-1 text-[8px] font-black bg-cyan-700 text-white px-1 border border-cyan-400 rounded">
                 Lv.1
               </span>
             </div>
             <div className="flex-1">
-              <div className="font-bold text-xs text-white truncate mb-1">
+              <div className="font-bold text-sm text-white truncate mb-1">
                 {player.name}
               </div>
 
               {/* HP BAR (MERAH) */}
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-[9px] font-black text-red-400">HP</span>
-                <div className="flex-1 h-2 bg-[#331118] border border-[#551d27] rounded-sm overflow-hidden relative">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="text-[10px] font-black text-red-400">HP</span>
+                <div className="flex-1 h-2.5 bg-[#331118] border border-[#551d27] rounded-sm overflow-hidden relative">
                   <div
                     className="h-full bg-[#ef4444] transition-all duration-300"
                     style={{ width: `${(player.hp / player.maxHp) * 100}%` }}
                   />
                 </div>
-                <span className="text-[9px] text-neutral-300 font-bold">{player.hp}/{player.maxHp}</span>
+                <span className="text-[10px] text-neutral-300 font-bold">{player.hp}/{player.maxHp}</span>
               </div>
 
               {/* SP / SHIELD STATUS */}
-              <div className="flex items-center justify-between text-[9px] text-neutral-400">
+              <div className="flex items-center justify-between text-[10px] text-neutral-400">
                 <span>🛡 Shield: <strong className="text-cyan-300">+{player.shield}</strong></span>
                 <span className="text-emerald-400 font-bold">SMKN 7</span>
               </div>
