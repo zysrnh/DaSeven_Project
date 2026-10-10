@@ -14,8 +14,8 @@ export const App: React.FC = () => {
   const [player, setPlayer] = useState<Player>({
     name: 'Rian Pratama',
     jurusan: 'Teknik Komputer & Jaringan',
-    maxHp: 60,
-    hp: 60,
+    maxHp: 100,
+    hp: 100,
     maxAp: 3,
     ap: 3,
     shield: 0,
@@ -37,6 +37,21 @@ export const App: React.FC = () => {
     setTimeout(() => {
       setGameMode('BATTLE');
     }, 600);
+  };
+
+  const handleDamage = (amount: number) => {
+    setPlayer((prev) => {
+      const newHp = Math.max(0, prev.hp - amount);
+      if (newHp <= 0) {
+        setTimeout(() => {
+          setGameMode('DEFEAT');
+        }, 500);
+      }
+      return {
+        ...prev,
+        hp: newHp,
+      };
+    });
   };
 
   const handleVictory = (updatedPlayer: Player) => {
@@ -64,8 +79,8 @@ export const App: React.FC = () => {
     setPlayer({
       name: 'Rian Pratama',
       jurusan: 'Teknik Komputer & Jaringan',
-      maxHp: 60,
-      hp: 60,
+      maxHp: 100,
+      hp: 100,
       maxAp: 3,
       ap: 3,
       shield: 0,
@@ -95,6 +110,7 @@ export const App: React.FC = () => {
           player={player}
           onEncounter={handleEncounter}
           onReturnToSchool={() => setGameMode('OVERWORLD')}
+          onDamagePlayer={handleDamage}
         />
       )}
 

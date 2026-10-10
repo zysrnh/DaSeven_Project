@@ -6,6 +6,7 @@ interface StreetMapProps {
   player: Player;
   onEncounter: (enemy: Enemy) => void;
   onReturnToSchool: () => void;
+  onDamagePlayer?: (amount: number) => void;
 }
 
 // DIMENSI DUNIA JALAN RAYA BALEENDAH
@@ -383,7 +384,7 @@ const processAutoTrimmedSprite = (
   return { canvas: oc, frames };
 };
 
-export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }) => {
+export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool, onDamagePlayer }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -404,6 +405,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
   const keysDownRef = useRef<Set<string>>(new Set());
   const [nearSchoolGate, setNearSchoolGate] = useState(false);
   const [trafficToast, setTrafficToast] = useState<string | null>(null);
+  const [damageFlash, setDamageFlash] = useState(false);
 
   // Screen shake saat tertabrak mobil
   const screenShakeRef = useRef(0);
@@ -863,14 +865,20 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
 
         const hitThresholdX = car.viewType === 'side' 
           ? (car.isSpeeding ? 150 : 130) 
-          : (car.isSpeeding ? 70 : 55);
+          : (car.isSpeeding ? 85 : 70);
         const hitThresholdY = car.viewType === 'side' 
           ? (car.isSpeeding ? 105 : 80) 
-          : (car.isSpeeding ? 100 : 80);
+          : (car.isSpeeding ? 120 : 100);
 
         if (hitDistanceX < hitThresholdX && hitDistanceY < hitThresholdY) {
           playSound.carCrash();
-          screenShakeRef.current = 40;
+          screenShakeRef.current = 45;
+          setDamageFlash(true);
+          setTimeout(() => setDamageFlash(false), 500);
+
+          if (onDamagePlayer) {
+            onDamagePlayer(50);
+          }
 
           if (car.dir === 'left' || car.dir === 'right') {
             playerPosRef.current.y = pY <= 720 ? 480 : 960;
@@ -878,7 +886,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
             playerPosRef.current.x = pX < 2040 ? 1780 : 2280;
           }
 
-          setTrafficToast('💥 BRUAAKK! Kamu tertabrak angkot karena menyeberang sembarangan!');
+          setTrafficToast('💥 BRUAAKK! Tertabrak angkot! HP berkurang 50%!');
           setTimeout(() => setTrafficToast(null), 3500);
         }
       });
@@ -1393,35 +1401,35 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
                 }
                 ctx.restore();
               } else if (car.viewType === 'front') {
-                // ================= FRONT VIEW ANGKOT (1 Mobil Tunggal Gagah) =================
+                // ================= FRONT VIEW ANGKOT (Gagah Lebar ~125px x 185px) =================
                 const spriteObj = angkotFrontRef.current;
                 const frames = spriteObj?.frames || [];
                 const spriteCanvas = spriteObj?.canvas;
 
-                let drawW = 85;
-                let drawH = 145;
+                let drawW = 125;
+                let drawH = 185;
                 if (frames.length > 0 && frames[0].sh > 0) {
                   const ratio = frames[0].sw / frames[0].sh;
-                  drawH = 145; // Tinggi 145px, pas dengan panjang bodi 1 mobil
-                  drawW = Math.max(65, Math.min(105, Math.round(drawH * ratio)));
+                  drawH = 185; // Tinggi 185px, gagah dan padat di lajur 200px
+                  drawW = Math.max(90, Math.min(145, Math.round(drawH * ratio)));
                 }
 
                 // Bayangan Bawah
                 ctx.fillStyle = 'rgba(10, 14, 20, 0.55)';
                 ctx.beginPath();
-                ctx.ellipse(cScrX, cScrY + drawH / 2 - 6, drawW * 0.46, 16, 0, 0, Math.PI * 2);
+                ctx.ellipse(cScrX, cScrY + drawH / 2 - 8, drawW * 0.46, 20, 0, 0, Math.PI * 2);
                 ctx.fill();
 
                 // Sorot Lampu Depan ke Bawah (Southbound)
                 ctx.save();
-                const beamGrad = ctx.createRadialGradient(cScrX, cScrY + drawH / 2, 14, cScrX, cScrY + drawH / 2 + 150, 160);
+                const beamGrad = ctx.createRadialGradient(cScrX, cScrY + drawH / 2, 16, cScrX, cScrY + drawH / 2 + 180, 195);
                 beamGrad.addColorStop(0, car.isSpeeding ? 'rgba(254, 240, 138, 0.55)' : 'rgba(254, 240, 138, 0.25)');
                 beamGrad.addColorStop(1, 'rgba(254, 240, 138, 0)');
                 ctx.fillStyle = beamGrad;
                 ctx.beginPath();
                 ctx.moveTo(cScrX - drawW / 3, cScrY + drawH / 3);
-                ctx.lineTo(cScrX - drawW * 1.15, cScrY + drawH / 2 + 175);
-                ctx.lineTo(cScrX + drawW * 1.15, cScrY + drawH / 2 + 175);
+                ctx.lineTo(cScrX - drawW * 1.15, cScrY + drawH / 2 + 210);
+                ctx.lineTo(cScrX + drawW * 1.15, cScrY + drawH / 2 + 210);
                 ctx.lineTo(cScrX + drawW / 3, cScrY + drawH / 3);
                 ctx.closePath();
                 ctx.fill();
@@ -1440,33 +1448,33 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
                 }
                 ctx.restore();
               } else if (car.viewType === 'rear') {
-                // ================= REAR VIEW ANGKOT (1 Mobil Tunggal Gagah) =================
+                // ================= REAR VIEW ANGKOT (Gagah Lebar ~125px x 185px) =================
                 const spriteObj = angkotRearRef.current;
                 const frames = spriteObj?.frames || [];
                 const spriteCanvas = spriteObj?.canvas;
 
-                let drawW = 85;
-                let drawH = 145;
+                let drawW = 125;
+                let drawH = 185;
                 if (frames.length > 0 && frames[0].sh > 0) {
                   const ratio = frames[0].sw / frames[0].sh;
-                  drawH = 145; // Tinggi 145px, pas dengan panjang bodi 1 mobil
-                  drawW = Math.max(65, Math.min(105, Math.round(drawH * ratio)));
+                  drawH = 185; // Tinggi 185px, gagah dan padat di lajur 200px
+                  drawW = Math.max(90, Math.min(145, Math.round(drawH * ratio)));
                 }
 
                 // Bayangan Bawah
                 ctx.fillStyle = 'rgba(10, 14, 20, 0.55)';
                 ctx.beginPath();
-                ctx.ellipse(cScrX, cScrY + drawH / 2 - 6, drawW * 0.46, 16, 0, 0, Math.PI * 2);
+                ctx.ellipse(cScrX, cScrY + drawH / 2 - 8, drawW * 0.46, 20, 0, 0, Math.PI * 2);
                 ctx.fill();
 
                 // Asap Knalpot Belakang
                 if (car.isSpeeding && Math.abs(car.speed) > 100) {
                   for (let si = 0; si < 3; si++) {
-                    const puffX = cScrX + (drawW / 4) + (Math.random() - 0.5) * 6;
-                    const puffY = cScrY + drawH / 2 + 10 + si * 12;
+                    const puffX = cScrX + (drawW / 4) + (Math.random() - 0.5) * 8;
+                    const puffY = cScrY + drawH / 2 + 14 + si * 16;
                     ctx.fillStyle = 'rgba(50, 55, 65, 0.65)';
                     ctx.beginPath();
-                    ctx.arc(puffX, puffY, 7 + si * 4, 0, Math.PI * 2);
+                    ctx.arc(puffX, puffY, 9 + si * 5, 0, Math.PI * 2);
                     ctx.fill();
                   }
                 }
@@ -1637,6 +1645,11 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool }
             {trafficToast}
           </div>
         </div>
+      )}
+
+      {/* RED FLASH DAMAGE OVERLAY */}
+      {damageFlash && (
+        <div className="absolute inset-0 z-50 pointer-events-none bg-red-600/40 animate-pulse transition-opacity duration-300" />
       )}
 
       {/* CANVAS DISPLAY */}
