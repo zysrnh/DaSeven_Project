@@ -969,9 +969,8 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
         else if (dir === 'up') activeSpriteKey = `walk_up_${walkFrameIdx}`;
         else activeSpriteKey = `walk_side_${walkFrameIdx}`;
       } else {
-        if (dir === 'down') activeSpriteKey = `idle_${idleFrameRef.current + 1}`;
-        else if (dir === 'up') activeSpriteKey = 'walk_up_2';
-        else activeSpriteKey = 'walk_side_2';
+        // Otomatis aktifkan animasi idle bernafas saat tidak bergerak
+        activeSpriteKey = `idle_${idleFrameRef.current + 1}`;
       }
 
       const playerImg = imagesRef.current[activeSpriteKey];
@@ -989,7 +988,8 @@ export const Overworld: React.FC<OverworldProps> = ({ player, onEncounter, onSwi
           ctx.save();
           ctx.translate(pScrX, pScrY);
 
-          if (dir === 'left') {
+          // Flip horizontal hanya saat sedang melangkah ke arah kiri
+          if (isMoving && dir === 'left') {
             ctx.scale(-1, 1);
           }
 
