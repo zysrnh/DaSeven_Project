@@ -310,7 +310,8 @@ interface TrafficVehicle {
   viewType: 'side' | 'front' | 'rear';
 }
 
-// Helper auto-chromakey + bounding box trimmer untuk gambar JPEG
+// Helper auto-chromakey + bounding box trimmer menggunakan Flood-Fill dari border luar
+// Menghilangkan latar belakang hitam tanpa melubangi ban, grill, atau komponen hitam di dalam bodi mobil
 const processAutoTrimmedSprite = (
   img: HTMLImageElement,
   cols: number = 1,
@@ -320,30 +321,108 @@ const processAutoTrimmedSprite = (
   frames: { sx: number; sy: number; sw: number; sh: number }[];
 } | null => {
   const oc = document.createElement('canvas');
-  oc.width = img.naturalWidth || img.width;
-  oc.height = img.naturalHeight || img.height;
+  const w = img.naturalWidth || img.width;
+  const h = img.naturalHeight || img.height;
+  oc.width = w;
+  oc.height = h;
   const octx = oc.getContext('2d');
   if (!octx) return null;
 
   octx.drawImage(img, 0, 0);
 
-  let minY = oc.height;
+  let minY = h;
   let maxY = 0;
-  let minX = oc.width;
+  let minX = w;
   let maxX = 0;
 
   try {
-    const imgData = octx.getImageData(0, 0, oc.width, oc.height);
+    const imgData = octx.getImageData(0, 0, w, h);
     const data = imgData.data;
-    for (let y = 0; y < oc.height; y++) {
-      for (let x = 0; x < oc.width; x++) {
-        const i = (y * oc.width + x) * 4;
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        if (r < 25 && g < 25 && b < 25) {
-          data[i + 3] = 0;
+    const visited = new Uint8Array(w * h);
+
+    // Queue BFS menggunakan TypedArray untuk performa tinggi
+    const queue = new Int32Array(w * h);
+    let head = 0;
+    let tail = 0;
+
+    const bgThreshold = 14;
+
+    const isBackgroundPixel = (x: number, y: number): boolean => {
+      const idx = (y * w + x) * 4;
+      return data[idx] <= bgThreshold && data[idx + 1] <= bgThreshold && data[idx + 2] <= bgThreshold;
+    };
+
+    // 1. Seed dari semua sisi border terluar (atas, bawah, kiri, kanan)
+    for (let x = 0; x < w; x++) {
+      if (isBackgroundPixel(x, 0)) {
+        visited[x] = 1;
+        queue[tail++] = x;
+      }
+      const bottomIdx = (h - 1) * w + x;
+      if (isBackgroundPixel(x, h - 1) && !visited[bottomIdx]) {
+        visited[bottomIdx] = 1;
+        queue[tail++] = bottomIdx;
+      }
+    }
+
+    for (let y = 0; y < h; y++) {
+      const leftIdx = y * w;
+      if (isBackgroundPixel(0, y) && !visited[leftIdx]) {
+        visited[leftIdx] = 1;
+        queue[tail++] = leftIdx;
+      }
+      const rightIdx = y * w + (w - 1);
+      if (isBackgroundPixel(w - 1, y) && !visited[rightIdx]) {
+        visited[rightIdx] = 1;
+        queue[tail++] = rightIdx;
+      }
+    }
+
+    // 2. BFS: sebarkan ke semua pixel hitam yang terhubung ke luar
+    while (head < tail) {
+      const curr = queue[head++];
+      const cx = curr % w;
+      const cy = Math.floor(curr / w);
+
+      if (cx > 0) {
+        const nIdx = curr - 1;
+        if (!visited[nIdx] && isBackgroundPixel(cx - 1, cy)) {
+          visited[nIdx] = 1;
+          queue[tail++] = nIdx;
+        }
+      }
+      if (cx < w - 1) {
+        const nIdx = curr + 1;
+        if (!visited[nIdx] && isBackgroundPixel(cx + 1, cy)) {
+          visited[nIdx] = 1;
+          queue[tail++] = nIdx;
+        }
+      }
+      if (cy > 0) {
+        const nIdx = curr - w;
+        if (!visited[nIdx] && isBackgroundPixel(cx, cy - 1)) {
+          visited[nIdx] = 1;
+          queue[tail++] = nIdx;
+        }
+      }
+      if (cy < h - 1) {
+        const nIdx = curr + w;
+        if (!visited[nIdx] && isBackgroundPixel(cx, cy + 1)) {
+          visited[nIdx] = 1;
+          queue[tail++] = nIdx;
+        }
+      }
+    }
+
+    // 3. Set transparan HANYA untuk pixel yang terhubung ke background luar
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const pIdx = y * w + x;
+        const dIdx = pIdx * 4;
+        if (visited[pIdx] === 1) {
+          data[dIdx + 3] = 0;
         } else {
+          // Komponen mobil (ban, velg, grill, knalpot tetap solid)
           if (y < minY) minY = y;
           if (y > maxY) maxY = y;
           if (x < minX) minX = x;
@@ -351,18 +430,19 @@ const processAutoTrimmedSprite = (
         }
       }
     }
+
     octx.putImageData(imgData, 0, 0);
   } catch (e) {
     console.warn('Canvas pixel processing bypass:', e);
   }
 
   if (minY >= maxY) {
-    minY = Math.floor(oc.height * 0.2);
-    maxY = Math.floor(oc.height * 0.8);
+    minY = Math.floor(h * 0.2);
+    maxY = Math.floor(h * 0.8);
   }
   if (minX >= maxX) {
     minX = 0;
-    maxX = oc.width;
+    maxX = w;
   }
 
   const actualBoxW = Math.max(20, maxX - minX);
