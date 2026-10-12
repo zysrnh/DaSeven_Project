@@ -293,10 +293,10 @@ const createCleanDirtPattern = (): HTMLCanvasElement => {
   return c;
 };
 
-// Tipe Kendaraan Angkot & Pick-up Lalu Lintas (Mendukung Arah Horizontal & Vertikal)
+// Tipe Kendaraan Angkot, Pick-up, & Avanza Lalu Lintas (Mendukung Arah Horizontal & Vertikal)
 interface TrafficVehicle {
   id: string;
-  vehicleType: 'angkot' | 'pickup';
+  vehicleType: 'angkot' | 'pickup' | 'avanza';
   x: number;
   y: number;
   speed: number;
@@ -504,6 +504,11 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool, 
   const pickupFrontRef = useRef<{ canvas: HTMLCanvasElement; frames: { sx: number; sy: number; sw: number; sh: number }[] } | null>(null);
   const pickupRearRef = useRef<{ canvas: HTMLCanvasElement; frames: { sx: number; sy: number; sw: number; sh: number }[] } | null>(null);
 
+  // Cache Canvas Sprite Avanza (Side, Front, Rear)
+  const avanzaSideRef = useRef<{ canvas: HTMLCanvasElement; frames: { sx: number; sy: number; sw: number; sh: number }[] } | null>(null);
+  const avanzaFrontRef = useRef<{ canvas: HTMLCanvasElement; frames: { sx: number; sy: number; sw: number; sh: number }[] } | null>(null);
+  const avanzaRearRef = useRef<{ canvas: HTMLCanvasElement; frames: { sx: number; sy: number; sw: number; sh: number }[] } | null>(null);
+
   // Patterns Cache
   const asphaltPatternRef = useRef<CanvasPattern | null>(null);
   const sidewalkPatternRef = useRef<CanvasPattern | null>(null);
@@ -531,10 +536,26 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool, 
     {
       id: 'pickup_east',
       vehicleType: 'pickup',
-      x: 1550,
+      x: 1100,
       y: 810,
       speed: 135,
       baseSpeed: 135,
+      dir: 'right',
+      animFrame: 0,
+      animTimer: 0,
+      isSpeeding: false,
+      hornCooldown: 0,
+      isStopped: false,
+      viewType: 'side',
+    },
+    // Jalur Horizontal Bawah (ke timur / kanan) - Avanza
+    {
+      id: 'avanza_east',
+      vehicleType: 'avanza',
+      x: 2000,
+      y: 810,
+      speed: 145,
+      baseSpeed: 145,
       dir: 'right',
       animFrame: 0,
       animTimer: 0,
@@ -563,10 +584,26 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool, 
     {
       id: 'pickup_west',
       vehicleType: 'pickup',
-      x: 1300,
+      x: 1750,
       y: 620,
       speed: -135,
       baseSpeed: -135,
+      dir: 'left',
+      animFrame: 0,
+      animTimer: 0,
+      isSpeeding: false,
+      hornCooldown: 0,
+      isStopped: false,
+      viewType: 'side',
+    },
+    // Jalur Horizontal Atas (ke barat / kiri) - Avanza
+    {
+      id: 'avanza_west',
+      vehicleType: 'avanza',
+      x: 850,
+      y: 620,
+      speed: -145,
+      baseSpeed: -145,
       dir: 'left',
       animFrame: 0,
       animTimer: 0,
@@ -689,6 +726,27 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool, 
     pickupBelakangImg.src = new URL('../assets/mobil/angkot/pickup/pickupbelakangv2.jpg', import.meta.url).href;
     pickupBelakangImg.onload = () => {
       pickupRearRef.current = processAutoTrimmedSprite(pickupBelakangImg, 3);
+    };
+
+    // 7. Load Avanza Side View (4 Frame Strip Berjalan)
+    const avanzaSideImg = new Image();
+    avanzaSideImg.src = new URL('../assets/mobil/avanza/avanza.jpg', import.meta.url).href;
+    avanzaSideImg.onload = () => {
+      avanzaSideRef.current = processAutoTrimmedSprite(avanzaSideImg, 4);
+    };
+
+    // 8. Load Avanza Depan (Front View - 3 Kolom: normal, lampu LED sorot, kabin)
+    const avanzaDepanImg = new Image();
+    avanzaDepanImg.src = new URL('../assets/mobil/avanza/avanzav2depan.jpg', import.meta.url).href;
+    avanzaDepanImg.onload = () => {
+      avanzaFrontRef.current = processAutoTrimmedSprite(avanzaDepanImg, 3);
+    };
+
+    // 9. Load Avanza Belakang (Rear View - 3 Kolom: normal, rem merah + asap, hazard)
+    const avanzaBelakangImg = new Image();
+    avanzaBelakangImg.src = new URL('../assets/mobil/avanza/avanzav2belakang.jpg', import.meta.url).href;
+    avanzaBelakangImg.onload = () => {
+      avanzaRearRef.current = processAutoTrimmedSprite(avanzaBelakangImg, 3);
     };
   }, []);
 
@@ -962,11 +1020,8 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool, 
           if (car.hornCooldown <= 0) {
             car.hornCooldown = 2.5;
             playSound.carHorn();
-            setTrafficToast(
-              car.vehicleType === 'pickup'
-                ? '⚠️ AWAS! MOBIL PICK-UP NGEBUT! MENYEBERANGLAH DI ZEBRA CROSS!'
-                : '⚠️ AWAS! ANGKOT NGEBUT! MENYEBERANGLAH DI ZEBRA CROSS!'
-            );
+            const carName = car.vehicleType === 'pickup' ? 'MOBIL PICK-UP' : car.vehicleType === 'avanza' ? 'MOBIL AVANZA' : 'ANGKOT';
+            setTrafficToast(`⚠️ AWAS! ${carName} NGEBUT! MENYEBERANGLAH DI ZEBRA CROSS!`);
             setTimeout(() => setTrafficToast(null), 3000);
           }
         } else {
@@ -986,23 +1041,25 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool, 
 
         car.speed += (currentTargetSpeed - car.speed) * Math.min(1, dt * 7);
 
+        const carPool: ('angkot' | 'pickup' | 'avanza')[] = ['angkot', 'pickup', 'avanza'];
+
         if (car.dir === 'left' || car.dir === 'right') {
           car.x += car.speed * dt;
           if (car.dir === 'right' && car.x > WORLD_WIDTH + 180) {
             car.x = -180;
-            car.vehicleType = Math.random() > 0.5 ? 'pickup' : 'angkot';
+            car.vehicleType = carPool[Math.floor(Math.random() * carPool.length)];
           } else if (car.dir === 'left' && car.x < -180) {
             car.x = WORLD_WIDTH + 180;
-            car.vehicleType = Math.random() > 0.5 ? 'pickup' : 'angkot';
+            car.vehicleType = carPool[Math.floor(Math.random() * carPool.length)];
           }
         } else {
           car.y += car.speed * dt;
           if (car.dir === 'down' && car.y > WORLD_HEIGHT + 180) {
             car.y = -180;
-            car.vehicleType = Math.random() > 0.5 ? 'pickup' : 'angkot';
+            car.vehicleType = carPool[Math.floor(Math.random() * carPool.length)];
           } else if (car.dir === 'up' && car.y < -180) {
             car.y = WORLD_HEIGHT + 180;
-            car.vehicleType = Math.random() > 0.5 ? 'pickup' : 'angkot';
+            car.vehicleType = carPool[Math.floor(Math.random() * carPool.length)];
           }
         }
 
@@ -1043,11 +1100,8 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool, 
             playerPosRef.current.x = pX < 2040 ? 1780 : 2280;
           }
 
-          setTrafficToast(
-            car.vehicleType === 'pickup'
-              ? '💥 BRUAAKK! Tertabrak mobil pick-up! HP berkurang 50%!'
-              : '💥 BRUAAKK! Tertabrak angkot! HP berkurang 50%!'
-          );
+          const crashName = car.vehicleType === 'pickup' ? 'mobil pick-up' : car.vehicleType === 'avanza' ? 'mobil Avanza' : 'angkot';
+          setTrafficToast(`💥 BRUAAKK! Tertabrak ${crashName}! HP berkurang 50%!`);
           setTimeout(() => setTrafficToast(null), 3500);
         }
       });
@@ -1493,8 +1547,12 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool, 
             yOrder: car.y + 48,
             draw: () => {
               if (car.viewType === 'side') {
-                // ================= SIDE VIEW MOBIL (Angkot & Pick-up Jumbo) =================
-                const spriteObj = car.vehicleType === 'pickup' ? pickupSideRef.current : angkotSideRef.current;
+                // ================= SIDE VIEW MOBIL (Angkot, Pick-up, & Avanza Jumbo) =================
+                const spriteObj = car.vehicleType === 'pickup' 
+                  ? pickupSideRef.current 
+                  : car.vehicleType === 'avanza'
+                  ? avanzaSideRef.current
+                  : angkotSideRef.current;
                 const frames = spriteObj?.frames || [];
                 const spriteCanvas = spriteObj?.canvas;
 
@@ -1502,7 +1560,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool, 
                 let drawH = 120;
                 if (frames.length > 0 && frames[0].sh > 0) {
                   const ratio = frames[0].sw / frames[0].sh;
-                  drawH = car.vehicleType === 'pickup' ? 122 : 120; // Tinggi bodi seimbang
+                  drawH = car.vehicleType === 'pickup' ? 122 : car.vehicleType === 'avanza' ? 116 : 120;
                   drawW = Math.max(200, Math.min(310, Math.round(drawH * ratio)));
                 }
 
@@ -1557,13 +1615,17 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool, 
                   const f = frames[car.animFrame % frames.length];
                   ctx.drawImage(spriteCanvas, f.sx, f.sy, f.sw, f.sh, -drawW / 2, -drawH / 2, drawW, drawH);
                 } else {
-                  ctx.fillStyle = car.vehicleType === 'pickup' ? '#253f68' : '#1c5c4e';
+                  ctx.fillStyle = car.vehicleType === 'pickup' ? '#253f68' : car.vehicleType === 'avanza' ? '#1f242d' : '#1c5c4e';
                   ctx.fillRect(-drawW / 2, -drawH / 2, drawW, drawH);
                 }
                 ctx.restore();
               } else if (car.viewType === 'front') {
-                // ================= FRONT VIEW (Angkot & Pick-up Gagah Lebar) =================
-                const spriteObj = car.vehicleType === 'pickup' ? pickupFrontRef.current : angkotFrontRef.current;
+                // ================= FRONT VIEW (Angkot, Pick-up, & Avanza Gagah Lebar) =================
+                const spriteObj = car.vehicleType === 'pickup' 
+                  ? pickupFrontRef.current 
+                  : car.vehicleType === 'avanza'
+                  ? avanzaFrontRef.current
+                  : angkotFrontRef.current;
                 const frames = spriteObj?.frames || [];
                 const spriteCanvas = spriteObj?.canvas;
 
@@ -1604,13 +1666,17 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool, 
                   const f = frames[frameIdx];
                   ctx.drawImage(spriteCanvas, f.sx, f.sy, f.sw, f.sh, -drawW / 2, -drawH / 2, drawW, drawH);
                 } else {
-                  ctx.fillStyle = car.vehicleType === 'pickup' ? '#253f68' : '#1c5c4e';
+                  ctx.fillStyle = car.vehicleType === 'pickup' ? '#253f68' : car.vehicleType === 'avanza' ? '#1f242d' : '#1c5c4e';
                   ctx.fillRect(-drawW / 2, -drawH / 2, drawW, drawH);
                 }
                 ctx.restore();
               } else if (car.viewType === 'rear') {
-                // ================= REAR VIEW (Angkot & Pick-up Gagah Lebar) =================
-                const spriteObj = car.vehicleType === 'pickup' ? pickupRearRef.current : angkotRearRef.current;
+                // ================= REAR VIEW (Angkot, Pick-up, & Avanza Gagah Lebar) =================
+                const spriteObj = car.vehicleType === 'pickup' 
+                  ? pickupRearRef.current 
+                  : car.vehicleType === 'avanza'
+                  ? avanzaRearRef.current
+                  : angkotRearRef.current;
                 const frames = spriteObj?.frames || [];
                 const spriteCanvas = spriteObj?.canvas;
 
@@ -1651,7 +1717,7 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool, 
                   const f = frames[frameIdx];
                   ctx.drawImage(spriteCanvas, f.sx, f.sy, f.sw, f.sh, -drawW / 2, -drawH / 2, drawW, drawH);
                 } else {
-                  ctx.fillStyle = car.vehicleType === 'pickup' ? '#253f68' : '#1c5c4e';
+                  ctx.fillStyle = car.vehicleType === 'pickup' ? '#253f68' : car.vehicleType === 'avanza' ? '#1f242d' : '#1c5c4e';
                   ctx.fillRect(-drawW / 2, -drawH / 2, drawW, drawH);
                 }
                 ctx.restore();
