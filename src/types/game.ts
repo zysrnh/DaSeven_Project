@@ -1,4 +1,4 @@
-﻿export type Direction = 'up' | 'down' | 'left' | 'right';
+export type Direction = 'up' | 'down' | 'left' | 'right';
 
 export interface Card {
   id: string;
@@ -66,3 +66,32 @@ export interface OverworldEntity {
   enemyData?: Enemy;
   spriteKey: string;
 }
+
+export type TrafficVehicleType = 'angkot' | 'pickup' | 'avanza';
+
+export type BuildingCategory =
+  | 'pabrik'
+  | 'sekolah'
+  | 'fotocopy'
+  | 'warmindo'
+  | 'counter_hp'
+  | 'warung_madura'
+  | 'bengkel'
+  | 'minimarket';
+
+export interface TrafficVehicle {
+  id: string;
+  vehicleType: TrafficVehicleType;
+  x: number;
+  y: number;
+  speed: number;
+  baseSpeed: number;
+  dir: 'left' | 'right' | 'up' | 'down';
+  animFrame: number;
+  animTimer: number;
+  isSpeeding: boolean;
+  hornCooldown: number;
+  isStopped: boolean;
+  viewType: 'side' | 'front' | 'rear';
+}
+

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import type { Direction, Enemy, Player } from '../types/game';
+import type { BuildingCategory, Direction, Enemy, Player, TrafficVehicle, TrafficVehicleType } from '../types/game';
 import { playSound } from '../utils/audio';
 
 interface StreetMapProps {
@@ -17,7 +17,7 @@ interface BuildingShop {
   id: string;
   name: string;
   tagline: string;
-  category: 'pabrik' | 'sekolah' | 'fotocopy' | 'warmindo' | 'counter_hp' | 'warung_madura' | 'bengkel' | 'minimarket';
+  category: BuildingCategory;
   x: number;
   y: number;
   w: number;
@@ -292,23 +292,6 @@ const createCleanDirtPattern = (): HTMLCanvasElement => {
 
   return c;
 };
-
-// Tipe Kendaraan Angkot, Pick-up, & Avanza Lalu Lintas (Mendukung Arah Horizontal & Vertikal)
-interface TrafficVehicle {
-  id: string;
-  vehicleType: 'angkot' | 'pickup' | 'avanza';
-  x: number;
-  y: number;
-  speed: number;
-  baseSpeed: number;
-  dir: 'left' | 'right' | 'up' | 'down';
-  animFrame: number;
-  animTimer: number;
-  isSpeeding: boolean;
-  hornCooldown: number;
-  isStopped: boolean;
-  viewType: 'side' | 'front' | 'rear';
-}
 
 // Helper auto-chromakey + bounding box trimmer menggunakan Flood-Fill dari border luar
 // Menghilangkan latar belakang hitam tanpa melubangi ban, grill, atau komponen hitam di dalam bodi mobil
