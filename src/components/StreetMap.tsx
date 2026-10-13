@@ -1689,13 +1689,17 @@ export const StreetMap: React.FC<StreetMapProps> = ({ player, onReturnToSchool, 
                   }
                 }
 
-                // Gambar Sprite (Saat berhenti/lampu merah pakai frame 1 lampu rem menyala)
+                // Gambar Sprite (Saat berhenti/lampu merah berkedip rem & hazard realistis)
                 ctx.save();
                 ctx.translate(cScrX, cScrY);
                 if (spriteCanvas && frames.length > 0) {
                   let frameIdx = 0;
-                  if ((car.isStopped || Math.abs(car.speed) < 30) && frames.length >= 2) {
-                    frameIdx = 1; // Lampu rem merah aktif!
+                  if (car.isStopped && frames.length >= 3) {
+                    // Berkedip antara lampu rem merah dan lampu hazard saat berhenti
+                    const blinkState = Math.floor(currentTime / 500) % 2;
+                    frameIdx = blinkState === 1 ? 2 : 1;
+                  } else if ((car.isStopped || Math.abs(car.speed) < 30) && frames.length >= 2) {
+                    frameIdx = 1; // Lampu rem merah aktif saat melambat
                   }
                   const f = frames[frameIdx];
                   ctx.drawImage(spriteCanvas, f.sx, f.sy, f.sw, f.sh, -drawW / 2, -drawH / 2, drawW, drawH);
