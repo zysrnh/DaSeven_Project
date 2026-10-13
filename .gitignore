@@ -22,3 +22,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment and Local files
+.env.local
+.env.*.local
+
+# Python artifacts and test outputs
+__pycache__/
+*.py[cod]
+*$py.class
+test_*.png
+test_*.jpg
+
